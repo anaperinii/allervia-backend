@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { IDoseRepository } from '../../domain/contracts/dose.repository.interface';
 import { DoseNotFoundException } from '../../domain/exceptions/dose-not-found.exception';
 import { UpdateDoseDto } from '../dtos/update-dose.dto';
@@ -21,9 +21,7 @@ export class UpdateDoseUseCase {
     if (!dose) {
       throw new DoseNotFoundException(id);
     }
-
-    console.log(dto);
-
+    
     const updatedDose = this.doseRepository.update(dose.id, dto);
 
     return updatedDose;

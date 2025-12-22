@@ -46,8 +46,10 @@ export class PrismaDoseRepository extends IDoseRepository {
     const dose = await this.prismaService.dose.findUnique({
       where: { 
         id,
-        createdBy: {
-          organizationId: orgId
+        immunotherapy: {
+          patient: {
+            primaryOrganizationId: orgId
+          }
         }
       },
     });

@@ -2,6 +2,7 @@ import { DoseStatus } from '@prisma/client';
 import { DoseAlreadyArchivedException } from '../exceptions/dose-already-archived.exception';
 import { UpdateDoseData } from '../contracts/interfaces/doses.interface';
 import { UpdateDoseStatusDto } from 'src/doses/application/dtos/update-dose-status.dto';
+import { InvalidDoseStatusException } from '../exceptions/invalid-dose-status.exception';
 
 export interface DoseProps {
   id: string;
@@ -111,7 +112,38 @@ export class Dose {
   }
 
   changeStatus(props: UpdateDoseStatusDto): void {
-    this.status = props.status;
+
+    const newStatus = props.status;
+
+    if (this.status === 'ADMINISTERED' && newStatus !== 'ENTERED_IN_ERROR') {
+      throw new InvalidDoseStatusException(
+      'Doses administradas podem ser alteradas apenas para registro errôneo'
+      );
+    }
+
+    if (this.status === 'ENTERED_IN_ERROR') {
+      throw new InvalidDoseStatusException(
+        'Doses registradas erroneamente e arquivadas não podem ter status alterado'
+      );
+    }
+
+    if (this.status === 'SCHEDULED' && newStatus === 'ENTERED_IN_ERROR') {
+      throw new InvalidDoseStatusException(
+        'Doses agendadas não podem ser marcadas como registros errôneos, caso seja necessário, edite os dados diretamente.'
+      );
+    }
+
+    if (this.status === 'ADMINISTERED' && newStatus === 'ENTERED_IN_ERROR') {
+      this.status = newStatus;
+      this.archive();
+      return;
+    }
+
+    if (props.status === this.status) {
+      throw new InvalidDoseStatusException(`Esta dose já possui o status ${props.status}`)
+    }
+    
+    this.status = newStatus;
   }
 
   archive(): void {
