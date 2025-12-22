@@ -1,0 +1,124 @@
+import { DoseStatus } from '@prisma/client';
+import { DoseAlreadyArchivedException } from '../exceptions/dose-already-archived.exception';
+import { UpdateDoseData } from '../contracts/interfaces/doses.interface';
+import { UpdateDoseStatusDto } from 'src/doses/application/dtos/update-dose-status.dto';
+
+export interface DoseProps {
+  id: string;
+  concentration: string;
+  volume: number;
+  scheduledAt: Date | null;
+  administeredAt: Date | null;
+  nextIntervalInDays: number;
+  sideEffect: string | null;
+  medicationRequired: string | null;
+  notes: string | null;
+  status: DoseStatus;
+  isArchived: boolean;
+  immunotherapyId: string;
+  administeredById: string | null;
+  createdById: string;
+  updatedById: string;
+  archivedById: string | null;
+  archivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateDoseProps {
+  concentration: string;
+  volume: number;
+  scheduledAt?: Date | null;
+  administeredAt?: Date | null;
+  nextIntervalInDays: number;
+  sideEffect?: string | null;
+  medicationRequired?: string | null;
+  notes?: string | null;
+  immunotherapyId: string;
+  administeredById?: string | null;
+  createdById: string;
+  updatedById: string;
+}
+
+export class Dose {
+  id: string;
+  concentration: string;
+  volume: number;
+  scheduledAt: Date | null;
+  administeredAt: Date | null;
+  nextIntervalInDays: number;
+  sideEffect: string | null;
+  medicationRequired: string | null;
+  notes: string | null;
+  status: DoseStatus;
+  isArchived: boolean;
+  immunotherapyId: string;
+  administeredById: string | null;
+  createdById: string;
+  updatedById: string;
+  archivedById: string | null;
+  archivedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+
+  constructor(props: DoseProps) {
+    this.id = props.id;
+    this.concentration = props.concentration;
+    this.volume = props.volume;
+    this.scheduledAt = props.scheduledAt;
+    this.administeredAt = props.administeredAt;
+    this.nextIntervalInDays = props.nextIntervalInDays;
+    this.sideEffect = props.sideEffect;
+    this.medicationRequired = props.medicationRequired;
+    this.notes = props.notes;
+    this.status = props.status;
+    this.isArchived = props.isArchived;
+    this.immunotherapyId = props.immunotherapyId;
+    this.administeredById = props.administeredById;
+    this.createdById = props.createdById;
+    this.updatedById = props.updatedById;
+    this.archivedById = props.archivedById;
+    this.archivedAt = props.archivedAt;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
+  }
+
+  static createNew(props: CreateDoseProps) {
+    const status: DoseStatus = props.administeredAt ? 'ADMINISTERED' : 'SCHEDULED';
+    return {
+      concentration: props.concentration,
+      volume: props.volume,
+      scheduledAt: props.scheduledAt || null,
+      administeredAt: props.administeredAt || null,
+      nextIntervalInDays: props.nextIntervalInDays,
+      sideEffect: props.sideEffect || null,
+      medicationRequired: props.medicationRequired || null,
+      notes: props.notes || null,
+      status: status,
+      immunotherapyId: props.immunotherapyId,
+      administeredById: props.administeredById || null,
+      createdById: props.createdById,
+      updatedById: props.updatedById,
+      isArchived: false
+    }
+  }
+
+  administered(props: Partial<UpdateDoseData>): void {
+    const administeredAt = props.administeredAt ?? this.administeredAt;
+    if (administeredAt && this.status === 'SCHEDULED') {
+      this.status = 'ADMINISTERED';
+    }
+  }
+
+  changeStatus(props: UpdateDoseStatusDto): void {
+    this.status = props.status;
+  }
+
+  archive(): void {
+    if (this.isArchived) {
+      throw new DoseAlreadyArchivedException();
+    }
+    this.isArchived = true;
+  }
+}
+

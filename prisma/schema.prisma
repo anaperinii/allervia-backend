@@ -1,0 +1,315 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AdministrationRoute {
+  SUBCUTANEOUS
+  SUBLINGUAL
+}
+
+enum UserType {
+  PROFESSIONAL
+  ADMIN
+  PATIENT
+  SYSTEM_ADMIN
+}
+
+enum RoleType {
+  SYSTEM_ADMIN
+  ADMIN
+  PHYSICIAN
+  NURSE
+  NURSING_TECHNICIAN
+}
+
+enum TherapyStatus {
+  IN_PROGRESS
+  SUSPENDED
+  COMPLETED
+}
+
+enum DoseStatus {
+  SCHEDULED
+  ADMINISTERED
+  SKIPPED
+  ENTERED_IN_ERROR
+}
+
+model Organization {
+  id        String   @id @default(ulid())
+  name      String   @unique
+  taxId     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  isActive  Boolean  @default(true)
+
+  users              User[]
+  patientMemberships Membership[]
+  patients           Patient[]
+
+  auditLogs           AuditLog[]
+  professionalInvites InternalUserInvite[]
+  roles               Role[]
+
+  @@index([taxId])
+}
+
+model Membership {
+  id             String   @id @default(ulid())
+  userId         String
+  organizationId String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, isActive])
+  @@index([userId, isActive])
+}
+
+model UserRole {
+  id        String   @id @default(ulid())
+  userId    String
+  roleTag   RoleType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  isActive  Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleTag], references: [name])
+
+  @@unique([userId, roleTag])
+  @@index([userId, isActive])
+  @@index([roleTag, isActive])
+}
+
+model User {
+  id             String   @id @default(ulid())
+  fullName       String
+  email          String   @unique
+  password       String
+  type           UserType
+  organizationId String? // Primary organization for PROFESSIONAL
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt @default(now())
+  isActive   Boolean  @default(true)
+  isArchived Boolean  @default(false)
+
+  roles        UserRole[]
+  memberships  Membership[]
+  patient      Patient?      @relation("PatientAccount")
+  professional Professional?
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  auditLogs    AuditLog[]
+
+  patientsCreated  Patient[]            @relation("PatientCreatedBy")
+  patientsUpdated  Patient[]            @relation("PatientUpdatedBy")
+  patientsArchived Patient[]            @relation("PatientArchivedBy")
+  invitesCreated   InternalUserInvite[] @relation("InviteCreatedBy")
+
+  dosesCreated            Dose[]          @relation("DoseCreatedBy")
+  dosesUpdated            Dose[]          @relation("DoseUpdatedBy")
+  dosesArchived           Dose[]          @relation("DoseArchivedBy")
+  immunotherapiesCreated  Immunotherapy[] @relation("ImmunotherapyCreatedBy")
+  immunotherapiesUpdated  Immunotherapy[] @relation("ImmunotherapyUpdatedBy")
+  immunotherapiesArchived Immunotherapy[] @relation("ImmunotherapyArchivedBy")
+
+  @@index([email])
+  @@index([type, isActive])
+  @@index([organizationId])
+}
+
+model Role {
+  id             String   @id @default(ulid())
+  name           RoleType @unique
+  description    String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt @default(now())
+  isActive       Boolean  @default(true)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  userRoles    UserRole[]
+
+  @@index([name, isActive])
+}
+
+model Professional {
+  id              String               @id @default(ulid())
+  specialty       String
+  phoneNumber     String
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt @default(now())
+  userId          String               @unique
+  immunotherapies Immunotherapy[]      @relation(name: "ResponsiblePhysician")
+  doses           Dose[]               @relation(name: "AdministeredByProfessional")
+  invites         InternalUserInvite[] @relation
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([specialty])
+}
+
+model Patient {
+  id                    String   @id @default(ulid())
+  fullName              String
+  birthDate             DateTime
+  weightInKg            Float
+  phoneNumber           String
+  primaryOrganizationId String
+  userId                String?  @unique
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt @default(now())
+  isActive   Boolean  @default(true)
+  isArchived Boolean  @default(false)
+
+  createdById  String
+  updatedById  String
+  archivedById String?
+  archivedAt   DateTime?
+
+  primaryOrganization Organization    @relation(fields: [primaryOrganizationId], references: [id])
+  user                User?           @relation("PatientAccount", fields: [userId], references: [id])
+  createdBy           User?           @relation("PatientCreatedBy", fields: [createdById], references: [id])
+  updatedBy           User?           @relation("PatientUpdatedBy", fields: [updatedById], references: [id])
+  archivedBy          User?           @relation("PatientArchivedBy", fields: [archivedById], references: [id])
+  immunotherapies     Immunotherapy[]
+
+  @@index([primaryOrganizationId, isActive, isArchived])
+  @@index([userId])
+  @@index([phoneNumber])
+  @@index([fullName])
+  @@index([birthDate])
+}
+
+model Immunotherapy {
+  id                     String              @id @default(ulid())
+  immunoType             String
+  administrationRoute    AdministrationRoute
+  extract                String
+  inductionStartDate     DateTime
+  maintenanceStartDate   DateTime?
+  targetConcentration    String
+  targetVolume           Float
+  patientId              String
+  responsiblePhysicianId String
+
+  isArchived Boolean       @default(false)
+  status     TherapyStatus @default(IN_PROGRESS)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt @default(now())
+
+  createdById  String
+  updatedById  String
+  archivedById String?
+  archivedAt   DateTime?
+
+  createdBy  User  @relation("ImmunotherapyCreatedBy", fields: [createdById], references: [id])
+  updatedBy  User @relation("ImmunotherapyUpdatedBy", fields: [updatedById], references: [id])
+  archivedBy User? @relation("ImmunotherapyArchivedBy", fields: [archivedById], references: [id])
+
+  patient              Patient      @relation(fields: [patientId], references: [id])
+  responsiblePhysician Professional @relation(fields: [responsiblePhysicianId], references: [id], name: "ResponsiblePhysician")
+  doses                Dose[]
+
+  @@index([patientId, status, isArchived])
+  @@index([responsiblePhysicianId])
+  @@index([inductionStartDate])
+}
+
+model Dose {
+  id                 String    @id @default(ulid())
+  concentration      String
+  volume             Float
+  scheduledAt        DateTime? //dev env por enquanto
+  administeredAt     DateTime?
+  nextIntervalInDays Int
+  sideEffect         String?
+  medicationRequired String?
+  notes              String?
+  immunotherapyId    String
+  administeredById   String?
+
+  isArchived Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt @default(now())
+  status     DoseStatus @default(SCHEDULED)
+
+  createdById  String
+  updatedById  String
+  archivedById String?
+  archivedAt   DateTime?
+
+  createdBy  User? @relation("DoseCreatedBy", fields: [createdById], references: [id])
+  updatedBy  User? @relation("DoseUpdatedBy", fields: [updatedById], references: [id])
+  archivedBy User? @relation("DoseArchivedBy", fields: [archivedById], references: [id])
+
+  immunotherapy  Immunotherapy @relation(fields: [immunotherapyId], references: [id])
+  administeredBy Professional?  @relation(fields: [administeredById], references: [id], name: "AdministeredByProfessional")
+
+  @@index([immunotherapyId, scheduledAt])
+  @@index([status, scheduledAt])
+  @@index([administeredById])
+  @@index([scheduledAt])
+}
+
+model AuditLog {
+  id             String   @id @default(ulid())
+  entityType     String
+  entityId       String
+  action         String
+  oldValues      Json?
+  newValues      Json?
+  changedFields  String[]
+  userId         String
+  sessionId      String?
+  organizationId String
+  timestamp      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([entityType, entityId, timestamp])
+  @@index([userId, timestamp])
+  @@index([organizationId, timestamp])
+  @@index([timestamp])
+}
+
+model InternalUserInvite {
+  id             String   @id @default(ulid())
+  email          String
+  fullName       String
+  roleType       RoleType
+  organizationId String
+  createdById    String
+  professionalId String?
+
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  isActive  Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  createdBy    User          @relation("InviteCreatedBy", fields: [createdById], references: [id])
+  professional Professional? @relation(fields: [professionalId], references: [id])
+
+  @@unique([email, organizationId, isActive]) // Evita múltiplos invites ativos para mesmo email
+  @@index([token])
+  @@index([email])
+  @@index([organizationId, isActive])
+  @@index([expiresAt])
+  @@index([professionalId])
+}
