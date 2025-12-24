@@ -24,20 +24,23 @@ export class UserFactory extends BaseFactory<User> {
     }
 
     async createAuthenticatedPhysicianProfessional(overrides?: Partial<AuthenticatedUserPayload>): Promise<AuthenticatedUserPayload> {
-        const user = await this.create();
+
+        const organization = await this.prisma.organization.create({
+            data: {
+                name: faker.company.name(),
+                taxId: faker.string.numeric(14)
+            }
+        });
+
+        const user = await this.create({
+            organizationId: organization.id
+        });
 
         const professional = await this.prisma.professional.create({
             data: {
                 specialty: faker.helpers.arrayElement(['Alergia e Imunologia', 'Pediatria', 'Enfermagem e Aplicação de Imunoterapias']),
                 phoneNumber: faker.phone.number(),
                 userId: user.id
-            }
-        });
-
-        const organization = await this.prisma.organization.create({
-            data: {
-                name: faker.company.name(),
-                taxId: faker.string.numeric(14)
             }
         });
 
@@ -53,13 +56,17 @@ export class UserFactory extends BaseFactory<User> {
     }
 
     async createAuthenticatedAdmin(overrides?: Partial<AuthenticatedUserPayload>): Promise<AuthenticatedUserPayload> {
-        const user = await this.create({ type: 'ADMIN' });
 
         const organization = await this.prisma.organization.create({
             data: {
                 name: faker.company.name(),
                 taxId: faker.string.numeric(14)
             }
+        });
+
+        const user = await this.create({ 
+            type: 'ADMIN', 
+            organizationId: organization.id 
         });
 
         return {

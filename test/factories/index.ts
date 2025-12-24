@@ -8,6 +8,7 @@ import { PatientFactory } from "./patient.factory";
 import { ProfessionalFactory } from "./professional.factory";
 import { UserRoleFactory } from "./user-role.factory";
 import { UserFactory } from "./user.factory";
+import { RoleFactory } from "./role.factory";
 
 export class TestFactories {
     public readonly users: UserFactory;
@@ -19,6 +20,7 @@ export class TestFactories {
     public readonly internalUserInvite: InternalUserInviteFactory;
     public readonly immunotherapies: ImmunotherapyFactory;
     public readonly doses: DoseFactory;
+    public readonly roles: RoleFactory;
 
     constructor(prisma: PrismaClient) {
         this.users = new UserFactory(prisma);
@@ -30,5 +32,6 @@ export class TestFactories {
         this.internalUserInvite = new InternalUserInviteFactory(prisma);
         this.immunotherapies = new ImmunotherapyFactory(prisma);
         this.doses = new DoseFactory(prisma);
+        this.roles = new RoleFactory(prisma);
     }
 }
