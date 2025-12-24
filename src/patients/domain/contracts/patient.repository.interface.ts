@@ -12,6 +12,7 @@ export abstract class IPatientRepository {
   ): Promise<Patient>;
 
   abstract update(
+    patientId: string,
     patient: Partial<UpdatePatientData>,
     tx?: Prisma.TransactionClient,
   ): Promise<Patient>;

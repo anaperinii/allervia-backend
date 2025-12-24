@@ -32,12 +32,12 @@ export class PrismaPatientRepository extends IPatientRepository {
     return new Patient(created);
   }
 
-  async update(patient: Partial<UpdatePatientData>, tx?: Prisma.TransactionClient): Promise<Patient> {
+  async update(patientId: string, patient: Partial<UpdatePatientData>, tx?: Prisma.TransactionClient): Promise<Patient> {
 
     const prismaClient = tx || this.prisma;
 
     const updated = await prismaClient.patient.update({
-      where: { id: patient.id },
+      where: { id: patientId },
       data: {
         fullName: patient.fullName,
         birthDate: patient.birthDate,

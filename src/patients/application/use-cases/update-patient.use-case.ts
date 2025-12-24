@@ -25,7 +25,7 @@ export class UpdatePatientUseCase {
       throw new PatientNotFoundException(id);
     }
 
-    const updatedPatient = await this.patientRepository.update(dto, tx);
+    const updatedPatient = await this.patientRepository.update(id, dto, tx);
 
     return updatedPatient;
   }

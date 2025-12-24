@@ -25,9 +25,9 @@ export class UpdatePatientStatusUseCase {
       throw new PatientNotFoundException(id);
     }
 
-    dto.status ? patient.activate() : patient.deactivate();
+    dto.status === true ? patient.activate() : patient.deactivate();
     
-    const savedPatient = await this.patientRepository.update(patient, tx);
+    const savedPatient = await this.patientRepository.update(patient.id, patient, tx);
 
     return savedPatient;
   }

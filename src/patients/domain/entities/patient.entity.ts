@@ -78,7 +78,7 @@ export class Patient {
   }
 
   activate(): void {
-    if (!this.isArchived) {
+    if (this.isActive) {
       throw new Error('Cannot activate an already active patient'); 
     }
 

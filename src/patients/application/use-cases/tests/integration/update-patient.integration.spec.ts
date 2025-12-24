@@ -1,0 +1,121 @@
+import { Test, TestingModule } from "@nestjs/testing"
+import { UpdatePatientUseCase } from "../../update-patient.use-case";
+import { PrismaService } from "src/prisma/prisma.service";
+import { TestFactories } from "test/factories";
+import { TestDatabaseManager } from "test/database/test-database.manager";
+import { IPatientRepository } from "src/patients/domain/contracts/patient.repository.interface";
+import { PrismaPatientRepository } from "src/patients/infrastructure/persistence/prisma-patient.repository";
+import { ulid } from "ulid";
+import { PatientNotFoundException } from "src/patients/domain/exceptions/patient-not-found.exception";
+import { UpdatePatientDto } from "src/patients/application/dtos/update-patient.dto";
+
+describe('UpdatePatientUseCase - Integration', () => {
+    let module: TestingModule;
+    let updatePatientUseCase: UpdatePatientUseCase;
+    let prisma: PrismaService;
+    let factories: TestFactories;
+
+    beforeAll(async () => {
+
+        await TestDatabaseManager.connect();
+
+        module = await Test.createTestingModule({
+            providers: [
+                UpdatePatientUseCase,
+                {
+                    provide: PrismaService,
+                    useValue: TestDatabaseManager.getInstance()
+                },
+                {
+                    provide: IPatientRepository,
+                    useClass: PrismaPatientRepository
+                }
+            ]
+        }).compile();
+
+        updatePatientUseCase = module.get(UpdatePatientUseCase);
+        prisma = module.get(PrismaService);
+        factories = new TestFactories(prisma);
+    });
+
+    beforeEach(async () => {
+        await TestDatabaseManager.cleanAll();
+    });
+
+    afterAll(async () => {
+        if(module) {
+            await module.close();
+        }
+        await TestDatabaseManager.disconnect();
+    });
+
+    it('should update patient correctly', async () => {
+        const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
+
+        const patient = await factories.patients.create({
+            primaryOrganizationId: authenticatedUser.activeOrgId,
+            createdById: authenticatedUser.id,
+            updatedById: authenticatedUser.id
+        });
+
+        const dto: UpdatePatientDto = {
+            fullName: 'João Silva Atualizado',
+            weightInKg: 80.0,
+            phoneNumber: '11999999999'
+        };
+
+        const result = await updatePatientUseCase.execute(patient.id, dto, authenticatedUser);
+
+        expect(result).toBeDefined();
+        expect(result.fullName).toBe(dto.fullName);
+        expect(result.weightInKg).toBe(dto.weightInKg);
+        expect(result.phoneNumber).toBe(dto.phoneNumber);
+    });
+
+    it('should update patient partially', async () => {
+        const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
+
+        const patient = await factories.patients.create({
+            primaryOrganizationId: authenticatedUser.activeOrgId,
+            createdById: authenticatedUser.id,
+            updatedById: authenticatedUser.id
+        });
+
+        const dto: UpdatePatientDto = {
+            fullName: 'Nome Atualizado'
+        };
+
+        const result = await updatePatientUseCase.execute(patient.id, dto, authenticatedUser);
+
+        expect(result).toBeDefined();
+        expect(result.fullName).toBe(dto.fullName);
+    });
+
+    it('should throw a not found exception when updating a non-existent patient', async () => {
+        const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
+
+        const dto: UpdatePatientDto = {
+            fullName: 'Nome Atualizado'
+        };
+
+        await expect(updatePatientUseCase.execute(ulid(), dto, authenticatedUser)).rejects.toThrow(PatientNotFoundException);
+    });
+
+    it('should throw a not found exception when updating patient from another organization', async () => {
+        const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
+        const authenticatedUserAnotherOrg = await factories.users.createAuthenticatedPhysicianProfessional();
+
+        const patient = await factories.patients.create({
+            primaryOrganizationId: authenticatedUser.activeOrgId,
+            createdById: authenticatedUser.id,
+            updatedById: authenticatedUser.id
+        });
+
+        const dto: UpdatePatientDto = {
+            fullName: 'Nome Atualizado'
+        };
+
+        await expect(updatePatientUseCase.execute(patient.id, dto, authenticatedUserAnotherOrg)).rejects.toThrow(PatientNotFoundException);
+    });
+})
+
