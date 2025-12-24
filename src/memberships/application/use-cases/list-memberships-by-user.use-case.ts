@@ -9,10 +9,6 @@ export class ListMembershipsByUserUseCase {
     async execute(userId: string) {
         const memberships = await this.membershipsRepository.findByUserId(userId);
 
-        if (!memberships) {
-            throw new NoMembershipsForUserException(userId);
-        }
-
         return memberships;
     }
 }

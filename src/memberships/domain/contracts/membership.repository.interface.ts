@@ -3,8 +3,7 @@ import { CreateMembershipProps, MembershipInfo, UpdateMembershipData } from './i
 
 export abstract class IMembershipRepository {
   abstract create(membership: CreateMembershipProps): Promise<Membership>;
-  abstract update(membership: Partial<UpdateMembershipData>): Promise<Membership>;
-  abstract save(membership: Membership): Promise<Membership>;
+  abstract update(id: string, membership: Partial<UpdateMembershipData>): Promise<Membership>;
   abstract findById(id: string): Promise<Membership | null>;
   abstract findByUserId(userId: string): Promise<MembershipInfo[]>;
   abstract findByUserAndOrganization(userId: string, organizationId: string): Promise<Membership | null>;

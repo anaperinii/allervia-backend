@@ -26,20 +26,15 @@ export class PrismaMembershipRepository extends IMembershipRepository {
     return new Membership(created);
   }
 
-  async update(membership: Partial<UpdateMembershipData>): Promise<Membership> {
+  async update(id: string, membership: Partial<UpdateMembershipData>): Promise<Membership> {
     const updated = await this.prisma.membership.update({
-      where: { id: membership.id },
+      where: { id },
       data: {
         isActive: membership.isActive
       },
     });
 
     return new Membership(updated);
-  }
-
-  async save(membership: Membership): Promise<Membership> {
-    const exists = await this.exists(membership.userId, membership.organizationId);
-    return exists ? await this.update(membership) : await this.create(membership);
   }
 
   async findById(id: string): Promise<Membership | null> {

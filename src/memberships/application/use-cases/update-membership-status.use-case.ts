@@ -19,7 +19,7 @@ export class UpdateMembershipStatusUseCase {
       throw new NotFoundException('Membership não encontrada');
     }
 
-    const updatedMembership =  await this.membershipRepository.update(membership);
+    const updatedMembership = await this.membershipRepository.update(membershipId, dto);
 
     return updatedMembership;
   }

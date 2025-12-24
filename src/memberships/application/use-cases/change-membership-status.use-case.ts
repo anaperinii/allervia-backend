@@ -20,7 +20,7 @@ export class ChangeMembershipStatusUseCase {
             membership.activate();
         }
 
-        const cancelledMembership = await this.membershipRepository.update(membership);
+        const cancelledMembership = await this.membershipRepository.update(membership.id, membership);
 
         return cancelledMembership;
     }
