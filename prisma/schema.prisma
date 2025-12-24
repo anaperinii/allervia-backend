@@ -96,7 +96,9 @@ model User {
   email          String   @unique
   password       String
   type           UserType
-  organizationId String? // Primary organization for PROFESSIONAL
+  organizationId String? 
+  specialty      String?
+  phoneNumber    String?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
@@ -105,26 +107,31 @@ model User {
 
   roles        UserRole[]
   memberships  Membership[]
-  patient      Patient?      @relation("PatientAccount")
-  professional Professional?
-  organization Organization? @relation(fields: [organizationId], references: [id])
   auditLogs    AuditLog[]
+  patient      Patient?      @relation("PatientAccount")
+  organization Organization? @relation(fields: [organizationId], references: [id])
 
   patientsCreated  Patient[]            @relation("PatientCreatedBy")
   patientsUpdated  Patient[]            @relation("PatientUpdatedBy")
   patientsArchived Patient[]            @relation("PatientArchivedBy")
   invitesCreated   InternalUserInvite[] @relation("InviteCreatedBy")
 
-  dosesCreated            Dose[]          @relation("DoseCreatedBy")
-  dosesUpdated            Dose[]          @relation("DoseUpdatedBy")
-  dosesArchived           Dose[]          @relation("DoseArchivedBy")
+  dosesCreated  Dose[] @relation("DoseCreatedBy")
+  dosesUpdated  Dose[] @relation("DoseUpdatedBy")
+  dosesArchived Dose[] @relation("DoseArchivedBy")
+
   immunotherapiesCreated  Immunotherapy[] @relation("ImmunotherapyCreatedBy")
   immunotherapiesUpdated  Immunotherapy[] @relation("ImmunotherapyUpdatedBy")
   immunotherapiesArchived Immunotherapy[] @relation("ImmunotherapyArchivedBy")
 
+  immunotherapies Immunotherapy[]      @relation(name: "ResponsiblePhysician")
+  doses           Dose[]               @relation(name: "AdministeredByProfessional")
+  invites         InternalUserInvite[] @relation
+
   @@index([email])
   @@index([type, isActive])
   @@index([organizationId])
+  @@index([specialty])
 }
 
 model Role {
@@ -140,23 +147,6 @@ model Role {
   userRoles    UserRole[]
 
   @@index([name, isActive])
-}
-
-model Professional {
-  id              String               @id @default(ulid())
-  specialty       String
-  phoneNumber     String
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @default(now()) @updatedAt
-  userId          String               @unique
-  immunotherapies Immunotherapy[]      @relation(name: "ResponsiblePhysician")
-  doses           Dose[]               @relation(name: "AdministeredByProfessional")
-  invites         InternalUserInvite[] @relation
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([specialty])
 }
 
 model Patient {
@@ -180,8 +170,8 @@ model Patient {
 
   primaryOrganization Organization    @relation(fields: [primaryOrganizationId], references: [id])
   user                User?           @relation("PatientAccount", fields: [userId], references: [id])
-  createdBy           User           @relation("PatientCreatedBy", fields: [createdById], references: [id])
-  updatedBy           User           @relation("PatientUpdatedBy", fields: [updatedById], references: [id])
+  createdBy           User            @relation("PatientCreatedBy", fields: [createdById], references: [id])
+  updatedBy           User            @relation("PatientUpdatedBy", fields: [updatedById], references: [id])
   archivedBy          User?           @relation("PatientArchivedBy", fields: [archivedById], references: [id])
   immunotherapies     Immunotherapy[]
 
@@ -219,7 +209,7 @@ model Immunotherapy {
   archivedBy User? @relation("ImmunotherapyArchivedBy", fields: [archivedById], references: [id])
 
   patient              Patient      @relation(fields: [patientId], references: [id])
-  responsiblePhysician Professional @relation(fields: [responsiblePhysicianId], references: [id], name: "ResponsiblePhysician")
+  responsiblePhysician User @relation(fields: [responsiblePhysicianId], references: [id], name: "ResponsiblePhysician")
   doses                Dose[]
 
   @@index([patientId, status, isArchived])
@@ -250,12 +240,12 @@ model Dose {
   archivedById String?
   archivedAt   DateTime?
 
-  createdBy  User @relation("DoseCreatedBy", fields: [createdById], references: [id])
-  updatedBy  User @relation("DoseUpdatedBy", fields: [updatedById], references: [id])
+  createdBy  User  @relation("DoseCreatedBy", fields: [createdById], references: [id])
+  updatedBy  User  @relation("DoseUpdatedBy", fields: [updatedById], references: [id])
   archivedBy User? @relation("DoseArchivedBy", fields: [archivedById], references: [id])
 
   immunotherapy  Immunotherapy @relation(fields: [immunotherapyId], references: [id])
-  administeredBy Professional? @relation(fields: [administeredById], references: [id], name: "AdministeredByProfessional")
+  administeredBy User? @relation(fields: [administeredById], references: [id], name: "AdministeredByProfessional")
 
   @@index([immunotherapyId, scheduledAt])
   @@index([status, scheduledAt])
@@ -302,9 +292,9 @@ model InternalUserInvite {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  organization Organization?  @relation(fields: [organizationId], references: [id])
-  createdBy    User?       @relation("InviteCreatedBy", fields: [createdById], references: [id])
-  professional Professional? @relation(fields: [professionalId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  createdBy    User?         @relation("InviteCreatedBy", fields: [createdById], references: [id])
+  professional User? @relation(fields: [professionalId], references: [id])
 
   @@unique([email, organizationId, isActive]) // Evita múltiplos invites ativos para mesmo email
   @@index([token])
