@@ -1,0 +1,68 @@
+import { Test, TestingModule } from "@nestjs/testing"
+import { FindInviteByTokenUseCase } from "../../find-invite-by-token.use-case";
+import { PrismaService } from "src/prisma/prisma.service";
+import { TestFactories } from "test/factories";
+import { TestDatabaseManager } from "test/database/test-database.manager";
+import { IUserInviteRepository } from "src/onboarding/invite/domain/contracts/user-invite.repository.interface";
+import { UserInviteNotFoundException } from "src/onboarding/invite/domain/exceptions/user-invite-not-found.exception";
+import { PrismaUserInviteRepository } from "src/onboarding/invite/infrastructure/persistence/prisma-user-invite.repository";
+
+
+describe('FindInviteByTokenUseCase - Integration', () => {
+    let module: TestingModule;
+    let findInviteByTokenUseCase: FindInviteByTokenUseCase;
+    let prisma: PrismaService;
+    let factories: TestFactories;
+
+    beforeAll(async () => {
+
+        await TestDatabaseManager.connect();
+
+        module = await Test.createTestingModule({
+            providers: [
+                FindInviteByTokenUseCase,
+                {
+                    provide: PrismaService,
+                    useValue: TestDatabaseManager.getInstance()
+                },
+                {
+                    provide: IUserInviteRepository,
+                    useClass: PrismaUserInviteRepository
+                }
+            ]
+        }).compile();
+
+        findInviteByTokenUseCase = module.get(FindInviteByTokenUseCase);
+        prisma = module.get(PrismaService);
+        factories = new TestFactories(prisma);
+    });
+
+    beforeEach(async () => {
+        await TestDatabaseManager.cleanAll();
+    });
+
+    afterAll(async () => {
+        if(module) {
+            await module.close();
+        }
+        await TestDatabaseManager.disconnect();
+    });
+
+    it('should return invite correctly by token', async () => {
+        const invite = await factories.internalUserInvite.create({
+            token: 'test-token-123',
+            expiresAt: new Date('2026-01-01')
+        });
+
+        const result = await findInviteByTokenUseCase.execute(invite.token);
+
+        expect(result).toBeDefined();
+        expect(result.id).toBe(invite.id);
+        expect(result.token).toBe(invite.token);
+    });
+
+    it('should throw not found exception when invite does not exist', async () => {
+        await expect(findInviteByTokenUseCase.execute('non-existent-token')).rejects.toThrow(UserInviteNotFoundException);
+    });
+})
+
