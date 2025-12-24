@@ -74,7 +74,7 @@ export class PrismaUserRepository extends IUserRepository {
 
         const user = await prismaClient.user.findFirst({
             where: {
-                id,
+                id: id,
                 organizationId: organizationId,
             },
         });

@@ -7,9 +7,7 @@ import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 
 @Injectable()
 export class FindUserByIdUseCase {
-  constructor(
-    private userRepository: IUserRepository,
-  ) {}
+  constructor(private userRepository: IUserRepository) {}
 
   async execute(
     userId: string,
@@ -17,38 +15,31 @@ export class FindUserByIdUseCase {
     activeOrgId?: string,
     tx?: Prisma.TransactionClient,
   ): Promise<UserResponseDto> {
+    //SYSTEM_ADMIN tem acesso global — busca sem restrição de organização
+    if (currentUser?.type === 'SYSTEM_ADMIN') {
+      const user = await this.userRepository.findUserSystemById(userId, tx);
 
-    const organizationId = currentUser ? currentUser.activeOrgId : activeOrgId;
-
-    if (currentUser && currentUser.type === 'SYSTEM_ADMIN') {
-      const systemUser = await this.userRepository.findUserSystemById(userId);
-
-      if (!systemUser) {
-      throw new UserNotFoundException(userId);
-      }
-
-      return systemUser;
-    }
-
-    if (!organizationId) {
-       // Se o Admin chegar aqui sem OrgId, ele trava logo aqui
-       throw new BadRequestException('Contexto organizacional não identificado');
-    }
-
-    // 3. Busca restrita por Organização
-    const user = await this.userRepository.findUserById(userId, organizationId, tx);
-
-    if (!user) {
-      const systemUser = await this.userRepository.findUserSystemById(userId);
-
-      if (!systemUser) {
+      if (!user) {
         throw new UserNotFoundException(userId);
       }
 
-      return systemUser;
+      return user;
+    }
+
+    // Usuários comuns precisam de contexto organizacional
+    const organizationId = currentUser ? currentUser.activeOrgId : activeOrgId;
+
+    if (!organizationId) {
+      throw new BadRequestException('Contexto organizacional não identificado');
+    }
+
+    // Busca com scoping por organização
+    const user = await this.userRepository.findUserById(userId, organizationId, tx);
+
+    if (!user) {
+      throw new UserNotFoundException(userId);
     }
 
     return user;
   }
 }
-
