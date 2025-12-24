@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { AccountController } from './presentation/controllers/account.controller';
+import { PrismaModule } from 'src/database/prisma/prisma.module';
+import { AccountController } from './presentation/account.controller';
 import { FindUserByIdUseCase } from './application/use-cases/find-user-by-id.use-case';
 import { CreateSystemAdminUseCase } from './application/use-cases/create-system-admin.use-case';
 import { UpdateUserStatusUseCase } from './application/use-cases/update-user-status.use-case';

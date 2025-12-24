@@ -68,7 +68,7 @@ export class User {
     }
   }
 
-  changePassword(hashedPassword: string): void {
+  updatePassword(hashedPassword: string): void {
     this.password = hashedPassword;
   }
 
@@ -91,20 +91,6 @@ export class User {
   unarchive(): void {
     this.isArchived = false;
     this.isActive = true;
-  }
-
-  toJSON() {
-    return {
-      id: this.id,
-      fullName: this.fullName,
-      email: this.email,
-      type: this.type,
-      organizationId: this.organizationId,
-      isActive: this.isActive,
-      isArchived: this.isArchived,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
-    };
   }
 }
 

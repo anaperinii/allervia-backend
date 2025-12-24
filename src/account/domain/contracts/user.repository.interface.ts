@@ -1,40 +1,21 @@
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { User } from '../entities/user.entity';
-import { Prisma } from '@prisma/client';
-import { UserCreationData, UserUpdateData } from './interfaces/account.interface';
+import { UserCreationData, UserUpdateData } from './types/account.types';
+import { ITransactionContext } from 'src/database/transaction.interface';
 
 export abstract class IUserRepository {
-  abstract create(
-    user: UserCreationData,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User>;
+  abstract create( userCreationData: UserCreationData, tx?: ITransactionContext ): Promise<User>;
 
-  abstract update(user: Partial<UserUpdateData>, tx?: Prisma.TransactionClient): Promise<User>;
+  abstract update( userUpdateData: Partial<UserUpdateData>, tx?: ITransactionContext ): Promise<User>;
 
-  abstract findUserByEmail(
-    email: string,
-    currentUser: AuthenticatedUserPayload,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User | null>;
+  abstract findUserByEmail( email: string, currentUser: AuthenticatedUserPayload, tx?: ITransactionContext ): Promise<User | null>;
 
-  abstract findUserById(
-    id: string,
-    organizationId: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User | null>;
+  abstract findUserById( userId: string, organizationId: string, tx?: ITransactionContext ): Promise<User | null>;
 
-  abstract findUserSystemById(
-    id: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User | null>;
+  abstract findUserSystemById( userId: string, tx?: ITransactionContext ): Promise<User | null>;
 
-  abstract existsByEmail(
-    email: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<boolean>;
+  abstract existsByEmail( email: string, tx?: ITransactionContext ): Promise<boolean>;
 
-  abstract exists(id: string, tx?: Prisma.TransactionClient): Promise<boolean>;
-
-  abstract delete(id: string, tx?: Prisma.TransactionClient): Promise<boolean>;
+  abstract delete(userId: string, tx?: ITransactionContext): Promise<boolean>;
 }
 

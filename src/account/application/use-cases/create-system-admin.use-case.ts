@@ -3,7 +3,7 @@ import { IUserRepository } from '../../domain/contracts/user.repository.interfac
 import { UserResponseDto } from '../dtos/user-response.dto';
 import { IHashingService } from '../../domain/contracts/hashing.service.interface';
 import { UserAlreadyExistsException } from '../../domain/exceptions/user-already-exists.exception';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/database/prisma/prisma.service';
 import { User } from 'src/account/domain/entities/user.entity';
 import { ProfileSystemUserDto } from '../dtos/profile-system-user.dto';
 import { ConfigService } from '@nestjs/config';

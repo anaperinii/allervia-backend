@@ -4,6 +4,7 @@ import { UserResponseDto } from '../dtos/user-response.dto';
 import { UserNotFoundException } from '../../domain/exceptions/user-not-found.exception';
 import { Prisma } from '@prisma/client';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { ITransactionContext } from 'src/database/transaction.interface';
 
 @Injectable()
 export class FindUserByIdUseCase {
@@ -13,7 +14,7 @@ export class FindUserByIdUseCase {
     userId: string,
     currentUser?: AuthenticatedUserPayload,
     activeOrgId?: string,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<UserResponseDto> {
     //SYSTEM_ADMIN tem acesso global — busca sem restrição de organização
     if (currentUser?.type === 'SYSTEM_ADMIN') {
