@@ -11,11 +11,8 @@ export class ListProfessionalsByOrganizationUseCase {
 
   async execute(currentUser: AuthenticatedUserPayload): Promise<ProfessionalResponseDto[]> {
     const professionals = await this.professionalRepository.findAllProfessionalByOrgId(
-      currentUser.activeOrgId || '',
+      currentUser.activeOrgId,
     );
-    if (!professionals) {
-      return [];
-    }
     return professionals;
   }
 }
