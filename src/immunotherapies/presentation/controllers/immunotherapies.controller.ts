@@ -86,10 +86,9 @@ export class ImmunotherapiesController {
   async updateImmunotherapy(
     @Param('id') immunoId: string,
     @Body() dto: UpdateImmunotherapyDto,
-    @ActiveOrganization() orgId: string,
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
+    @ActiveOrganization() orgId: string
   ): Promise<ImmunotherapyResponseDto> {
-    return this.updateImmunotherapyUseCase.execute(immunoId, dto, orgId, currentUser);
+    return this.updateImmunotherapyUseCase.execute(immunoId, dto, orgId);
   }
 
   @ApiBody({ type: UpdateImmunotherapyStatusDto })

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IImmunotherapyRepository } from "src/immunotherapies/domain/contracts/immunotherapy.repository.interface";
@@ -58,7 +58,7 @@ describe('ListImmunotherapiesByPatientUseCase - Integration', () => {
             await factories.immunotherapies.create({
                 immunoType: i % 2 === 0 ? "Ácaros" : "Pólen",
                 inductionStartDate: new Date('2026-01-15'),
-                responsiblePhysicianId: authenticatedUser.professionalId,
+                responsiblePhysicianId: authenticatedUser.id,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id,
                 patientId: i === 2 ? patients[0].id : patients[i].id

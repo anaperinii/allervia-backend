@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/database/prisma/prisma.service';
 import { Immunotherapy } from '../../domain/entities/immunotherapy.entity';
 import { IImmunotherapyRepository } from '../../domain/contracts/immunotherapy.repository.interface';
 import { CreateImmunotherapyData, UpdateImmunotherapyData } from 'src/immunotherapies/domain/contracts/interfaces/immunotherapy.interfaces';

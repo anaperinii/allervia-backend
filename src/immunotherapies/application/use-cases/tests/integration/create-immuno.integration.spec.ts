@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { CreateImmunotherapyUseCase } from "../../create-immunotherapy.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { CreatePatientUseCase } from "src/patients/application/use-cases/create-patient.use-case";
@@ -9,7 +9,7 @@ import { PrismaImmunotherapyRepository } from "src/immunotherapies/infrastructur
 import { IImmunotherapyRepository } from "src/immunotherapies/domain/contracts/immunotherapy.repository.interface";
 import { IPatientRepository } from "src/patients/domain/contracts/patient.repository.interface";
 import { PrismaPatientRepository } from "src/patients/infrastructure/persistence/prisma-patient.repository";
-import { PrismaClientInitializationError, PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 
 describe('CreateImmunotherapyUseCase - Integration', () => {
     let module: TestingModule;
@@ -72,7 +72,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
             inductionStartDate: new Date('2026-01-15'),
             targetConcentration: "1:10",
             targetVolume: 0.5,
-            responsiblePhysicianId: authenticatedUser.professionalId!,
+            responsiblePhysicianId: authenticatedUser.id,
         };
 
         const result = await immunoUseCase.execute(dto, authenticatedUser);
@@ -99,7 +99,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
         console.log(immunotherapyInDb)
 
         expect(immunotherapyInDb).not.toBeNull();
-        expect(immunotherapyInDb!.responsiblePhysicianId).toBe(authenticatedUser.professionalId!);
+        expect(immunotherapyInDb!.responsiblePhysicianId).toBe(authenticatedUser.id);
         expect(immunotherapyInDb!.createdById).toBe(authenticatedUser.id);
     });
 
@@ -120,7 +120,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
             inductionStartDate: new Date('2026-01-15'),
             targetConcentration: "1:10",
             targetVolume: 0.5,
-            responsiblePhysicianId: authenticatedUser.professionalId!,
+            responsiblePhysicianId: authenticatedUser.id,
         };
 
         jest.spyOn(immunoUseCase['immunotherapyRepository'], 'create').mockRejectedValueOnce(
@@ -130,7 +130,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
         await expect(immunoUseCase.execute(dto, authenticatedUser)).rejects.toThrow(PrismaClientKnownRequestError);
 
         const immunoCount = await prisma.immunotherapy.count({
-            where: { responsiblePhysicianId: authenticatedUser.professionalId! }
+            where: { responsiblePhysicianId: authenticatedUser.id }
         });
         expect(immunoCount).toBe(0);
 

@@ -16,12 +16,6 @@ export class CreateDoseUseCase {
     currentUser: AuthenticatedUserPayload,
   ): Promise<Dose> {
 
-    console.log(currentUser);
-
-    if (!currentUser.professionalId) {
-      throw new BadRequestException('Usuário não vinculado a um profissional');
-    }
-
     const dose = Dose.createNew({
       concentration: dto.concentration,
       volume: dto.volume,
@@ -32,7 +26,7 @@ export class CreateDoseUseCase {
       medicationRequired: dto.medicationRequired,
       notes: dto.notes,
       immunotherapyId: therapyId,
-      administeredById: currentUser.professionalId,
+      administeredById: currentUser.id,
       createdById: currentUser.id,
       updatedById: currentUser.id
     });

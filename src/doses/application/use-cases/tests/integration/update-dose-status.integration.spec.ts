@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/doses/domain/contracts/dose.repository.interface";
@@ -59,7 +59,7 @@ describe('UpdateDoseStatusUseCase - Integration', () => {
 
         const immunotherapy = await factories.immunotherapies.create({
             inductionStartDate: new Date('2026-01-15'),
-            responsiblePhysicianId: authenticatedUser.professionalId,
+            responsiblePhysicianId: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             patientId: patient.id
@@ -69,7 +69,7 @@ describe('UpdateDoseStatusUseCase - Integration', () => {
             administeredAt: new Date('2026-01-16'),
             scheduledAt: new Date('2026-01-16'),
             immunotherapyId: immunotherapy.id,
-            administeredById: authenticatedUser.professionalId,
+            administeredById: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             status: 'ADMINISTERED'
@@ -99,7 +99,7 @@ describe('UpdateDoseStatusUseCase - Integration', () => {
 
         const immunotherapy = await factories.immunotherapies.create({
             inductionStartDate: new Date('2026-01-15'),
-            responsiblePhysicianId: authenticatedUser.professionalId,
+            responsiblePhysicianId: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             patientId: patient.id
@@ -109,7 +109,7 @@ describe('UpdateDoseStatusUseCase - Integration', () => {
             administeredAt: new Date('2026-01-16'),
             scheduledAt: new Date('2026-01-16'),
             immunotherapyId: immunotherapy.id,
-            administeredById: authenticatedUser.professionalId,
+            administeredById: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id
         });

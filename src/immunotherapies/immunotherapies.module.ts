@@ -1,5 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { PrismaModule } from 'src/database/prisma/prisma.module';
 import { PatientsModule } from 'src/patients/patients.module';
 import { ImmunotherapiesController } from './presentation/controllers/immunotherapies.controller';
 import { DosesModule } from 'src/doses/doses.module';

@@ -4,7 +4,7 @@ import { CreateImmunotherapyDto } from "../dtos/create-immunotherapy.dto";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { ImmunotherapyResponseDto } from "../dtos/immunotherapy-response.dto";
 import { CreatePatientUseCase } from "src/patients/application/use-cases/create-patient.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { Immunotherapy } from "src/immunotherapies/domain/entities/immunotherapy.entity";
 import { PatientResponseDto } from "src/patients/application/dtos/patient-response.dto";
 

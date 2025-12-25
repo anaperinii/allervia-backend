@@ -1,7 +1,7 @@
 import { TestingModule, Test } from "@nestjs/testing";
 import { IImmunotherapyRepository } from "src/immunotherapies/domain/contracts/immunotherapy.repository.interface";
 import { PrismaImmunotherapyRepository } from "src/immunotherapies/infrastructure/persistence/prisma-immunotherapy.repository";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { TestFactories } from "test/factories";
 import { UpdateImmunotherapyStatusUseCase } from "../../update-immunotherapy-status.use-case";
@@ -60,7 +60,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
         });
         const immunotherapy = await factories.immunotherapies.create({
             inductionStartDate: new Date('2026-01-15'),
-            responsiblePhysicianId: authenticatedUser.professionalId,
+            responsiblePhysicianId: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             patientId: patient.id
@@ -83,7 +83,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
         });
         const immunotherapy = await factories.immunotherapies.create({
             inductionStartDate: new Date('2026-01-15'),
-            responsiblePhysicianId: authenticatedUser.professionalId,
+            responsiblePhysicianId: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             patientId: patient.id,
@@ -107,7 +107,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
         });
         const immunotherapy = await factories.immunotherapies.create({
             inductionStartDate: new Date('2026-01-15'),
-            responsiblePhysicianId: authenticatedUser.professionalId,
+            responsiblePhysicianId: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             patientId: patient.id

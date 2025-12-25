@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { CreateDoseUseCase } from "../../create-dose.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/doses/domain/contracts/dose.repository.interface";
@@ -58,7 +58,7 @@ describe('CreateDoseUseCase - Integration', () => {
 
         const immunotherapy = await factories.immunotherapies.create({
             inductionStartDate: new Date('2026-01-15'),
-            responsiblePhysicianId: authenticatedUser.professionalId,
+            responsiblePhysicianId: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             patientId: patient.id
@@ -76,37 +76,6 @@ describe('CreateDoseUseCase - Integration', () => {
 
         expect(result).toBeDefined();
         console.log(result);
-        expect(result.administeredById).toBe(authenticatedUser.professionalId);
-    });
-
-    it('should throw a bad request exception when registering a dose with a non professional user', async () => {
-        const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
-
-        const authenticatedAdminUser = await factories.users.createAuthenticatedAdmin();
-
-        const patient = await factories.patients.create({
-            primaryOrganizationId: authenticatedUser.activeOrgId,
-            createdById: authenticatedUser.id,
-            updatedById: authenticatedUser.id
-        });
-
-        const immunotherapy = await factories.immunotherapies.create({
-            inductionStartDate: new Date('2026-01-15'),
-            responsiblePhysicianId: authenticatedUser.professionalId,
-            createdById: authenticatedUser.id,
-            updatedById: authenticatedUser.id,
-            patientId: patient.id
-        });
-
-        const dto = {
-            concentration: "1:10000",
-            volume: 0.1,
-            administeredAt: new Date('2026-01-16'),
-            scheduledAt: new Date('2026-01-16'),
-            nextIntervalInDays: 7
-        }
-
-        await expect(createDoseUseCase.execute(immunotherapy.id, dto, authenticatedAdminUser)).rejects.toThrow(BadRequestException);
-
+        expect(result.administeredById).toBe(authenticatedUser.id);
     });
 })
