@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { IOrganizationRepository } from '../../domain/repositories/organization.repository.interface';
+import { IOrganizationRepository } from '../../domain/contracts/organization.repository.interface';
 import { CreateOrganizationDto } from '../dtos/create-organization.dto';
 import { OrganizationResponseDto } from '../dtos/organization-response.dto';
 import { OrganizationAlreadyExistsException } from '../../domain/exceptions/organization-already-exists.exception';
@@ -23,14 +23,11 @@ export class CreateOrganizationUseCase {
       throw new OrganizationAlreadyExistsException('taxId', dto.taxId);
     }
 
-    // Cria a entidade de domínio
     const organization = new Organization({
       name: dto.name,
       taxId: dto.taxId,
-      // isActive e datas são definidas automaticamente no constructor (defaults: true e new Date())
     });
 
-    // Salva no repositório
     const savedOrganization = await this.organizationRepository.create(organization);
 
     return savedOrganization;

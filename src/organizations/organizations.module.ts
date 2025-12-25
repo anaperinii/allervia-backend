@@ -3,7 +3,7 @@ import { PrismaModule } from 'src/database/prisma/prisma.module';
 import { OrganizationsController } from './presentation/controllers/organizations.controller';
 import { CreateOrganizationUseCase } from './application/use-cases/create-organization.use-case';
 import { FindOrganizationUseCase } from './application/use-cases/find-organization.use-case';
-import { IOrganizationRepository } from './domain/repositories/organization.repository.interface';
+import { IOrganizationRepository } from './domain/contracts/organization.repository.interface';
 import { PrismaOrganizationRepository } from './infrastructure/persistence/prisma-organization.repository';
 
 @Module({

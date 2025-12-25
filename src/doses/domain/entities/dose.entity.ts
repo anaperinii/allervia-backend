@@ -1,6 +1,6 @@
 import { DoseStatus } from '@prisma/client';
 import { DoseAlreadyArchivedException } from '../exceptions/dose-already-archived.exception';
-import { UpdateDoseData } from '../contracts/interfaces/doses.interface';
+import { UpdateDoseData } from '../contracts/doses.interface';
 import { UpdateDoseStatusDto } from 'src/doses/application/dtos/update-dose-status.dto';
 import { InvalidDoseStatusException } from '../exceptions/invalid-dose-status.exception';
 

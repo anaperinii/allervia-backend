@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { Dose } from '../../domain/entities/dose.entity';
 import { IDoseRepository } from '../../domain/contracts/dose.repository.interface';
-import { CreateDoseData, UpdateDoseData } from 'src/doses/domain/contracts/interfaces/doses.interface';
+import { CreateDoseData, UpdateDoseData } from 'src/doses/domain/contracts/doses.interface';
 
 @Injectable()
 export class PrismaDoseRepository extends IDoseRepository {

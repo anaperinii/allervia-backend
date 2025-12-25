@@ -1,5 +1,5 @@
 import { Membership } from '../entities/membership.entity';
-import { CreateMembershipProps, MembershipInfo, UpdateMembershipData } from './interfaces/memberships.interface';
+import { CreateMembershipProps, MembershipInfo, UpdateMembershipData } from './memberships.interface';
 
 export abstract class IMembershipRepository {
   abstract create(membership: CreateMembershipProps): Promise<Membership>;

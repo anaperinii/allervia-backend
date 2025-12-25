@@ -4,7 +4,7 @@ import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { FindOrganizationUseCase } from "src/organizations/application/use-cases/find-organization.use-case";
-import { IOrganizationRepository } from "src/organizations/domain/repositories/organization.repository.interface";
+import { IOrganizationRepository } from "src/organizations/domain/contracts/organization.repository.interface";
 import { PrismaOrganizationRepository } from "src/organizations/infrastructure/persistence/prisma-organization.repository";
 import { ConflictException } from "@nestjs/common";
 import { AddMembershipDto } from "src/memberships/application/dtos/add-membership.dto";

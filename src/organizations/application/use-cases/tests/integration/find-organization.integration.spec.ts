@@ -4,7 +4,7 @@ import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { OrganizationNotFoundException } from "src/organizations/domain/exceptions/organization-not-found.exception";
-import { IOrganizationRepository } from "src/organizations/domain/repositories/organization.repository.interface";
+import { IOrganizationRepository } from "src/organizations/domain/contracts/organization.repository.interface";
 import { PrismaOrganizationRepository } from "src/organizations/infrastructure/persistence/prisma-organization.repository";
 import { ulid } from "ulid";
 

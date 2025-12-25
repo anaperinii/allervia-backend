@@ -3,7 +3,7 @@ import { Immunotherapy } from '../entities/immunotherapy.entity';
 import {
   CreateImmunotherapyData,
   UpdateImmunotherapyData,
-} from './interfaces/immunotherapy.interfaces';
+} from './immunotherapy.interfaces';
 
 export abstract class IImmunotherapyRepository {
   abstract create(

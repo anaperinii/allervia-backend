@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IJwtTokenService } from '../../domain/services/jwt-token.service.interface';
+import { IJwtTokenService } from '../../domain/contracts/jwt-token.service.interface';
 import { IMembershipRepository } from 'src/memberships/domain/contracts/membership.repository.interface';
 import { ProfessionalTokenGenerator } from '../strategies/professional-token-generator.strategy';
 import { SystemAdminTokenGenerator } from '../strategies/system-admin-token-generator.strategy';

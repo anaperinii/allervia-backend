@@ -8,7 +8,7 @@ import { User } from "src/account/domain/entities/user.entity";
 import { ProfileInternalUserDto } from "src/account/application/dtos/profile-internal-user.dto";
 import { IUserRepository } from "src/account/domain/contracts/user.repository.interface";
 import { IUserInviteRepository } from "src/onboarding/invite/domain/contracts/user-invite.repository.interface";
-import { RegisterUser } from "../../domain/interfaces/register.interface";
+import { RegisterUser } from "../../domain/contracts/register.interface";
 
 
 @Injectable()

@@ -5,7 +5,7 @@ import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { CreateOrganizationDto } from "src/organizations/application/dtos/create-organization.dto";
 import { OrganizationAlreadyExistsException } from "src/organizations/domain/exceptions/organization-already-exists.exception";
-import { IOrganizationRepository } from "src/organizations/domain/repositories/organization.repository.interface";
+import { IOrganizationRepository } from "src/organizations/domain/contracts/organization.repository.interface";
 import { PrismaOrganizationRepository } from "src/organizations/infrastructure/persistence/prisma-organization.repository";
 
 

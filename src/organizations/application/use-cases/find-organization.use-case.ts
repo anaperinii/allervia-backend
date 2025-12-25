@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IOrganizationRepository } from '../../domain/repositories/organization.repository.interface';
+import { IOrganizationRepository } from '../../domain/contracts/organization.repository.interface';
 import { OrganizationResponseDto } from '../dtos/organization-response.dto';
 import { OrganizationNotFoundException } from '../../domain/exceptions/organization-not-found.exception';
 

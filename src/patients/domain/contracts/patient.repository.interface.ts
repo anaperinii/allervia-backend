@@ -3,7 +3,7 @@ import { Patient } from '../entities/patient.entity';
 import {
   CreatePatientData,
   UpdatePatientData,
-} from './interfaces/patients.interface';
+} from './patients.interface';
 
 export abstract class IPatientRepository {
   abstract create(

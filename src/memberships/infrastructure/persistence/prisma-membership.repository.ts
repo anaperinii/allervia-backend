@@ -3,7 +3,7 @@ import { PrismaService } from 'src/database/prisma/prisma.service';
 import { Membership } from '../../domain/entities/membership.entity';
 import { IMembershipRepository } from '../../domain/contracts/membership.repository.interface';
 import { MembershipInfo } from 'src/security/application/dtos/login-response.dto';
-import { UpdateMembershipData } from 'src/memberships/domain/contracts/interfaces/memberships.interface';
+import { UpdateMembershipData } from 'src/memberships/domain/contracts/memberships.interface';
 
 @Injectable()
 export class PrismaMembershipRepository extends IMembershipRepository {

@@ -8,7 +8,7 @@ import { RegisterStrategy } from "./register.strategy";
 import { User } from "src/account/domain/entities/user.entity";
 import { IUserInviteRepository } from "src/onboarding/invite/domain/contracts/user-invite.repository.interface";
 import { ProfileInternalUserDto } from "src/account/application/dtos/profile-internal-user.dto";
-import { RegisterUser } from "../../domain/interfaces/register.interface";
+import { RegisterUser } from "../../domain/contracts/register.interface";
 
 @Injectable()
 export class AdminRegisterStrategy implements RegisterStrategy {

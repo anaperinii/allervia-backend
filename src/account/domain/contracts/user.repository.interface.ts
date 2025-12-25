@@ -1,6 +1,6 @@
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { User } from '../entities/user.entity';
-import { UserCreationData, UserUpdateData } from './types/account.types';
+import { UserCreationData, UserUpdateData } from './account.types';
 import { ITransactionContext } from 'src/database/transaction.interface';
 
 export abstract class IUserRepository {

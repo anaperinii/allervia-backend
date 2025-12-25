@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { IPasswordHashingService } from '../../domain/services/password-hashing.service.interface';
-import { IJwtTokenService } from '../../domain/services/jwt-token.service.interface';
-import { IUserAuthRepository } from '../../domain/repositories/user-auth.repository.interface';
+import { IPasswordHashingService } from '../../domain/contracts/password-hashing.service.interface';
+import { IJwtTokenService } from '../../domain/contracts/jwt-token.service.interface';
+import { IUserAuthRepository } from '../../domain/contracts/user-auth.repository.interface';
 import { LoginDto } from '../dtos/login.dto';
 import { LoginResponseDto } from '../dtos/login-response.dto';
 import { TokenGeneratorFactory } from '../factories/token-generator.factory';

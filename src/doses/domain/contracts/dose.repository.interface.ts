@@ -1,5 +1,5 @@
 import { Dose } from '../entities/dose.entity';
-import { CreateDoseData, UpdateDoseData } from './interfaces/doses.interface';
+import { CreateDoseData, UpdateDoseData } from './doses.interface';
 
 export abstract class IDoseRepository {
   abstract create(dose: CreateDoseData): Promise<Dose>;

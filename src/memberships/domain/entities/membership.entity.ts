@@ -1,4 +1,4 @@
-import { CreateMembershipProps } from "../contracts/interfaces/memberships.interface";
+import { CreateMembershipProps } from "../contracts/memberships.interface";
 
 interface MembershipProps {
   id: string;

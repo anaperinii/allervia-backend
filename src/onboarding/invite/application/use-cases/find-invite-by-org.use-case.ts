@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { IUserInviteRepository } from "../../domain/contracts/user-invite.repository.interface";
 import { InviteResponseDto } from "../dtos/invite-response.dto";
-import { FindInvitesFilters } from "../../domain/contracts/interfaces/invite.interface";
+import { FindInvitesFilters } from "../../domain/contracts/invite.interface";
 
 @Injectable()
 export class FindInviteByOrgUseCase {

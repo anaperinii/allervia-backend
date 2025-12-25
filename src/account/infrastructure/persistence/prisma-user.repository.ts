@@ -3,7 +3,7 @@ import { PrismaService } from "src/database/prisma/prisma.service";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { User } from "../../domain/entities/user.entity";
 import { IUserRepository } from "src/account/domain/contracts/user.repository.interface";
-import { UserCreationData, UserUpdateData } from "src/account/domain/contracts/types/account.types";
+import { UserCreationData, UserUpdateData } from "src/account/domain/contracts/account.types";
 import { ITransactionContext } from "src/database/transaction.interface";
 
 

@@ -3,7 +3,7 @@ import { PrismaService } from 'src/database/prisma/prisma.service';
 import { IUserInviteRepository } from '../../domain/contracts/user-invite.repository.interface';
 import { UserInvite } from '../../domain/entities/user-invite.entity';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { FindInvitesFilters, UpdateInviteData } from '../../domain/contracts/interfaces/invite.interface';
+import { FindInvitesFilters, UpdateInviteData } from '../../domain/contracts/invite.interface';
 import { ITransactionContext } from 'src/database/transaction.interface';
 import { Prisma } from '@prisma/client';
 

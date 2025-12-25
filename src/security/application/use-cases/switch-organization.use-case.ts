@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { IUserAuthRepository } from '../../domain/repositories/user-auth.repository.interface';
+import { IUserAuthRepository } from '../../domain/contracts/user-auth.repository.interface';
 import { AuthenticatedUserPayload } from '../../types/auth.types';
 import { SwitchOrganizationDto } from '../dtos/switch-organization.dto';
 import { LoginResponseDto } from '../dtos/login-response.dto';
