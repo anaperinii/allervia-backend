@@ -280,8 +280,8 @@ model InternalUserInvite {
   email          String
   fullName       String
   roleType       RoleType
-  organizationId String?
-  createdById    String?
+  organizationId String
+  createdById    String
   professionalId String?
 
   token     String    @unique
@@ -292,8 +292,8 @@ model InternalUserInvite {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  organization Organization? @relation(fields: [organizationId], references: [id])
-  createdBy    User?         @relation("InviteCreatedBy", fields: [createdById], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  createdBy    User         @relation("InviteCreatedBy", fields: [createdById], references: [id])
   professional User? @relation(fields: [professionalId], references: [id])
 
   @@unique([email, organizationId, isActive]) // Evita múltiplos invites ativos para mesmo email
