@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { IUserRepository } from '../../domain/contracts/user.repository.interface';
 import { UserResponseDto } from '../dtos/user-response.dto';
 import { UserNotFoundException } from '../../domain/exceptions/user-not-found.exception';
-import { Prisma } from '@prisma/client';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { ITransactionContext } from 'src/database/transaction.interface';
 
@@ -12,8 +11,7 @@ export class FindUserByIdUseCase {
 
   async execute(
     userId: string,
-    currentUser?: AuthenticatedUserPayload,
-    activeOrgId?: string,
+    currentUser: AuthenticatedUserPayload,
     tx?: ITransactionContext,
   ): Promise<UserResponseDto> {
     //SYSTEM_ADMIN tem acesso global — busca sem restrição de organização
@@ -27,15 +25,12 @@ export class FindUserByIdUseCase {
       return user;
     }
 
-    // Usuários comuns precisam de contexto organizacional
-    const organizationId = currentUser ? currentUser.activeOrgId : activeOrgId;
-
-    if (!organizationId) {
+    if (!currentUser.activeOrgId) {
       throw new BadRequestException('Contexto organizacional não identificado');
     }
 
     // Busca com scoping por organização
-    const user = await this.userRepository.findUserById(userId, organizationId, tx);
+    const user = await this.userRepository.findUserById(userId, currentUser.activeOrgId, tx);
 
     if (!user) {
       throw new UserNotFoundException(userId);

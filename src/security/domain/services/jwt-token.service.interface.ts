@@ -2,7 +2,6 @@ export interface TokenPayload {
   sub: string;
   email: string;
   type: string;
-  professionalId?: string,
   organizationId?: string;
   activeOrgId?: string;
   roles?: string[];

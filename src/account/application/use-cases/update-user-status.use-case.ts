@@ -25,8 +25,7 @@ export class UpdateUserStatusUseCase {
     if (dto.isActive) {
       user.activate();
     } else {
-      user.deactivate();
-      
+      user.deactivate();     
     }
 
     const updatedUser = await this.userRepository.update(user);

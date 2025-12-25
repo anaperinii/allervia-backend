@@ -33,22 +33,15 @@ export class UserFactory extends BaseFactory<User> {
         });
 
         const user = await this.create({
-            organizationId: organization.id
-        });
-
-        const professional = await this.prisma.professional.create({
-            data: {
-                specialty: faker.helpers.arrayElement(['Alergia e Imunologia', 'Pediatria', 'Enfermagem e Aplicação de Imunoterapias']),
-                phoneNumber: faker.phone.number(),
-                userId: user.id
-            }
+            organizationId: organization.id,
+            specialty: faker.helpers.arrayElement(['Alergia e Imunologia', 'Pediatria', 'Enfermagem e Aplicação de Imunoterapias']),
+            phoneNumber: faker.phone.number(),
         });
 
         return {
             id: user.id,
             email: user.email,
             type: 'PROFESSIONAL',
-            professionalId: professional.id,
             activeOrgId: organization.id,
             roles: ['PHYSICIAN'],
             memberships: [],
@@ -66,7 +59,8 @@ export class UserFactory extends BaseFactory<User> {
 
         const user = await this.create({ 
             type: 'ADMIN', 
-            organizationId: organization.id 
+            organizationId: organization.id ,
+            phoneNumber: faker.phone.number()
         });
 
         return {
@@ -89,6 +83,13 @@ export class UserFactory extends BaseFactory<User> {
             }
         });
 
+        const membership = await this.prisma.membership.create({
+            data: {
+                userId: user.id,
+                organizationId: organization.id
+            }
+        })
+
         return {
             id: user.id,
             email: user.email,
@@ -97,6 +98,7 @@ export class UserFactory extends BaseFactory<User> {
             roles: ['SYSTEM_ADMIN'],
             memberships: [
                 {
+                    id: membership.id,
                     organizationId: organization.id,
                     organizationName: organization.name,
                 },

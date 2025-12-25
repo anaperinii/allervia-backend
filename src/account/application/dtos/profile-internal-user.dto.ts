@@ -17,10 +17,10 @@ export class ProfileInternalUserDto {
     @ApiProperty({ description: 'Especialidade/Atuação', required: false})
     @IsString()
     @IsOptional()
-    specialty?: string; // PROFESSIONAL SCOPE
+    specialty?: string;
  
-    @ApiProperty({ description: 'Telefone Comercial de Contato', required: false})
+    @ApiProperty({ description: 'Telefone Comercial de Contato'})
     @IsString()
     @IsOptional()
-    phoneNumber?: string; // PROFESSIONAL SCOPE
+    phoneNumber: string; 
 }

@@ -7,6 +7,8 @@ interface UserProps {
   password: string; 
   type: UserType;
   organizationId: string | null;
+  specialty: string | null;
+  phoneNumber: string | null;
   isActive: boolean;
   isArchived: boolean;
   createdAt: Date;
@@ -19,6 +21,8 @@ interface CreateUserProps {
   password: string;
   type: UserType;
   organizationId?: string | null;
+  specialty?: string | null;
+  phoneNumber?: string | null;
 }
 
 export class User {
@@ -28,6 +32,8 @@ export class User {
   password: string;
   type: UserType;
   organizationId: string | null;
+  specialty: string | null;
+  phoneNumber: string | null;
   isActive: boolean;
   isArchived: boolean;
   createdAt: Date;
@@ -40,6 +46,8 @@ export class User {
     this.password = props.password;
     this.type = props.type;
     this.organizationId = props.organizationId;
+    this.specialty = props.specialty;
+    this.phoneNumber = props.phoneNumber;
     this.isActive = props.isActive;
     this.isArchived = props.isArchived;
     this.createdAt = props.createdAt;
@@ -53,18 +61,28 @@ export class User {
       password: props.password,
       type: props.type,
       organizationId: props.organizationId || null,
+      specialty: props.specialty?.trim() || null,
+      phoneNumber: props.phoneNumber?.trim() || null,
       isActive: true,
       isArchived: false
     };
   }
 
-  updateProfile(fullName?: string, email?: string): void {
+  updateProfile(fullName?: string, email?: string, specialty?: string, phoneNumber?: string): void {
     if (fullName !== undefined) {
       this.fullName = fullName.trim();
     }
 
     if (email !== undefined) {
       this.email = email;
+    }
+
+    if (specialty !== undefined) {
+      this.specialty = specialty.trim();
+    }
+
+    if (phoneNumber !== undefined) {
+      this.phoneNumber = phoneNumber.trim();
     }
   }
 

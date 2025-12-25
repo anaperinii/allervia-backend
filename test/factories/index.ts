@@ -5,14 +5,12 @@ import { InternalUserInviteFactory } from "./internal-user-invite.factory";
 import { MembershipFactory } from "./membership.factory";
 import { OrganizationFactory } from "./organization.factory";
 import { PatientFactory } from "./patient.factory";
-import { ProfessionalFactory } from "./professional.factory";
 import { UserRoleFactory } from "./user-role.factory";
 import { UserFactory } from "./user.factory";
 import { RoleFactory } from "./role.factory";
 
 export class TestFactories {
     public readonly users: UserFactory;
-    public readonly professionals: ProfessionalFactory;
     public readonly userRoles: UserRoleFactory;
     public readonly patients: PatientFactory;
     public readonly organizations: OrganizationFactory;
@@ -24,7 +22,6 @@ export class TestFactories {
 
     constructor(prisma: PrismaClient) {
         this.users = new UserFactory(prisma);
-        this.professionals = new ProfessionalFactory(prisma);
         this.userRoles = new UserRoleFactory(prisma);
         this.patients = new PatientFactory(prisma);
         this.organizations = new OrganizationFactory(prisma);

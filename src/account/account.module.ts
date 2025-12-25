@@ -17,7 +17,7 @@ import { UpdateUserBackofficeDto } from './application/dtos/update-user-backoffi
 import { UpdateUserAdminDto } from './application/dtos/update-user-admin.dto';
 import { ProfileInternalUserDto } from './application/dtos/profile-internal-user.dto';
 import { ProfileSystemUserDto } from './application/dtos/profile-system-user.dto';
-import { UserProfessionalResponseDto } from './application/dtos/user-professional-response.dto';
+import { UpdateUserUseCase } from './application/use-cases/update-user.use-case';
 
 @Module({
   providers: [
@@ -27,6 +27,7 @@ import { UserProfessionalResponseDto } from './application/dtos/user-professiona
     UpdateUserStatusUseCase,
     ArchiveUserUseCase,
     ValidateUserEmailUseCase,
+    UpdateUserUseCase,
 
     // DTOs
     UserResponseDto,
@@ -36,7 +37,6 @@ import { UserProfessionalResponseDto } from './application/dtos/user-professiona
     UpdateUserAdminDto,
     ProfileInternalUserDto,
     ProfileSystemUserDto,
-    UserProfessionalResponseDto,
 
     // Repositories
     {

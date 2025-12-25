@@ -12,10 +12,8 @@ import { OrganizationContextGuard } from './security/guards/organization-context
 import { RolesGuard } from './security/guards/roles.guard';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { RolesModule } from './roles/roles.module';
-import { ProfessionalsModule } from './professionals/professionals.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { AccountModule } from './account/account.module';
-import { AdministrationModule } from './administration/administration.module';
 
 @Module({
   imports: [
@@ -30,10 +28,8 @@ import { AdministrationModule } from './administration/administration.module';
     DosesModule,
     OrganizationsModule,
     RolesModule,
-    ProfessionalsModule,
     OnboardingModule,
     AccountModule,
-    AdministrationModule,
   ],
   controllers: [],
   providers: [

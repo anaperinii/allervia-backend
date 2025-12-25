@@ -5,7 +5,9 @@ export class UserResponseDto {
   fullName: string;
   email: string;
   type: UserType;
-  organizationId: string | null;
+  organizationId?: string | null;
+  specialty?: string | null;
+  phoneNumber?: string | null;
   isActive: boolean;
   isArchived: boolean;
   createdAt: Date;

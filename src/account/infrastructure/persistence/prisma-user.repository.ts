@@ -40,21 +40,6 @@ export class PrismaUserRepository extends IUserRepository {
         return new User(updated);
     }
 
-    async delete(id: string, tx?: ITransactionContext): Promise<boolean> {
-
-        const prismaClient = this.prismaService.getClient(tx);
-
-        await prismaClient.user.update({
-            where: { id },
-            data: {
-                isActive: false,
-                isArchived: true
-            },
-        });
-
-        return true;
-    }
-
     async findUserByEmail(email: string, currentUser: AuthenticatedUserPayload, tx?: ITransactionContext): Promise<User | null> {
 
         const prismaClient = this.prismaService.getClient(tx);
@@ -95,6 +80,17 @@ export class PrismaUserRepository extends IUserRepository {
         });
         
         return user ? new User(user) : null;
+    }
+
+    async findAllUsersByOrg(organizationId: string): Promise<User[]> {
+        
+        const users = await this.prismaService.user.findMany({
+            where: {
+                organizationId
+            }
+        });
+
+        return users.map(u => new User(u));
     }
 
     async existsByEmail(email: string, tx?: ITransactionContext): Promise<boolean> {

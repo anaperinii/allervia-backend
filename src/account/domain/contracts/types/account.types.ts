@@ -6,6 +6,8 @@ export interface UserCreationData {
   password: string;
   type: UserType;
   organizationId: string | null;
+  specialty?: string | null;
+  phoneNumber?: string | null;
   isActive: boolean;
   isArchived: boolean;
 }
@@ -15,6 +17,8 @@ export interface UserUpdateData {
   fullName: string;
   email: string;
   password: string;
+  specialty: string | null;
+  phoneNumber: string | null;
   isActive: boolean;
   isArchived: boolean;
 }

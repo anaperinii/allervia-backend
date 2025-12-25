@@ -1,5 +1,5 @@
 import { PartialType } from "@nestjs/mapped-types";
-import { PickType } from "@nestjs/swagger";
-import { ProfileInternalUserDto } from "./profile-internal-user.dto";
+import { UpdateUserDto } from "./update-user.dto";
+import { OmitType } from "@nestjs/swagger";
 
-export class UpdateUserPersonalDto extends PartialType(PickType(ProfileInternalUserDto, ['fullName', 'password', 'specialty', 'phoneNumber'])) {}
+export class UpdateUserPersonalDto extends PartialType(OmitType(UpdateUserDto, ['email'])) {}

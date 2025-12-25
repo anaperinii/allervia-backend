@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/database/prisma/prisma.service';
 import { IUserAuthRepository, UserForAuth } from '../../domain/repositories/user-auth.repository.interface';
 
 @Injectable()
@@ -14,8 +14,7 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
       include: {
         roles: { include: { role: true } },
         memberships: { include: { organization: true } },
-        organization: true,
-        professional: true
+        organization: true
       },
     });
 
@@ -37,8 +36,7 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
         organizationId: m.organizationId,
         organization: { name: m.organization.name },
       })),
-      organization: user.organization ? { name: user.organization.name } : undefined,
-      professional: user.professional ? { id: user.professional.id } : undefined,
+      organization: user.organization ? { name: user.organization.name } : undefined
     };
   }
 }

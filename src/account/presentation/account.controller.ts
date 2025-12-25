@@ -8,6 +8,10 @@ import { UpdateUserStatusDto } from '../application/dtos/update-user-status.dto'
 import { CreateSystemAdminUseCase } from 'src/account/application/use-cases/create-system-admin.use-case';
 import { ProfileSystemUserDto } from 'src/account/application/dtos/profile-system-user.dto';
 import { Public } from 'src/security/decorators/public.decorator';
+import { UpdateUserAdminDto } from '../application/dtos/update-user-admin.dto';
+import { UpdateUserBackofficeDto } from '../application/dtos/update-user-backoffice.dto';
+import { UpdateUserPersonalDto } from '../application/dtos/update-user-personal.dto';
+import { UpdateUserUseCase } from '../application/use-cases/update-user.use-case';
 
 @Controller('account')
 export class AccountController {
@@ -15,6 +19,7 @@ export class AccountController {
     private findUserByIdUseCase: FindUserByIdUseCase,
     private createSystemAdminUseCase: CreateSystemAdminUseCase,
     private updateUserStatusUseCase: UpdateUserStatusUseCase,
+    private updateUserPersonalUseCase: UpdateUserUseCase
   ) {}
 
   @Get('me')
@@ -38,6 +43,34 @@ export class AccountController {
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
     return this.updateUserStatusUseCase.execute(id, dto, currentUser);
+  }
+
+  @Patch('update/me')
+  @Roles('PHYSICIAN', 'NURSE', 'NURSING_TECHNICIAN')
+  async updateUserPersonal(
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+    @Body() updateUserDto: UpdateUserPersonalDto,
+  ) {
+    return this.updateUserPersonalUseCase.execute(currentUser.id, updateUserDto, currentUser);
+  }
+  
+  @Patch('update/:id')
+  @Roles('ADMIN', 'SYSTEM_ADMIN')
+  async updateUserAsAdmin(
+    @Param('id') userId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+    @Body() updateUserDto: UpdateUserBackofficeDto,
+  ) {
+    return this.updateUserPersonalUseCase.execute(userId, updateUserDto, currentUser);
+  }
+
+  @Patch('update/backoffice/me')
+  @Roles('ADMIN', 'SYSTEM_ADMIN')
+  async updateUserPersonalAdmin(
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+    @Body() updateUserDto: UpdateUserAdminDto,
+  ) {
+    return this.updateUserPersonalUseCase.execute(currentUser.id, updateUserDto, currentUser);
   }
 }
 

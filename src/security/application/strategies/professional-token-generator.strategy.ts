@@ -17,7 +17,6 @@ export class ProfessionalTokenGenerator implements ITokenGenerator {
       sub: user.id,
       email: user.email,
       type: 'PROFESSIONAL',
-      professionalId: user.professional?.id,
       activeOrgId: user.organizationId,
       roles: user.roles?.map(r => r.roleTag || r.name || '') || [],
     };

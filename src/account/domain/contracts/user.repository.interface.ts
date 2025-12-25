@@ -10,12 +10,12 @@ export abstract class IUserRepository {
 
   abstract findUserByEmail( email: string, currentUser: AuthenticatedUserPayload, tx?: ITransactionContext ): Promise<User | null>;
 
+  abstract findAllUsersByOrg( organizationId: string ): Promise<User[]>;
+
   abstract findUserById( userId: string, organizationId: string, tx?: ITransactionContext ): Promise<User | null>;
 
   abstract findUserSystemById( userId: string, tx?: ITransactionContext ): Promise<User | null>;
 
   abstract existsByEmail( email: string, tx?: ITransactionContext ): Promise<boolean>;
-
-  abstract delete(userId: string, tx?: ITransactionContext): Promise<boolean>;
 }
 
