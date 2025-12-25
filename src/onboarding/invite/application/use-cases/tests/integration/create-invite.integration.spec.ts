@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { CreateInviteUseCase } from "../../create-invite.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { FindUserByIdUseCase } from "src/account/application/use-cases/find-user-by-id.use-case";
@@ -95,7 +95,8 @@ describe('CreateInviteUseCase - Integration', () => {
             email: 'existing@test.com',
             organizationId: authenticatedUser.activeOrgId,
             isActive: true,
-            expiresAt: new Date('2026-01-01')
+            expiresAt: new Date('2026-01-01'),
+            createdById: authenticatedUser.id
         });
 
         const dto: CreateInviteDto = {

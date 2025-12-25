@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { ListMembershipsByUserUseCase } from "../../list-memberships-by-user.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IMembershipRepository } from "src/memberships/domain/contracts/membership.repository.interface";

@@ -112,22 +112,5 @@ export class UserInvite {
   isDeactive(): boolean {
     return this.isActive === false && this.usedAt === null;
   }
-
-  toJSON() {
-    return {
-      id: this.id,
-      email: this.email,
-      fullName: this.fullName,
-      roleType: this.roleType,
-      organizationId: this.organizationId,
-      token: this.token,
-      expiresAt: this.expiresAt,
-      isActive: this.isActive,
-      isExpired: this.isExpired,
-      isUsed: this.isUsed,
-      usedAt: this.usedAt,
-      createdAt: this.createdAt,
-    };
-  }
 }
 

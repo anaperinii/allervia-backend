@@ -2,9 +2,9 @@ import { Injectable } from "@nestjs/common";
 import { RegisterStrategy } from "./register.strategy";
 import { RoleType } from "@prisma/client";
 import { RegisterStrategyFactory } from "./register-strategy.factory";
-import { RegisterResult } from "../../domain/interfaces/register.interface";
 import { ProfileInternalUserDto } from "src/account/application/dtos/profile-internal-user.dto";
 import { ValidateInviteForRegisterUseCase } from "src/onboarding/invite/application/use-cases/validate-invite-for-registration.use-case";
+import { RegisterUser } from "../../domain/interfaces/register.interface";
 
 @Injectable()
 export class RegisterStrategyContext{
@@ -19,7 +19,7 @@ export class RegisterStrategyContext{
         this.strategy = this.registerFactory.getStrategy(roleType);
     }
 
-    async registerInternalUserFromInvite(inviteToken: string, dto: ProfileInternalUserDto): Promise<RegisterResult> {
+    async registerInternalUserFromInvite(inviteToken: string, dto: ProfileInternalUserDto): Promise<RegisterUser> {
         const invite = await this.validateInviteForRegistration.execute(inviteToken);
 
         this.setStrategyForUser(invite.roleType);

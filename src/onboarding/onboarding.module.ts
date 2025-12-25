@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { PrismaModule } from 'src/database/prisma/prisma.module';
 import { AccountModule } from 'src/account/account.module';
-import { ProfessionalsModule } from 'src/professionals/professionals.module';
 import { AuthModule } from 'src/security/auth.module';
 import { InviteController } from './invite/presentation/invite.controller';
 import { RegistrationController } from './register/presentation/registration.controller';
@@ -27,7 +26,7 @@ import { ValidateInviteForRegisterUseCase } from './invite/application/use-cases
 import { FindActiveInviteUseCase } from './invite/application/use-cases/find-active-invite.use-case';
 
 @Module({
-  imports: [PrismaModule, AccountModule, ProfessionalsModule, AuthModule, OrganizationsModule, RolesModule],
+  imports: [PrismaModule, AccountModule, AuthModule, OrganizationsModule, RolesModule],
   providers: [
     // Use Cases
     CreateInviteUseCase,

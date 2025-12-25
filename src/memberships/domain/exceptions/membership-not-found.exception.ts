@@ -1,4 +1,4 @@
-import { DomainException } from "src/shared/domain/exceptions/domain.exception";
+import { DomainException } from "src/shared/domain.exception";
 
 export class MembershipNotFoundException extends DomainException {
   constructor(id: string) {

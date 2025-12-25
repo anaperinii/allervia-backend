@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/database/prisma/prisma.service';
 import { IUserInviteRepository } from '../../domain/contracts/user-invite.repository.interface';
 import { UserInvite } from '../../domain/entities/user-invite.entity';
-import { Prisma } from '@prisma/client';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { FindInvitesFilters, UpdateInviteData } from '../../domain/contracts/interfaces/invite.interface';
+import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaUserInviteRepository extends IUserInviteRepository {
@@ -14,9 +15,9 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
 
   async create(
     invite: UserInvite,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<UserInvite> {
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const created = await prismaClient.internalUserInvite.create({
       data: invite,
@@ -27,9 +28,9 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
 
   async update(
     invite: Partial<UpdateInviteData>,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<UserInvite> {
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const updated = await prismaClient.internalUserInvite.update({
       where: { id: invite.id },
@@ -47,9 +48,9 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
   async findById(
     id: string,
     currentUser: AuthenticatedUserPayload,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<UserInvite | null> {
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const invite = await prismaClient.internalUserInvite.findUnique({
       where: {
@@ -63,9 +64,9 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
 
   async findByToken(
     token: string,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<UserInvite | null> {
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const invite = await prismaClient.internalUserInvite.findUnique({
       where: { token },
@@ -77,9 +78,9 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
   async findByOrganization(
     organizationId: string,
     filters?: FindInvitesFilters,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<UserInvite[]> {
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const where: Prisma.InternalUserInviteWhereInput = { organizationId };
 
@@ -106,9 +107,9 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
   async findActiveInvite(
     email: string,
     organizationId: string,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<UserInvite | null> {
-    const prismaClient = tx || this.prismaService;
+     const prismaClient = this.prismaService.getClient(tx);
 
     const invite = await prismaClient.internalUserInvite.findFirst({
       where: {
@@ -122,10 +123,9 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
     return invite ? new UserInvite(invite) : null;
   }
 
-  async exists(id: string, tx?: Prisma.TransactionClient): Promise<boolean> {
-    const prismaClient = tx || this.prismaService;
+  async exists(id: string): Promise<boolean> {
 
-    const count = await prismaClient.internalUserInvite.count({
+    const count = await this.prismaService.internalUserInvite.count({
       where: { id },
     });
 

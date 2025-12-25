@@ -1,18 +1,9 @@
-interface RegisterUser {
+export interface RegisterUser {
     id: string;
     fullName: string;
     email: string;
-};
-
-interface RegisterProfessional {
-    id: string;
     createdAt: Date;
     updatedAt: Date;
-    specialty: string;
-    userId: string;
-};
-
-export interface RegisterResult {
-    user: RegisterUser;
-    professional?: RegisterProfessional;
+    specialty: string | null;
+    phoneNumber: string | null;
 };

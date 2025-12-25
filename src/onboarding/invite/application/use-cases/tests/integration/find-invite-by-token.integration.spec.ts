@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { FindInviteByTokenUseCase } from "../../find-invite-by-token.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IUserInviteRepository } from "src/onboarding/invite/domain/contracts/user-invite.repository.interface";
@@ -49,9 +49,14 @@ describe('FindInviteByTokenUseCase - Integration', () => {
     });
 
     it('should return invite correctly by token', async () => {
+
+        const authenticatedUser = await factories.users.createAuthenticatedAdmin();
+
         const invite = await factories.internalUserInvite.create({
             token: 'test-token-123',
-            expiresAt: new Date('2026-01-01')
+            expiresAt: new Date('2026-01-01'),
+            organizationId: authenticatedUser.activeOrgId,
+            createdById: authenticatedUser.id
         });
 
         const result = await findInviteByTokenUseCase.execute(invite.token);

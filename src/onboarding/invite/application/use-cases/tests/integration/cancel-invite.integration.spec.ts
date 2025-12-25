@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { CancelInviteUseCase } from "../../cancel-invite.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 
@@ -58,7 +58,8 @@ describe('CancelInviteUseCase - Integration', () => {
         const invite = await factories.internalUserInvite.create({
             organizationId: authenticatedUser.activeOrgId,
             isActive: true,
-            expiresAt: new Date('2026-01-01')
+            expiresAt: new Date('2026-01-01'),
+            createdById: authenticatedUser.id
         });
 
         const result = await cancelInviteUseCase.execute(invite.id, authenticatedUser);

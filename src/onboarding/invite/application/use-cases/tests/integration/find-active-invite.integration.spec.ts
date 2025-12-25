@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { FindActiveInviteUseCase } from "../../find-active-invite.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IUserInviteRepository } from "src/onboarding/invite/domain/contracts/user-invite.repository.interface";
@@ -53,7 +53,8 @@ describe('FindActiveInviteUseCase - Integration', () => {
             email: 'test@example.com',
             organizationId: authenticatedUser.activeOrgId,
             isActive: true,
-            expiresAt: new Date('2026-01-01')
+            expiresAt: new Date('2026-01-01'),
+            createdById: authenticatedUser.id
         });
 
         const result = await findActiveInviteUseCase.execute(invite.email, authenticatedUser.activeOrgId);
@@ -78,7 +79,8 @@ describe('FindActiveInviteUseCase - Integration', () => {
             email: 'test@example.com',
             organizationId: authenticatedUser.activeOrgId,
             isActive: false,
-            expiresAt: new Date('2026-01-01')
+            expiresAt: new Date('2026-01-01'),
+            createdById: authenticatedUser.id
         });
 
         const result = await findActiveInviteUseCase.execute('test@example.com', authenticatedUser.activeOrgId);

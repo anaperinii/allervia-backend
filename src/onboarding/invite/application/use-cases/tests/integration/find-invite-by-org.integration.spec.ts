@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { FindInviteByOrgUseCase } from "../../find-invite-by-org.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IUserInviteRepository } from "src/onboarding/invite/domain/contracts/user-invite.repository.interface";
@@ -52,12 +52,14 @@ describe('FindInviteByOrgUseCase - Integration', () => {
 
         const invite1 = await factories.internalUserInvite.create({
             organizationId: authenticatedUser.activeOrgId,
-            expiresAt: new Date('2026-01-01')
+            expiresAt: new Date('2026-01-01'),
+            createdById: authenticatedUser.id
         });
 
         const invite2 = await factories.internalUserInvite.create({
             organizationId: authenticatedUser.activeOrgId,
-            expiresAt: new Date('2026-01-01')
+            expiresAt: new Date('2026-01-01'),
+            createdById: authenticatedUser.id
         });
 
         const result = await findInviteByOrgUseCase.execute(authenticatedUser.activeOrgId, {});

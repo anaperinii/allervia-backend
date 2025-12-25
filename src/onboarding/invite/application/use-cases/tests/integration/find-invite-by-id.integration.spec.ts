@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { FindInviteByIdUseCase } from "../../find-invite-by-id.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { ulid } from "ulid";
@@ -53,7 +53,8 @@ describe('FindInviteByIdUseCase - Integration', () => {
 
         const invite = await factories.internalUserInvite.create({
             organizationId: authenticatedUser.activeOrgId,
-            expiresAt: new Date('2026-01-01')
+            expiresAt: new Date('2026-01-01'),
+            createdById: authenticatedUser.id
         });
 
         const result = await findInviteByIdUseCase.execute(invite.id, authenticatedUser);
