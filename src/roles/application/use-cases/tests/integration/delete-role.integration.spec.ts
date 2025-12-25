@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { DeleteRoleUseCase } from "../../delete-role.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { RoleInUseException } from "src/roles/domain/exceptions/role-in-use.exception";
-import { IRoleRepository } from "src/roles/domain/repositories/role.repository.interface";
+import { IRoleRepository } from "src/roles/domain/contracts/role.repository.interface";
 import { PrismaRoleRepository } from "src/roles/infrastructure/persistence/prisma-role.repository";
 import { FindRoleByNameUseCase } from "../../find-role-by-name.use-case";
 

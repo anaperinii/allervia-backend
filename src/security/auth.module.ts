@@ -6,7 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OrganizationContextGuard } from './guards/organization-context.guard';
 import { MembershipsModule } from 'src/memberships/memberships.module';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { PrismaModule } from 'src/database/prisma/prisma.module';
 import { AccountModule } from 'src/account/account.module';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { SwitchOrganizationUseCase } from './application/use-cases/switch-organization.use-case';

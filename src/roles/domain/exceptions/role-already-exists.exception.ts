@@ -1,4 +1,4 @@
-import { DomainException } from "src/shared/domain/exceptions/domain.exception";
+import { DomainException } from "src/shared/domain.exception";
 
 export class RoleAlreadyExistsException extends DomainException {
   constructor(name: string) {

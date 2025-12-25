@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma, RoleType, UserRole } from "@prisma/client";
-import { IRoleRepository } from "src/roles/domain/repositories/role.repository.interface";
+import { IRoleRepository } from "src/roles/domain/contracts/role.repository.interface";
+import { UserRoleResponseDto } from "../dtos/user-role-respose.dto";
 
 @Injectable()
 export class FindUserRoleByNameUseCase {
@@ -8,11 +9,10 @@ export class FindUserRoleByNameUseCase {
 
     async execute(
         userId: string,
-        roleName: RoleType,
-        tx?: Prisma.TransactionClient
-    ): Promise<UserRole | null> {
+        roleName: RoleType
+    ): Promise<UserRoleResponseDto | null> {
 
-        const userRole = await this.roleRepository.findUserRoleByName(roleName, userId, tx);
+        const userRole = await this.roleRepository.findUserRoleByName(roleName, userId);
 
         return userRole;
     }

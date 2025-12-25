@@ -1,23 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/database/prisma/prisma.service';
 import { Prisma, RoleType, UserRole } from '@prisma/client';
 import { CreateRoleProps, Role } from '../../domain/entities/role.entity';
-import { IRoleRepository } from '../../domain/repositories/role.repository.interface';
+import { IRoleRepository } from '../../domain/contracts/role.repository.interface';
 import { UserRoleResponseDto } from 'src/roles/application/dtos/user-role-respose.dto';
+import { ITransactionContext } from 'src/database/transaction.interface';
 
 @Injectable()
 export class PrismaRoleRepository extends IRoleRepository {
   constructor(
     private readonly prismaService: PrismaService
-  ) {
-    super();
-  }
+  ) { super() }
 
   async create(
     role: CreateRoleProps,
-    tx?: Prisma.TransactionClient
+    tx?:ITransactionContext
   ): Promise<Role> {
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const created = await prismaClient.role.create({
       data: {
@@ -30,12 +29,29 @@ export class PrismaRoleRepository extends IRoleRepository {
     return new Role(created);
   }
 
+  async createUserRole (
+    userId: string,
+    roleName: RoleType,
+    tx?:ITransactionContext
+  ) {
+    const prismaClient = this.prismaService.getClient(tx);
+
+    const userRole = await prismaClient.userRole.create({
+      data: {
+        userId,
+        roleTag: roleName,
+      },
+    });
+
+    return userRole;
+  }
+
   async update(
     role: Role,
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<Role> {
 
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const updated = await prismaClient.role.update({
       where: { id: role.id },
@@ -89,6 +105,9 @@ export class PrismaRoleRepository extends IRoleRepository {
 
     const prismaUserRole = await prismaClient.userRole.findUnique({
       where: { userId_roleTag: { userId, roleTag: name } },
+      include: { 
+        user: { select: { organizationId: true }}
+      }
     });
 
     return prismaUserRole;

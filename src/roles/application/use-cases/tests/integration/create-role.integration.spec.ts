@@ -1,12 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { CreateRoleUseCase } from "../../create-role.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { ConfigService } from "@nestjs/config";
 import { UnauthorizedException } from "@nestjs/common";
 import { CreateRoleDto } from "src/roles/application/dtos/create-role.dto";
-import { IRoleRepository } from "src/roles/domain/repositories/role.repository.interface";
+import { IRoleRepository } from "src/roles/domain/contracts/role.repository.interface";
 import { PrismaRoleRepository } from "src/roles/infrastructure/persistence/prisma-role.repository";
 
 describe('CreateRoleUseCase - Integration', () => {

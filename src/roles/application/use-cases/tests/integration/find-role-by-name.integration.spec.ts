@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { FindRoleByNameUseCase } from "../../find-role-by-name.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { RoleNotFoundException } from "src/roles/domain/exceptions/role-not-found.exception";
-import { IRoleRepository } from "src/roles/domain/repositories/role.repository.interface";
+import { IRoleRepository } from "src/roles/domain/contracts/role.repository.interface";
 import { PrismaRoleRepository } from "src/roles/infrastructure/persistence/prisma-role.repository";
 
 

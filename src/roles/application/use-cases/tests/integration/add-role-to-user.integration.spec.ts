@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { AddRoleToUserUseCase } from "../../add-role-to-user.use-case";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { FindUserByIdUseCase } from "src/account/application/use-cases/find-user-by-id.use-case";
@@ -10,7 +10,7 @@ import { IUserRepository } from "src/account/domain/contracts/user.repository.in
 import { PrismaUserRepository } from "src/account/infrastructure/persistence/prisma-user.repository";
 import { ConflictException } from "@nestjs/common";
 import { InactiveRoleException } from "src/roles/domain/exceptions/inactive-role.exception";
-import { IRoleRepository } from "src/roles/domain/repositories/role.repository.interface";
+import { IRoleRepository } from "src/roles/domain/contracts/role.repository.interface";
 import { PrismaRoleRepository } from "src/roles/infrastructure/persistence/prisma-role.repository";
 
 describe('AddRoleToUserUseCase - Integration', () => {

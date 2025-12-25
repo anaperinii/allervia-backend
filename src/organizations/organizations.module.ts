@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { PrismaModule } from 'src/database/prisma/prisma.module';
 import { OrganizationsController } from './presentation/controllers/organizations.controller';
 import { CreateOrganizationUseCase } from './application/use-cases/create-organization.use-case';
 import { FindOrganizationUseCase } from './application/use-cases/find-organization.use-case';

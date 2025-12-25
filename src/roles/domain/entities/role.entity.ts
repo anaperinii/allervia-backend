@@ -4,7 +4,7 @@ interface RoleProps {
   id: string;
   name: RoleType;
   description: string | null;
-  organizationId: string;
+  organizationId: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -13,14 +13,14 @@ interface RoleProps {
 export interface CreateRoleProps {
   name: RoleType;
   description: string | null;
-  organizationId: string;
+  organizationId: string | null;
 }
 
 export class Role {
   id: string;
   name: RoleType;
   description: string | null;
-  organizationId: string;
+  organizationId: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -29,7 +29,7 @@ export class Role {
     this.id = props.id;
     this.name = props.name;
     this.description = props.description || null;
-    this.organizationId = props.organizationId;
+    this.organizationId = props.organizationId || null;
     this.isActive = props.isActive;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;

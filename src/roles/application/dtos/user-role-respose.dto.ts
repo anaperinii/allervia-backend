@@ -7,4 +7,7 @@ export class UserRoleResponseDto {
     createdAt: Date;
     updatedAt: Date;
     isActive: boolean;
+    user?: {
+        organizationId: string | null;
+    }
 }
