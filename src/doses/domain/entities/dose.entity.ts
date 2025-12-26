@@ -6,9 +6,9 @@ import { InvalidDoseStatusException } from '../exceptions/invalid-dose-status.ex
 
 export interface DoseProps {
   id: string;
-  concentration: string;
+  concentration: number;
   volume: number;
-  scheduledAt: Date | null;
+  scheduledAt: Date;
   administeredAt: Date | null;
   nextIntervalInDays: number;
   sideEffect: string | null;
@@ -27,9 +27,9 @@ export interface DoseProps {
 }
 
 export interface CreateDoseProps {
-  concentration: string;
+  concentration: number;
   volume: number;
-  scheduledAt?: Date | null;
+  scheduledAt: Date;
   administeredAt?: Date | null;
   nextIntervalInDays: number;
   sideEffect?: string | null;
@@ -43,9 +43,9 @@ export interface CreateDoseProps {
 
 export class Dose {
   id: string;
-  concentration: string;
+  concentration: number;
   volume: number;
-  scheduledAt: Date | null;
+  scheduledAt: Date;
   administeredAt: Date | null;
   nextIntervalInDays: number;
   sideEffect: string | null;
@@ -85,17 +85,16 @@ export class Dose {
   }
 
   static createNew(props: CreateDoseProps) {
-    const status: DoseStatus = props.administeredAt ? 'ADMINISTERED' : 'SCHEDULED';
     return {
       concentration: props.concentration,
       volume: props.volume,
-      scheduledAt: props.scheduledAt || null,
+      scheduledAt: props.scheduledAt,
       administeredAt: props.administeredAt || null,
       nextIntervalInDays: props.nextIntervalInDays,
       sideEffect: props.sideEffect || null,
       medicationRequired: props.medicationRequired || null,
       notes: props.notes || null,
-      status: status,
+      status: DoseStatus.SCHEDULED,
       immunotherapyId: props.immunotherapyId,
       administeredById: props.administeredById || null,
       createdById: props.createdById,

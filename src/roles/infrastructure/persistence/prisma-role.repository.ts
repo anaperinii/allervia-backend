@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma/prisma.service';
-import { Prisma, RoleType, UserRole } from '@prisma/client';
+import { RoleType, UserRole } from '@prisma/client';
 import { CreateRoleProps, Role } from '../../domain/entities/role.entity';
 import { IRoleRepository } from '../../domain/contracts/role.repository.interface';
 import { UserRoleResponseDto } from 'src/roles/application/dtos/user-role-respose.dto';
@@ -68,10 +68,10 @@ export class PrismaRoleRepository extends IRoleRepository {
   async findById(
     id: string, 
     organizationId: string, 
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<Role | null> {
 
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const prismaRole = await prismaClient.role.findUnique({
       where: { id, organizationId },
@@ -83,10 +83,10 @@ export class PrismaRoleRepository extends IRoleRepository {
   async findByName(
     name: RoleType, 
     organizationId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<Role | null> {
 
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const prismaRole = await prismaClient.role.findUnique({
       where: { name, organizationId },
@@ -98,10 +98,10 @@ export class PrismaRoleRepository extends IRoleRepository {
   async findUserRoleByName(
     name: RoleType, 
     userId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<UserRoleResponseDto | null> {
 
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const prismaUserRole = await prismaClient.userRole.findUnique({
       where: { userId_roleTag: { userId, roleTag: name } },
@@ -115,10 +115,10 @@ export class PrismaRoleRepository extends IRoleRepository {
 
   async findAllActive(
     organizationId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<Role[]> {
 
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const prismaRoles = await prismaClient.role.findMany({
       where: { organizationId, isActive: true },
@@ -131,10 +131,10 @@ export class PrismaRoleRepository extends IRoleRepository {
   async exists(
     id: string, 
     organizationId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<boolean> {
 
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const count = await prismaClient.role.count({
       where: { id, organizationId },
@@ -146,10 +146,10 @@ export class PrismaRoleRepository extends IRoleRepository {
   async hasActiveUserRoles(
     roleName: RoleType, 
     organizationId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<boolean> {
 
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const count = await prismaClient.userRole.count({
       where: {
@@ -167,10 +167,10 @@ export class PrismaRoleRepository extends IRoleRepository {
   async findRolesByUsers(
     roleName: RoleType,
     organizationId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<UserRoleResponseDto[]> {
 
-    const prismaClient = tx || this.prismaService;
+    const prismaClient = this.prismaService.getClient(tx);
 
     const userRoles = await prismaClient.userRole.findMany({
       where: {

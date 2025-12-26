@@ -1,14 +1,22 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { IDoseRepository } from '../../domain/contracts/dose.repository.interface';
-import { DoseNotFoundException } from '../../domain/exceptions/dose-not-found.exception';
 import { UpdateDoseDto } from '../dtos/update-dose.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Dose } from '@prisma/client';
+import { IBuildUpPhase } from 'src/treatment-protocols/allergen-immunotherapy/build-up-phase/build-up-phase.interface';
+import { IMaintenancePhase } from 'src/treatment-protocols/allergen-immunotherapy/maintenance-phase/maintenance-phase.interface';
+import { FindDoseUseCase } from './find-dose.use-case';
+import { FindImmunotherapyUseCase } from 'src/immunotherapies/application/use-cases/find-immunotherapy.use-case';
+import { Immunotherapy } from 'src/immunotherapies/domain/entities/immunotherapy.entity';
 
 @Injectable()
 export class UpdateDoseUseCase {
   constructor(
-    private readonly doseRepository: IDoseRepository
+    private readonly findDoseUseCase: FindDoseUseCase,
+    private readonly buildUpProtocol: IBuildUpPhase,
+    private readonly maintenanceProtocol: IMaintenancePhase,
+    private readonly doseRepository: IDoseRepository,
+    private readonly findImmunotherapyUseCase: FindImmunotherapyUseCase
   ) {}
 
   async execute(
@@ -16,15 +24,33 @@ export class UpdateDoseUseCase {
     dto: UpdateDoseDto,
     currentUser: AuthenticatedUserPayload,
   ): Promise<Dose> {
-    const dose = await this.doseRepository.findById(id, currentUser.activeOrgId);
 
-    if (!dose) {
-      throw new DoseNotFoundException(id);
+    const dose = await this.findDoseUseCase.execute(id, currentUser.activeOrgId);
+
+    const immunotherapy = await this.findImmunotherapyUseCase.execute(dose.immunotherapyId, currentUser.activeOrgId) as Immunotherapy;
+    
+    // Preparar dados de atualização
+    const updateData: any = { ...dto };
+    updateData.updatedById = currentUser.id;
+    
+    // Se houver administeredAt, atualizar status e administeredById
+    if (dto.administeredAt) {
+      updateData.status = 'ADMINISTERED';
+      updateData.administeredById = currentUser.id;
     }
     
-    const updatedDose = this.doseRepository.update(dose.id, dto);
+    const updatedDose = await this.doseRepository.update(dose.id, updateData);
+
+    if (dto.administeredAt) {
+      if (dto.concentration === immunotherapy.targetConcentration && dto.volume === immunotherapy.targetVolume) {
+        await this.maintenanceProtocol.registerScheduledMaintenanceDose(updatedDose, currentUser, immunotherapy);
+      } else {
+        await this.buildUpProtocol.registerNextScheduledDose(updatedDose, currentUser, immunotherapy);
+      }
+    }
 
     return updatedDose;
   }
 }
+
 

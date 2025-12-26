@@ -5,7 +5,7 @@ export interface CreateImmunotherapyData {
     administrationRoute: AdministrationRoute;
     extract: string;
     inductionStartDate: Date;
-    targetConcentration: string;
+    targetConcentration: number;
     targetVolume: number;
     patientId: string;
     responsiblePhysicianId: string;
@@ -20,7 +20,7 @@ export interface UpdateImmunotherapyData {
     extract: string;
     inductionStartDate: Date;
     maintenanceStartDate: Date | null;
-    targetConcentration: string;
+    targetConcentration: number;
     targetVolume: number;
     responsiblePhysicianId: string;
     isArchived: boolean;

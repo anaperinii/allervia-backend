@@ -3,7 +3,7 @@ import { PrismaService } from 'src/database/prisma/prisma.service';
 import { Patient } from '../../domain/entities/patient.entity';
 import { IPatientRepository } from '../../domain/contracts/patient.repository.interface';
 import { CreatePatientData, UpdatePatientData } from 'src/patients/domain/contracts/patients.interface';
-import { Prisma } from '@prisma/client';
+import { ITransactionContext } from 'src/database/transaction.interface';
 
 @Injectable()
 export class PrismaPatientRepository extends IPatientRepository {
@@ -11,9 +11,9 @@ export class PrismaPatientRepository extends IPatientRepository {
     super();
   }
 
-  async create(patient: CreatePatientData, tx?: Prisma.TransactionClient): Promise<Patient> {
+  async create(patient: CreatePatientData, tx?: ITransactionContext): Promise<Patient> {
 
-    const prismaClient = tx || this.prisma;
+    const prismaClient = this.prisma.getClient(tx);
 
     const created = await prismaClient.patient.create({
       data: {
@@ -32,9 +32,9 @@ export class PrismaPatientRepository extends IPatientRepository {
     return new Patient(created);
   }
 
-  async update(patientId: string, patient: Partial<UpdatePatientData>, tx?: Prisma.TransactionClient): Promise<Patient> {
+  async update(patientId: string, patient: Partial<UpdatePatientData>, tx?: ITransactionContext): Promise<Patient> {
 
-    const prismaClient = tx || this.prisma;
+    const prismaClient = this.prisma.getClient(tx);
 
     const updated = await prismaClient.patient.update({
       where: { id: patientId },
@@ -55,9 +55,9 @@ export class PrismaPatientRepository extends IPatientRepository {
     return new Patient(updated);
   }
 
-  async findById(id: string, organizationId: string, tx?: Prisma.TransactionClient): Promise<Patient | null> {
+  async findById(id: string, organizationId: string, tx?: ITransactionContext): Promise<Patient | null> {
 
-    const prismaClient = tx || this.prisma;
+    const prismaClient = this.prisma.getClient(tx);
 
     const patient = await prismaClient.patient.findFirst({
       where: {
@@ -69,9 +69,9 @@ export class PrismaPatientRepository extends IPatientRepository {
     return patient ? new Patient(patient) : null;
   }
 
-  async findByOrganization(organizationId: string, tx?: Prisma.TransactionClient): Promise<Patient[]> {
+  async findByOrganization(organizationId: string, tx?: ITransactionContext): Promise<Patient[]> {
 
-    const prismaClient = tx || this.prisma;
+    const prismaClient = this.prisma.getClient(tx);
 
     const patients = await prismaClient.patient.findMany({
       where: {
@@ -84,9 +84,9 @@ export class PrismaPatientRepository extends IPatientRepository {
     return patients.map(p => new Patient(p));
   }
 
-  async exists(id: string, organizationId: string, tx?: Prisma.TransactionClient): Promise<boolean> {
+  async exists(id: string, organizationId: string, tx?: ITransactionContext): Promise<boolean> {
 
-    const prismaClient = tx || this.prisma;
+    const prismaClient = this.prisma.getClient(tx);
 
     const count = await prismaClient.patient.count({
       where: {

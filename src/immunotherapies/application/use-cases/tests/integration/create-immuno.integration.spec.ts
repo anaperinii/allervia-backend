@@ -10,10 +10,19 @@ import { IImmunotherapyRepository } from "src/immunotherapies/domain/contracts/i
 import { IPatientRepository } from "src/patients/domain/contracts/patient.repository.interface";
 import { PrismaPatientRepository } from "src/patients/infrastructure/persistence/prisma-patient.repository";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
+import { IBuildUpPhase } from "src/treatment-protocols/allergen-immunotherapy/build-up-phase/build-up-phase.interface";
+import { BuildUpPhaseService } from "src/treatment-protocols/allergen-immunotherapy/build-up-phase/build-up-phase.service";
+import { RegisterStartingDoseUseCase } from "src/treatment-protocols/allergen-immunotherapy/build-up-phase/register-starting-dose.use-case";
+import { RegisterNextScheduledBuildUpUseCase } from "src/treatment-protocols/allergen-immunotherapy/build-up-phase/register-scheduled-build-up.use-case";
+import { CreateDoseUseCase } from "src/doses/application/use-cases/create-dose.use-case";
+import { IDoseRepository } from "src/doses/domain/contracts/dose.repository.interface";
+import { PrismaDoseRepository } from "src/doses/infrastructure/persistence/prisma-dose.repository";
+import { CountDosesByConcentration } from "src/doses/application/use-cases/count-doses-by-concentration.use-case";
 
 describe('CreateImmunotherapyUseCase - Integration', () => {
     let module: TestingModule;
     let immunoUseCase: CreateImmunotherapyUseCase;
+    let buildUpProtocol: IBuildUpPhase;
     let prisma: PrismaService;
     let factories: TestFactories;
 
@@ -25,6 +34,10 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
             providers: [
                 CreateImmunotherapyUseCase,
                 CreatePatientUseCase,
+                CreateDoseUseCase,
+                RegisterStartingDoseUseCase,
+                RegisterNextScheduledBuildUpUseCase,
+                CountDosesByConcentration,
                 {
                     provide: PrismaService,
                     useValue: TestDatabaseManager.getInstance()
@@ -36,11 +49,20 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
                 {
                     provide: IPatientRepository,
                     useClass: PrismaPatientRepository
+                },
+                {
+                    provide: IDoseRepository,
+                    useClass: PrismaDoseRepository
+                },
+                {
+                    provide: IBuildUpPhase,
+                    useClass: BuildUpPhaseService
                 }
             ]
         }).compile();
 
         immunoUseCase = module.get(CreateImmunotherapyUseCase);
+        buildUpProtocol = module.get(IBuildUpPhase);
         prisma = module.get(PrismaService);
         factories = new TestFactories(prisma);
     });
@@ -56,7 +78,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
         await TestDatabaseManager.disconnect();
     });
 
-    it('should create complete immunotherapy for patient', async () => {
+    it('should create complete immunotherapy for patient and register the first dose correctly', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
         const dto: CreateImmunotherapyDto = {
@@ -70,7 +92,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
             administrationRoute: 'SUBCUTANEOUS',
             extract: "Der p 60 + der f 10% + blt 30%",
             inductionStartDate: new Date('2026-01-15'),
-            targetConcentration: "1:10",
+            targetConcentration: 10,
             targetVolume: 0.5,
             responsiblePhysicianId: authenticatedUser.id,
         };
@@ -101,6 +123,17 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
         expect(immunotherapyInDb).not.toBeNull();
         expect(immunotherapyInDb!.responsiblePhysicianId).toBe(authenticatedUser.id);
         expect(immunotherapyInDb!.createdById).toBe(authenticatedUser.id);
+
+        const firstDose = await prisma.dose.findFirst({
+            where: {
+                immunotherapyId: result.immunotherapy.id
+            }
+        });
+
+        console.log(firstDose);
+
+        expect(firstDose).toBeDefined();
+        
     });
 
 
@@ -118,7 +151,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
             administrationRoute: 'SUBCUTANEOUS',
             extract: "Der p 60 + der f 10% + blt 30%",
             inductionStartDate: new Date('2026-01-15'),
-            targetConcentration: "1:10",
+            targetConcentration: 10,
             targetVolume: 0.5,
             responsiblePhysicianId: authenticatedUser.id,
         };

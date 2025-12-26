@@ -1,9 +1,9 @@
 import { DoseStatus } from "@prisma/client";
 
 export interface CreateDoseData {
-    concentration: string;
+    concentration: number;
     volume: number;
-    scheduledAt: Date | null;
+    scheduledAt: Date;
     administeredAt: Date | null;
     nextIntervalInDays: number;
     sideEffect: string | null;
@@ -17,9 +17,17 @@ export interface CreateDoseData {
     isArchived: boolean;
 }
 
+export interface CreateScheduledDoseData {
+    concentration: number;
+    volume: number;
+    scheduledAt: Date;
+    nextIntervalInDays: number;
+    immunotherapyId: string;
+}
+
 export interface UpdateDoseData {
     id: string;
-    concentration: string;
+    concentration: number;
     volume: number;
     scheduledAt: Date | null;
     administeredAt: Date | null;

@@ -4,7 +4,7 @@ import { PatientNotFoundException } from '../../domain/exceptions/patient-not-fo
 import { UpdatePatientStatusDto } from '../dtos/update-patient-status.dto';
 import { PatientResponseDto } from '../dtos/patient-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { Prisma } from '@prisma/client';
+import { ITransactionContext } from 'src/database/transaction.interface';
 
 @Injectable()
 export class UpdatePatientStatusUseCase {
@@ -16,7 +16,7 @@ export class UpdatePatientStatusUseCase {
     id: string,
     dto: UpdatePatientStatusDto,
     currentUser: AuthenticatedUserPayload,
-    tx?: Prisma.TransactionClient
+    tx?: ITransactionContext
   ): Promise<PatientResponseDto> {
 
     const patient = await this.patientRepository.findById(id, currentUser.activeOrgId);

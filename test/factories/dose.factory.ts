@@ -4,7 +4,7 @@ import { BaseFactory } from "./base.factory";
 export class DoseFactory extends BaseFactory<Dose> {
     protected getDefaultData(): Partial<Dose> {
         return {
-            concentration: "1:10000",
+            concentration: 10000,
             volume: 0.1,
             nextIntervalInDays: 7
         }

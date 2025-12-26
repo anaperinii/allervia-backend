@@ -30,7 +30,7 @@ export class DosesController {
   }
 
   @ApiBody({ type: UpdateDoseDto })
-  @Patch('update/:id')
+  @Patch(':id')
   @Roles('PHYSICIAN', 'NURSE')
   async update(
     @Param('id') id: string,
@@ -51,4 +51,5 @@ export class DosesController {
     return this.updateDoseStatusUseCase.execute(id, dto, currentUser);
   }
 }
+
 

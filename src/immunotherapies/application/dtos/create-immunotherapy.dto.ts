@@ -34,7 +34,7 @@ export class CreateImmunotherapyDto {
     @ApiProperty({description: 'Concentração Meta'})
     @IsString()
     @IsNotEmpty()
-    targetConcentration: string;
+    targetConcentration: number;
 
     @ApiProperty({description: 'Volume Meta'})
     @IsNumber()
@@ -47,4 +47,5 @@ export class CreateImmunotherapyDto {
     @IsString()
     responsiblePhysicianId: string;
 }
+
 

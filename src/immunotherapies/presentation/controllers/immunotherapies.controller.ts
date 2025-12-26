@@ -6,7 +6,6 @@ import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Roles } from 'src/security/decorators/roles.decorator';
 import { CreateDoseUseCase } from 'src/doses/application/use-cases/create-dose.use-case';
 import { ListDosesByTherapyUseCase } from 'src/doses/application/use-cases/list-doses-by-therapy.use-case';
-import { CreateDoseDto } from 'src/doses/application/dtos/create-dose.dto';
 import { CreateImmunotherapyUseCase } from 'src/immunotherapies/application/use-cases/create-immunotherapy.use-case';
 import { ImmunotherapyResponseDto } from 'src/immunotherapies/application/dtos/immunotherapy-response.dto';
 import { FindImmunotherapyUseCase } from 'src/immunotherapies/application/use-cases/find-immunotherapy.use-case';
@@ -19,6 +18,7 @@ import { UpdateImmunotherapyStatusDto } from 'src/immunotherapies/application/dt
 import { UpdateImmunotherapyDto } from 'src/immunotherapies/application/dtos/update-immunotherapy.dto';
 import { PatientResponseDto } from 'src/patients/application/dtos/patient-response.dto';
 import { ListAllImmunotherapiesUseCase } from 'src/immunotherapies/application/use-cases/list-all-immunotherapies.use-case';
+import { UpdateDoseDto } from 'src/doses/application/dtos/update-dose.dto';
 
 
 @ApiTags('immunotherapies')
@@ -101,17 +101,6 @@ export class ImmunotherapiesController {
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto> {
     return this.updateImmunotherapyStatusUseCase.execute(immunoId, dto, orgId, currentUser);
-  }
-
-  @ApiBody({ type: CreateDoseDto })
-  @Post(':id/doses/register')
-  @Roles('PHYSICIAN', 'NURSE', 'NURSING_TECHNICIAN')
-  async createDoseForImmunotherapy(
-    @Param('id') immunoId: string,
-    @Body() dto: CreateDoseDto,
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ) {
-    return this.createDoseUseCase.execute(immunoId, dto, currentUser);
   }
 
   @Get(':id/doses')

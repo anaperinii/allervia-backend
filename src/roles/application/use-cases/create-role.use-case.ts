@@ -3,7 +3,7 @@ import { IRoleRepository } from '../../domain/contracts/role.repository.interfac
 import { CreateRoleDto } from '../dtos/create-role.dto';
 import { RoleResponseDto } from '../dtos/role-response.dto';
 import { Role } from '../../domain/entities/role.entity';
-import { Prisma } from '@prisma/client';
+import { ITransactionContext } from 'src/database/transaction.interface';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class CreateRoleUseCase {
 
   async execute(
     dto: CreateRoleDto, 
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<RoleResponseDto> {
 
     const secretKey = this.configService.get<string>('SUPER_ADMIN_REGISTRATION_KEY');
@@ -30,7 +30,7 @@ export class CreateRoleUseCase {
       organizationId: dto.organizationId
     });
 
-    const savedRole = await this.roleRepository.create(role);
+    const savedRole = await this.roleRepository.create(role, tx);
     return savedRole;
   }
 }

@@ -7,7 +7,7 @@ export class ImmunotherapyFactory extends BaseFactory<Immunotherapy> {
             immunoType: 'Ácaros',
             administrationRoute: 'SUBCUTANEOUS' as AdministrationRoute,
             extract: "Der p 60 + der f 10% + blt 30%",
-            targetConcentration: "1:10",
+            targetConcentration: 10,
             targetVolume: 0.5
         }
     }

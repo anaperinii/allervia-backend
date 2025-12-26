@@ -3,6 +3,7 @@ import { PrismaService } from 'src/database/prisma/prisma.service';
 import { Dose } from '../../domain/entities/dose.entity';
 import { IDoseRepository } from '../../domain/contracts/dose.repository.interface';
 import { CreateDoseData, UpdateDoseData } from 'src/doses/domain/contracts/doses.interface';
+import { ITransactionContext } from 'src/database/transaction.interface';
 
 @Injectable()
 export class PrismaDoseRepository extends IDoseRepository {
@@ -10,9 +11,26 @@ export class PrismaDoseRepository extends IDoseRepository {
     super();
   }
 
-  async create(dose: CreateDoseData): Promise<Dose> {
-    const created = await this.prismaService.dose.create({
-      data: dose
+  async create(dose: CreateDoseData, tx?: ITransactionContext): Promise<Dose> {
+    const prismaClient = this.prismaService.getClient(tx);
+    
+    const created = await prismaClient.dose.create({
+      data: {
+        immunotherapyId: dose.immunotherapyId,
+        concentration: dose.concentration,
+        volume: dose.volume,
+        scheduledAt: dose.scheduledAt ? new Date(dose.scheduledAt) : dose.scheduledAt,
+        administeredAt: dose.administeredAt,
+        nextIntervalInDays: dose.nextIntervalInDays,
+        sideEffect: dose.sideEffect,
+        medicationRequired: dose.medicationRequired,
+        notes: dose.notes,
+        status: dose.status,
+        administeredById: dose.administeredById,
+        isArchived: dose.isArchived,
+        updatedById: dose.updatedById,
+        createdById: dose.createdById
+      }
     });
 
     return new Dose(created);
@@ -78,5 +96,34 @@ export class PrismaDoseRepository extends IDoseRepository {
 
     return count > 0;
   }
+
+  async countDosesByConcentration(concentration: number, immunotherapyId: string, orgId: string): Promise<number> {
+    const count = await this.prismaService.dose.count({
+      where: {
+        concentration,
+        immunotherapyId,
+        createdBy: {
+          organizationId: orgId
+        }
+      }
+    });
+
+    return count;
+  }
+
+  async countDosesByInterval(interval: number, immunotherapyId: string, orgId: string): Promise<number> {
+    const count = await this.prismaService.dose.count({
+      where: {
+        nextIntervalInDays: interval,
+        immunotherapyId,
+        createdBy: {
+          organizationId: orgId
+        }
+      }
+    });
+
+    return count;
+  }
 }
+
 

@@ -21,7 +21,7 @@ export class ImmunotherapyResponseDto {
   maintenanceStartDate: Date | null;
 
   @ApiProperty({ description: 'Concentração alvo' })
-  targetConcentration: string;
+  targetConcentration: number;
 
   @ApiProperty({ description: 'Volume alvo' })
   targetVolume: number;
@@ -56,4 +56,5 @@ export class ImmunotherapyResponseDto {
   @ApiProperty({ description: 'Data em que foi arquivada' })
   archivedAt: Date | null;
 }
+
 

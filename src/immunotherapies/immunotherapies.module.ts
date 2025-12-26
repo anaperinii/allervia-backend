@@ -12,6 +12,7 @@ import { ListImmunotherapiesByTypeUseCase } from './application/use-cases/list-i
 import { UpdateImmunotherapyUseCase } from './application/use-cases/update-immunotherapy.use-case';
 import { UpdateImmunotherapyStatusUseCase } from './application/use-cases/update-immunotherapy-status.use-case';
 import { ListAllImmunotherapiesUseCase } from './application/use-cases/list-all-immunotherapies.use-case';
+import { TreatmentProtocolsModule } from 'src/treatment-protocols/treatment-protocols.module';
 
 @Module({
   providers: [
@@ -30,7 +31,7 @@ import { ListAllImmunotherapiesUseCase } from './application/use-cases/list-all-
       useClass: PrismaImmunotherapyRepository,
     },
   ],
-  imports: [PrismaModule, PatientsModule, forwardRef(() => DosesModule)],
+  imports: [PrismaModule, PatientsModule, forwardRef(() => DosesModule), forwardRef(() => TreatmentProtocolsModule)],
   exports: [IImmunotherapyRepository, CreateImmunotherapyUseCase, FindImmunotherapyUseCase],
   controllers: [ImmunotherapiesController],
 })

@@ -9,9 +9,12 @@ import { UpdateDoseStatusUseCase } from './application/use-cases/update-dose-sta
 import { IDoseRepository } from './domain/contracts/dose.repository.interface';
 import { PrismaDoseRepository } from './infrastructure/persistence/prisma-dose.repository';
 import { DosesController } from './presentation/controllers/doses.controller';
+import { CountDosesByConcentration } from './application/use-cases/count-doses-by-concentration.use-case';
+import { CountDosesByIntervalUseCase } from './application/use-cases/count-doses-by-interval.use-case';
+import { TreatmentProtocolsModule } from 'src/treatment-protocols/treatment-protocols.module';
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => ImmunotherapiesModule)],
+  imports: [PrismaModule, forwardRef(() => ImmunotherapiesModule), forwardRef(() => TreatmentProtocolsModule)],
   controllers: [DosesController],
   providers: [
     // Use Cases
@@ -20,6 +23,8 @@ import { DosesController } from './presentation/controllers/doses.controller';
     ListDosesByTherapyUseCase,
     UpdateDoseUseCase,
     UpdateDoseStatusUseCase,
+    CountDosesByConcentration,
+    CountDosesByIntervalUseCase,
 
     // Repositories
     {
@@ -27,6 +32,6 @@ import { DosesController } from './presentation/controllers/doses.controller';
       useClass: PrismaDoseRepository,
     },
   ],
-  exports: [IDoseRepository, CreateDoseUseCase, ListDosesByTherapyUseCase],
+  exports: [IDoseRepository, CreateDoseUseCase, ListDosesByTherapyUseCase, CountDosesByConcentration, CountDosesByIntervalUseCase],
 })
 export class DosesModule {}

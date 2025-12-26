@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { ITransactionContext } from 'src/database/transaction.interface';
 import { Patient } from '../entities/patient.entity';
 import {
   CreatePatientData,
@@ -8,29 +8,29 @@ import {
 export abstract class IPatientRepository {
   abstract create(
     patient: CreatePatientData,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<Patient>;
 
   abstract update(
     patientId: string,
     patient: Partial<UpdatePatientData>,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<Patient>;
 
   abstract findById(
     id: string,
     organizationId: string,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<Patient | null>;
 
   abstract findByOrganization(
     organizationId: string,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<Patient[]>;
   
   abstract exists(
     id: string,
     organizationId: string,
-    tx?: Prisma.TransactionClient,
+    tx?: ITransactionContext,
   ): Promise<boolean>;
 }

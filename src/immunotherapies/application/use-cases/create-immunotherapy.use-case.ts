@@ -7,6 +7,7 @@ import { CreatePatientUseCase } from "src/patients/application/use-cases/create-
 import { PrismaService } from "src/database/prisma/prisma.service";
 import { Immunotherapy } from "src/immunotherapies/domain/entities/immunotherapy.entity";
 import { PatientResponseDto } from "src/patients/application/dtos/patient-response.dto";
+import { IBuildUpPhase } from "src/treatment-protocols/allergen-immunotherapy/build-up-phase/build-up-phase.interface";
 
 @Injectable()
 export class CreateImmunotherapyUseCase {
@@ -14,6 +15,7 @@ export class CreateImmunotherapyUseCase {
     private readonly immunotherapyRepository: IImmunotherapyRepository,
     private readonly createPatientUseCase: CreatePatientUseCase,
     private readonly prisma: PrismaService,
+    private readonly buildUpProtocol: IBuildUpPhase
   ) {} 
 
   async execute(
@@ -21,7 +23,7 @@ export class CreateImmunotherapyUseCase {
     currentUser: AuthenticatedUserPayload,
   ): Promise<{ patient: PatientResponseDto; immunotherapy: ImmunotherapyResponseDto }> {
     
-    return await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.transaction(async (tx) => {
       
       const patientDto = await this.createPatientUseCase.execute(
         {
@@ -49,6 +51,8 @@ export class CreateImmunotherapyUseCase {
 
       const savedImmunotherapy = await this.immunotherapyRepository.create(immunotherapy, tx);
 
+      await this.buildUpProtocol.registerStartingBuildUpDose(savedImmunotherapy, currentUser, tx);
+
       return {
         patient: patientDto,
         immunotherapy: savedImmunotherapy,
@@ -56,4 +60,5 @@ export class CreateImmunotherapyUseCase {
     });
   }
 }
+
 

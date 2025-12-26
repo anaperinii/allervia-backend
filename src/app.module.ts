@@ -14,6 +14,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { RolesModule } from './roles/roles.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { AccountModule } from './account/account.module';
+import { TreatmentProtocolsModule } from './treatment-protocols/treatment-protocols.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AccountModule } from './account/account.module';
     RolesModule,
     OnboardingModule,
     AccountModule,
+    TreatmentProtocolsModule,
   ],
   controllers: [],
   providers: [

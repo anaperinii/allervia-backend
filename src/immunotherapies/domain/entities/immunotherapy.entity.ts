@@ -8,7 +8,7 @@ export interface ImmunotherapyProps {
   extract: string;
   inductionStartDate: Date;
   maintenanceStartDate: Date | null;
-  targetConcentration: string;
+  targetConcentration: number;
   targetVolume: number;
   patientId: string;
   responsiblePhysicianId: string;
@@ -27,7 +27,7 @@ export interface CreateImmunotherapyProps {
   administrationRoute: AdministrationRoute;
   extract: string;
   inductionStartDate: Date;
-  targetConcentration: string;
+  targetConcentration: number;
   targetVolume: number;
   patientId: string;
   responsiblePhysicianId: string;
@@ -42,7 +42,7 @@ export class Immunotherapy {
   extract: string;
   inductionStartDate: Date;
   maintenanceStartDate: Date | null;
-  targetConcentration: string;
+  targetConcentration: number;
   targetVolume: number;
   patientId: string;
   responsiblePhysicianId: string;
@@ -109,29 +109,6 @@ export class Immunotherapy {
     this.isArchived = true;
     this.archivedById = archivedById;
     this.archivedAt = new Date();
-  }
-
-  toJSON() {
-    return {
-      id: this.id,
-      immunoType: this.immunoType,
-      administrationRoute: this.administrationRoute,
-      extract: this.extract,
-      inductionStartDate: this.inductionStartDate,
-      maintenanceStartDate: this.maintenanceStartDate,
-      targetConcentration: this.targetConcentration,
-      targetVolume: this.targetVolume,
-      patientId: this.patientId,
-      responsiblePhysicianId: this.responsiblePhysicianId,
-      isArchived: this.isArchived,
-      status: this.status,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      createdById: this.createdById,
-      updatedById: this.updatedById,
-      archivedById: this.archivedById,
-      archivedAt: this.archivedAt
-    };
   }
 }
 

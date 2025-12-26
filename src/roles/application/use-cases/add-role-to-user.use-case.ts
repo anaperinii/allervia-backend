@@ -29,10 +29,6 @@ export class AddRoleToUserUseCase {
 
     const existingRole = await this.findUserRoleByName.execute(userId, roleName);
 
-    if(existingRole?.user!.organizationId !== activeOrgId) {
-      throw new UnauthorizedException('User organization ID is not compatible to this action.');
-    }
-
     if (existingRole) {
       throw new ConflictException(`User already has the role "${roleName}".`);
     }
