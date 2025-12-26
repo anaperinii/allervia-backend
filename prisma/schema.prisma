@@ -189,7 +189,7 @@ model Immunotherapy {
   extract                String
   inductionStartDate     DateTime
   maintenanceStartDate   DateTime?
-  targetConcentration    String
+  targetConcentration    Int
   targetVolume           Float
   patientId              String
   responsiblePhysicianId String
@@ -219,9 +219,9 @@ model Immunotherapy {
 
 model Dose {
   id                 String    @id @default(ulid())
-  concentration      String
+  concentration      Int
   volume             Float
-  scheduledAt        DateTime? //dev env por enquanto
+  scheduledAt        DateTime
   administeredAt     DateTime?
   nextIntervalInDays Int
   sideEffect         String?
