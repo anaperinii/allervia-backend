@@ -35,16 +35,6 @@ export class Organization {
     this.isActive = false;
     this.updatedAt = new Date();
   }
-
-  toJSON() {
-    return {
-      id: this.id,
-      name: this.name,
-      taxId: this.taxId,
-      isActive: this.isActive,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
-    };
-  }
 }
+
 

@@ -6,3 +6,4 @@ export class OrganizationNotFoundException extends DomainException {
   }
 }
 
+

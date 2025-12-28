@@ -4,9 +4,9 @@ import { PrismaService } from "src/database/prisma/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { FindInviteByOrgUseCase } from "../../find-invite-by-org.use-case";
-import { FindUserByIdUseCase } from "src/account/application/use-cases/find-user-by-id.use-case";
-import { IUserRepository } from "src/account/domain/contracts/user.repository.interface";
-import { PrismaUserRepository } from "src/account/infrastructure/persistence/prisma-user.repository";
+import { FindUserByIdUseCase } from "src/account/profiles/application/use-cases/find-user-by-id.use-case";
+import { IUserRepository } from "src/account/profiles/domain/contracts/user.repository.interface";
+import { PrismaUserRepository } from "src/account/profiles/infrastructure/persistence/prisma-user.repository";
 import { IUserInviteRepository } from "src/onboarding/invite/domain/contracts/user-invite.repository.interface";
 import { PrismaUserInviteRepository } from "src/onboarding/invite/infrastructure/persistence/prisma-user-invite.repository";
 import { ListInvitesQueryDto } from "../../../dtos/list-invites-query.dto";
@@ -94,4 +94,5 @@ describe('ListInvitesUseCase - Integration', () => {
         expect(Array.isArray(result)).toBe(true);
     });
 })
+
 

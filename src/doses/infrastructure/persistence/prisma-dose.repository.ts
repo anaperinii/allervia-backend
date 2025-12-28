@@ -104,6 +104,9 @@ export class PrismaDoseRepository extends IDoseRepository {
         immunotherapyId,
         createdBy: {
           organizationId: orgId
+        },
+        status: {
+          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE']
         }
       }
     });
@@ -118,6 +121,9 @@ export class PrismaDoseRepository extends IDoseRepository {
         immunotherapyId,
         createdBy: {
           organizationId: orgId
+        },
+        status: {
+          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE']
         }
       }
     });

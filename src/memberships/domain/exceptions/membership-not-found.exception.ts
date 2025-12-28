@@ -6,3 +6,4 @@ export class MembershipNotFoundException extends DomainException {
   }
 }
 
+

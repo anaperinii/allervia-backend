@@ -1,10 +1,11 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import { Membership } from "src/memberships/domain/entities/membership.entity";
 import { IMembershipRepository } from "src/memberships/domain/contracts/membership.repository.interface";
 import { FindOrganizationUseCase } from "src/organizations/application/use-cases/find-organization.use-case";
+import { MembershipAlreadyExistsException } from "src/memberships/domain/exceptions/membership-already-exists.exception";
 
 @Injectable()
-export class AddMembershipForAdminUseCase {
+export class AddMembershipForSystemAdminUseCase {
     constructor(
         private membershipRepository: IMembershipRepository,
         private findOrganizationUseCase: FindOrganizationUseCase
@@ -17,7 +18,7 @@ export class AddMembershipForAdminUseCase {
         const existing = await this.membershipRepository.findByUserId(userId);
         
         if (existing) {
-            throw new ConflictException('Membership já existe');
+            throw new MembershipAlreadyExistsException(userId, orgId);
         }
         
         await this.findOrganizationUseCase.execute(orgId);

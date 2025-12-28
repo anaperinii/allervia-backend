@@ -3,14 +3,14 @@ import { CurrentUser } from "src/security/decorators/current-user.decorator";
 import type { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { Roles } from "src/security/decorators/roles.decorator";
 import { AddMembershipDto } from "../../application/dtos/add-membership.dto";
-import { AddMembershipForAdminUseCase } from "../../application/use-cases/add-membership-for-admin.use-case";
+import { AddMembershipForSystemAdminUseCase } from "../../application/use-cases/add-membership-for-admin.use-case";
 import { ListMembershipsByUserUseCase } from "../../application/use-cases/list-memberships-by-user.use-case";
 import { ChangeMembershipStatusUseCase } from "src/memberships/application/use-cases/change-membership-status.use-case";
 
 @Controller('memberships')
 export class MembershipsController {
     constructor(
-        private addMembershipForAdminUseCase: AddMembershipForAdminUseCase,
+        private addMembershipForAdminUseCase: AddMembershipForSystemAdminUseCase,
         private listMembershipsByUserUseCase: ListMembershipsByUserUseCase,
         private changeMembershipStatusUseCase: ChangeMembershipStatusUseCase
     ) {}

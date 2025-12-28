@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { ListInvitesQueryDto } from '../dtos/list-invites-query.dto';
 import { FindInviteByOrgUseCase } from './find-invite-by-org.use-case';
-import { FindUserByIdUseCase } from 'src/account/application/use-cases/find-user-by-id.use-case';
+import { FindUserByIdUseCase } from 'src/account/profiles/application/use-cases/find-user-by-id.use-case';
 
 @Injectable()
 export class ListInvitesUseCase {

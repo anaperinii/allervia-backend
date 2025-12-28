@@ -8,6 +8,7 @@ export class ChangeMembershipStatusUseCase {
     constructor(private membershipRepository: IMembershipRepository) {}
 
     async execute (currentUser: AuthenticatedUserPayload, orgId: string) {
+
         const membership = await this.membershipRepository.findByUserAndOrganization(currentUser.id, orgId);
 
         if (!membership) {
@@ -20,8 +21,8 @@ export class ChangeMembershipStatusUseCase {
             membership.activate();
         }
 
-        const cancelledMembership = await this.membershipRepository.update(membership.id, membership);
+        const updatedMembership = await this.membershipRepository.update(membership.id, membership);
 
-        return cancelledMembership;
+        return updatedMembership;
     }
 }

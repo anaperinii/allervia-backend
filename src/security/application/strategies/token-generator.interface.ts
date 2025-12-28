@@ -5,3 +5,4 @@ export interface ITokenGenerator {
   generate(user: UserForAuth, activeOrgId?: string): Promise<LoginResponseDto>;
 }
 
+

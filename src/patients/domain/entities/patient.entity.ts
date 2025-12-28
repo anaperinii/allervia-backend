@@ -103,24 +103,4 @@ export class Patient {
   unarchive(): void {
     this.isArchived = false
   }
-
-  toJSON() {
-    return {
-      id: this.id,
-      fullName: this.fullName,
-      birthDate: this.birthDate,
-      weightInKg: this.weightInKg,
-      phoneNumber: this.phoneNumber,
-      primaryOrganizationId: this.primaryOrganizationId,
-      userId: this.userId,
-      isActive: this.isActive,
-      isArchived: this.isArchived,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      createdById: this.createdById,
-      updatedById: this.updatedById,
-      archivedById: this.archivedById,
-      archivedAt: this.archivedAt
-    };
-  }
 }

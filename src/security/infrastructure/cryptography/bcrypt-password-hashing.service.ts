@@ -4,13 +4,15 @@ import { IPasswordHashingService } from '../../domain/contracts/password-hashing
 
 @Injectable()
 export class BcryptPasswordHashingService extends IPasswordHashingService {
+  private readonly SALT_ROUNDS = 10;
+
   async hash(password: string): Promise<string> {
-    const saltRounds = 10;
-    return bcrypt.hash(password, saltRounds);
+    return bcrypt.hash(password, this.SALT_ROUNDS);
   }
 
   async compare(password: string, hash: string): Promise<boolean> {
     return bcrypt.compare(password, hash);
   }
 }
+
 

@@ -14,7 +14,6 @@ import { RegisterStrategyFactory } from './register/application/strategies/regis
 import { IUserInviteRepository } from 'src/onboarding/invite/domain/contracts/user-invite.repository.interface';
 import { PrismaUserInviteRepository } from 'src/onboarding/invite/infrastructure/persistence/prisma-user-invite.repository';
 import { OrganizationsModule } from 'src/organizations/organizations.module';
-import { RolesModule } from 'src/roles/roles.module';
 import { AdminInviteStrategy } from './invite/application/strategies/admin-invite.strategy';
 import { SystemAdminInviteStrategy } from './invite/application/strategies/system-admin-invite.strategy';
 import { ProfessionalRegisterStrategy } from './register/application/strategies/professional-register.strategy';
@@ -26,7 +25,7 @@ import { ValidateInviteForRegisterUseCase } from './invite/application/use-cases
 import { FindActiveInviteUseCase } from './invite/application/use-cases/find-active-invite.use-case';
 
 @Module({
-  imports: [PrismaModule, AccountModule, AuthModule, OrganizationsModule, RolesModule],
+  imports: [PrismaModule, AccountModule, AuthModule, OrganizationsModule],
   providers: [
     // Use Cases
     CreateInviteUseCase,

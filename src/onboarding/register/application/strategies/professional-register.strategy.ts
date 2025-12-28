@@ -2,20 +2,20 @@ import { Injectable } from "@nestjs/common";
 import { RegisterStrategy } from "./register.strategy";
 import { UserInvite } from "src/onboarding/invite/domain/entities/user-invite.entity";
 import { PrismaService } from "src/database/prisma/prisma.service";
-import { AddRoleToUserUseCase } from "src/roles/application/use-cases/add-role-to-user.use-case";
-import { IHashingService } from "src/account/domain/contracts/hashing.service.interface";
-import { User } from "src/account/domain/entities/user.entity";
-import { ProfileInternalUserDto } from "src/account/application/dtos/profile-internal-user.dto";
-import { IUserRepository } from "src/account/domain/contracts/user.repository.interface";
+import { AddRoleToUserUseCase } from "src/account/roles/application/use-cases/add-role-to-user.use-case";
+import { User } from "src/account/profiles/domain/entities/user.entity";
+import { ProfileInternalUserDto } from "src/account/profiles/application/dtos/profile-internal-user.dto";
+import { IUserRepository } from "src/account/profiles/domain/contracts/user.repository.interface";
 import { IUserInviteRepository } from "src/onboarding/invite/domain/contracts/user-invite.repository.interface";
 import { RegisterUser } from "../../domain/contracts/register.interface";
+import { IPasswordHashingService } from "src/security/domain/contracts/password-hashing.service.interface";
 
 
 @Injectable()
 export class ProfessionalRegisterStrategy implements RegisterStrategy {
     constructor(
       private prisma: PrismaService,
-      private hashingService: IHashingService,
+      private hashingService: IPasswordHashingService,
       private addRoleToUserUseCase: AddRoleToUserUseCase,
       private userRepository: IUserRepository, 
       private inviteRepository: IUserInviteRepository

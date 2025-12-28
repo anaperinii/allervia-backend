@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { Public } from 'src/security/decorators/public.decorator';
 import { RegisterStrategyContext } from '../application/strategies/register-strategy.context';
-import { ProfileInternalUserDto } from 'src/account/application/dtos/profile-internal-user.dto';
+import { ProfileInternalUserDto } from 'src/account/profiles/application/dtos/profile-internal-user.dto';
 
 @Controller('onboarding/registration')
 export class RegistrationController {

@@ -30,7 +30,7 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
       organizationId: user.organizationId,
       roles: user.roles.map(r => ({
         roleTag: r.roleTag,
-        name: r.role.name,
+        name: r.role.name
       })),
       memberships: user.memberships.map(m => ({
         organizationId: m.organizationId,
@@ -40,4 +40,5 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
     };
   }
 }
+
 

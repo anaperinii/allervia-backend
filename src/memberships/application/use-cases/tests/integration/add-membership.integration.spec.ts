@@ -6,10 +6,10 @@ import { TestDatabaseManager } from "test/database/test-database.manager";
 import { FindOrganizationUseCase } from "src/organizations/application/use-cases/find-organization.use-case";
 import { IOrganizationRepository } from "src/organizations/domain/contracts/organization.repository.interface";
 import { PrismaOrganizationRepository } from "src/organizations/infrastructure/persistence/prisma-organization.repository";
-import { ConflictException } from "@nestjs/common";
 import { AddMembershipDto } from "src/memberships/application/dtos/add-membership.dto";
 import { IMembershipRepository } from "src/memberships/domain/contracts/membership.repository.interface";
 import { PrismaMembershipRepository } from "src/memberships/infrastructure/persistence/prisma-membership.repository";
+import { MembershipAlreadyExistsException } from "src/memberships/domain/exceptions/membership-already-exists.exception";
 
 describe('AddMembershipUseCase - Integration', () => {
     let module: TestingModule;
@@ -81,7 +81,8 @@ describe('AddMembershipUseCase - Integration', () => {
 
         await addMembershipUseCase.execute(dto, authenticatedUser);
 
-        await expect(addMembershipUseCase.execute(dto, authenticatedUser)).rejects.toThrow(ConflictException);
+        await expect(addMembershipUseCase.execute(dto, authenticatedUser)).rejects.toThrow(MembershipAlreadyExistsException);
     });
 })
+
 

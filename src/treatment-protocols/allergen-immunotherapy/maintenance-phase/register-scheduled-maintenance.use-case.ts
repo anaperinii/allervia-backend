@@ -18,13 +18,18 @@ export class RegisterNextScheduledMaintenanceUseCase {
     ) {}
 
     async execute(registeredDose: Dose, currentUser: AuthenticatedUserPayload, immunotherapy: Immunotherapy): Promise<Dose> {
+        // Validar que a dose foi administrada (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
+        if (!registeredDose.administeredAt || 
+            (registeredDose.status !== 'ADMINISTERED_ON_SCHEDULE' && registeredDose.status !== 'ADMINISTERED_OFF_SCHEDULE')) {
+            throw new Error('Apenas doses administradas podem gerar próxima dose agendada');
+        }
 
         const nextIntervalDays = await this.calculateNextMaintenanceInterval(registeredDose, currentUser);
 
         const dto = {
             concentration: immunotherapy.targetConcentration,
             volume: immunotherapy.targetVolume,
-            scheduledAt: addDate(registeredDose.administeredAt!, nextIntervalDays),
+            scheduledAt: addDate(registeredDose.administeredAt, nextIntervalDays),
             nextIntervalInDays: nextIntervalDays,
             immunotherapyId: immunotherapy.id
         } as CreateScheduledDoseData;

@@ -6,3 +6,4 @@ export class InvalidBirthDateException extends DomainException {
   }
 }
 
+

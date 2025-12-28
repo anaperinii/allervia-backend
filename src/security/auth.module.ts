@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtStrategy } from './infrastructure/jwt/jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
@@ -76,6 +76,7 @@ import { RolesGuard } from './guards/roles.guard';
   exports: [
     IJwtTokenService,
     IUserAuthRepository,
+    IPasswordHashingService,
     OrganizationContextFactory,
     OrganizationContextGuard,
     RoleValidationFactory,

@@ -40,15 +40,4 @@ export class Membership {
   deactivate(): void {
     this.isActive = false;
   }
-
-  toJSON() {
-    return {
-      id: this.id,
-      userId: this.userId,
-      organizationId: this.organizationId,
-      isActive: this.isActive,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
-    };
-  }
 }

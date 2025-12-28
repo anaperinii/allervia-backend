@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { AuthenticatedUserPayload } from '../types/auth.types';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { Request } from 'express';
-import { IUserRepository } from 'src/account/domain/contracts/user.repository.interface';
+import { IUserRepository } from 'src/account/profiles/domain/contracts/user.repository.interface';
 import { OrganizationContextFactory } from './strategies/organization-context.factory';
 
 @Injectable()

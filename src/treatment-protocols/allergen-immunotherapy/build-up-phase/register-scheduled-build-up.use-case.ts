@@ -17,13 +17,18 @@ export class RegisterNextScheduledBuildUpUseCase {
     ) {}
 
     async execute(registeredDose: Dose, currentUser: AuthenticatedUserPayload, immunotherapy: Immunotherapy): Promise<Dose> {
+        // Validar que a dose foi administrada (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
+        if (!registeredDose.administeredAt || 
+            (registeredDose.status !== 'ADMINISTERED_ON_SCHEDULE' && registeredDose.status !== 'ADMINISTERED_OFF_SCHEDULE')) {
+            throw new Error('Apenas doses administradas podem gerar próxima dose agendada');
+        }
 
         if (registeredDose.concentration === immunotherapy.targetConcentration 
             && registeredDose.volume === immunotherapy.targetVolume - 0.1) {
                 const dto = {
                     concentration: immunotherapy.targetConcentration,
                     volume: immunotherapy.targetVolume,
-                    scheduledAt: addDate(registeredDose.administeredAt!, BUILD_UP_INTERVAL),
+                    scheduledAt: addDate(registeredDose.administeredAt, BUILD_UP_INTERVAL),
                     nextIntervalInDays: BUILD_UP_INTERVAL,
                     immunotherapyId: immunotherapy.id
                 } as CreateScheduledDoseData;
@@ -36,7 +41,7 @@ export class RegisterNextScheduledBuildUpUseCase {
         const dto = {
             concentration: nextConcentration,
             volume: nextVolume,
-            scheduledAt: addDate(registeredDose.administeredAt!, BUILD_UP_INTERVAL),
+            scheduledAt: addDate(registeredDose.administeredAt, BUILD_UP_INTERVAL),
             nextIntervalInDays: BUILD_UP_INTERVAL,
             immunotherapyId: immunotherapy.id
         } as CreateScheduledDoseData;
