@@ -23,10 +23,12 @@ export class UpdateDoseStatusUseCase {
     }
 
     dose.changeStatus(dto);
+    dose.updatedById = currentUser.id;
 
     const savedDose = await this.doseRepository.update(dose.id, dose);
 
     return savedDose;
   }
 }
+
 

@@ -6,3 +6,4 @@ export class DoseAlreadyArchivedException extends DomainException {
   }
 }
 
+

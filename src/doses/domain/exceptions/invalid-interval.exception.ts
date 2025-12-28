@@ -6,3 +6,4 @@ export class InvalidIntervalException extends DomainException {
   }
 }
 
+

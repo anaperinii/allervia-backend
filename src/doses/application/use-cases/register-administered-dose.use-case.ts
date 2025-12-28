@@ -10,7 +10,7 @@ import { FindImmunotherapyUseCase } from 'src/immunotherapies/application/use-ca
 import { Immunotherapy } from 'src/immunotherapies/domain/entities/immunotherapy.entity';
 
 @Injectable()
-export class UpdateDoseUseCase {
+export class RegisterAdministeredDoseUseCase {
   constructor(
     private readonly findDoseUseCase: FindDoseUseCase,
     private readonly buildUpProtocol: IBuildUpPhase,
@@ -35,7 +35,9 @@ export class UpdateDoseUseCase {
     
     // Se houver administeredAt, atualizar status e administeredById
     if (dto.administeredAt) {
-      updateData.status = 'ADMINISTERED';
+      dose.administered(dto);
+      // Copiar o status atualizado da entity para o updateData
+      updateData.status = dose.status;
       updateData.administeredById = currentUser.id;
     }
     
@@ -52,5 +54,3 @@ export class UpdateDoseUseCase {
     return updatedDose;
   }
 }
-
-

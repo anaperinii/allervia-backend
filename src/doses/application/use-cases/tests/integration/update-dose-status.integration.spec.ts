@@ -6,7 +6,6 @@ import { IDoseRepository } from "src/doses/domain/contracts/dose.repository.inte
 import { PrismaDoseRepository } from "src/doses/infrastructure/persistence/prisma-dose.repository";
 import { ulid } from "ulid";
 import { DoseNotFoundException } from "src/doses/domain/exceptions/dose-not-found.exception";
-import { UpdateDoseUseCase } from "../../update-dose.use-case";
 import { IBuildUpPhase } from "src/treatment-protocols/allergen-immunotherapy/build-up-phase/build-up-phase.interface";
 import { BuildUpPhaseService } from "src/treatment-protocols/allergen-immunotherapy/build-up-phase/build-up-phase.service";
 import { IMaintenancePhase } from "src/treatment-protocols/allergen-immunotherapy/maintenance-phase/maintenance-phase.interface";
@@ -25,10 +24,11 @@ import { BUILD_UP_INTERVAL, STARTING_DOSE_CONCENTRATION, STARTING_DOSE_VOLUME } 
 import { MAINTENANCE_INTERVALS } from "src/treatment-protocols/allergen-immunotherapy/maintenance-phase/maintenance-phase.variables";
 import { DoseStatus } from "@prisma/client";
 import { addDate } from "src/shared/utils";
+import { RegisterAdministeredDoseUseCase } from "../../register-administered-dose.use-case";
 
-describe('UpdateDoseUseCase - Integration', () => {
+describe('registerAdministeredDoseUseCase - Integration', () => {
     let module: TestingModule;
-    let updateDoseUseCase: UpdateDoseUseCase;
+    let registerAdministeredDoseUseCase: RegisterAdministeredDoseUseCase;
     let findDoseUseCase: FindDoseUseCase;
     let findImmunotherapyUseCase: FindImmunotherapyUseCase;
     let buildUpProtocol: IBuildUpPhase;
@@ -42,7 +42,7 @@ describe('UpdateDoseUseCase - Integration', () => {
 
         module = await Test.createTestingModule({
             providers: [
-                UpdateDoseUseCase,
+                RegisterAdministeredDoseUseCase,
                 FindDoseUseCase,
                 FindImmunotherapyUseCase,
                 CreateDoseUseCase,
@@ -74,7 +74,7 @@ describe('UpdateDoseUseCase - Integration', () => {
             ]
         }).compile();
 
-        updateDoseUseCase = module.get(UpdateDoseUseCase);
+        registerAdministeredDoseUseCase = module.get(RegisterAdministeredDoseUseCase);
         buildUpProtocol = module.get(IBuildUpPhase);
         maintenanceProtocol = module.get(IMaintenancePhase);
         findDoseUseCase = module.get(FindDoseUseCase);
@@ -134,14 +134,14 @@ describe('UpdateDoseUseCase - Integration', () => {
                 notes: "Dose administrada com sucesso"
             };
 
-            const result = await updateDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
             expect(result).toBeDefined();
             expect(result.concentration).toBe(STARTING_DOSE_CONCENTRATION);
             expect(result.volume).toBe(STARTING_DOSE_VOLUME * 2);
             expect(result.administeredAt).toBeDefined();
             expect(result.notes).toBe(dto.notes);
-            expect(result.status).toBe(DoseStatus.ADMINISTERED);
+            expect([DoseStatus.ADMINISTERED_ON_SCHEDULE, DoseStatus.ADMINISTERED_OFF_SCHEDULE]).toContain(result.status);
 
             // Verificar se a próxima dose foi criada automaticamente
             const nextDose = await prisma.dose.findFirst({
@@ -196,7 +196,7 @@ describe('UpdateDoseUseCase - Integration', () => {
                     administeredById: authenticatedUser.id,
                     createdById: authenticatedUser.id,
                     updatedById: authenticatedUser.id,
-                    status: 'ADMINISTERED',
+                    status: 'ADMINISTERED_ON_SCHEDULE',
                     nextIntervalInDays: BUILD_UP_INTERVAL
                 });
             }
@@ -220,10 +220,10 @@ describe('UpdateDoseUseCase - Integration', () => {
                 administeredAt: administeredDate
             };
 
-            const result = await updateDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
             expect(result).toBeDefined();
-            expect(result.status).toBe(DoseStatus.ADMINISTERED);
+            expect([DoseStatus.ADMINISTERED_ON_SCHEDULE, DoseStatus.ADMINISTERED_OFF_SCHEDULE]).toContain(result.status);
 
             // Verificar se a próxima dose foi criada com nova concentração
             const nextDose = await prisma.dose.findFirst({
@@ -283,10 +283,10 @@ describe('UpdateDoseUseCase - Integration', () => {
                 administeredAt: administeredDate
             };
 
-            const result = await updateDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
             expect(result).toBeDefined();
-            expect(result.status).toBe(DoseStatus.ADMINISTERED);
+            expect([DoseStatus.ADMINISTERED_ON_SCHEDULE, DoseStatus.ADMINISTERED_OFF_SCHEDULE]).toContain(result.status);
 
             // Verificar se a próxima dose foi criada com targetConcentration e targetVolume
             const nextDose = await prisma.dose.findFirst({
@@ -349,10 +349,10 @@ describe('UpdateDoseUseCase - Integration', () => {
                 notes: "Primeira dose de manutenção"
             };
 
-            const result = await updateDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
             expect(result).toBeDefined();
-            expect(result.status).toBe(DoseStatus.ADMINISTERED);
+            expect([DoseStatus.ADMINISTERED_ON_SCHEDULE, DoseStatus.ADMINISTERED_OFF_SCHEDULE]).toContain(result.status);
             expect(result.concentration).toBe(targetConcentration);
             expect(result.volume).toBe(targetVolume);
 
@@ -410,7 +410,7 @@ describe('UpdateDoseUseCase - Integration', () => {
                     administeredById: authenticatedUser.id,
                     createdById: authenticatedUser.id,
                     updatedById: authenticatedUser.id,
-                    status: 'ADMINISTERED',
+                    status: 'ADMINISTERED_ON_SCHEDULE',
                     nextIntervalInDays: currentInterval
                 });
             }
@@ -434,10 +434,10 @@ describe('UpdateDoseUseCase - Integration', () => {
                 administeredAt: administeredDate
             };
 
-            const result = await updateDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
             expect(result).toBeDefined();
-            expect(result.status).toBe(DoseStatus.ADMINISTERED);
+            expect([DoseStatus.ADMINISTERED_ON_SCHEDULE, DoseStatus.ADMINISTERED_OFF_SCHEDULE]).toContain(result.status);
 
             // Verificar se a próxima dose foi criada mantendo o mesmo intervalo (14 dias)
             const nextDose = await prisma.dose.findFirst({
@@ -491,7 +491,7 @@ describe('UpdateDoseUseCase - Integration', () => {
                     administeredById: authenticatedUser.id,
                     createdById: authenticatedUser.id,
                     updatedById: authenticatedUser.id,
-                    status: 'ADMINISTERED',
+                    status: 'ADMINISTERED_ON_SCHEDULE',
                     nextIntervalInDays: currentInterval
                 });
             }
@@ -515,10 +515,10 @@ describe('UpdateDoseUseCase - Integration', () => {
                 administeredAt: administeredDate
             };
 
-            const result = await updateDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
             expect(result).toBeDefined();
-            expect(result.status).toBe(DoseStatus.ADMINISTERED);
+            expect([DoseStatus.ADMINISTERED_ON_SCHEDULE, DoseStatus.ADMINISTERED_OFF_SCHEDULE]).toContain(result.status);
 
             // Verificar se a próxima dose foi criada com o próximo intervalo (21 dias)
             const nextDose = await prisma.dose.findFirst({
@@ -572,7 +572,7 @@ describe('UpdateDoseUseCase - Integration', () => {
                     administeredById: authenticatedUser.id,
                     createdById: authenticatedUser.id,
                     updatedById: authenticatedUser.id,
-                    status: 'ADMINISTERED',
+                    status: 'ADMINISTERED_ON_SCHEDULE',
                     nextIntervalInDays: lastInterval
                 });
             }
@@ -596,10 +596,10 @@ describe('UpdateDoseUseCase - Integration', () => {
                 administeredAt: administeredDate
             };
 
-            const result = await updateDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
             expect(result).toBeDefined();
-            expect(result.status).toBe(DoseStatus.ADMINISTERED);
+            expect([DoseStatus.ADMINISTERED_ON_SCHEDULE, DoseStatus.ADMINISTERED_OFF_SCHEDULE]).toContain(result.status);
 
             // Verificar se a próxima dose foi criada mantendo o último intervalo (28 dias)
             const nextDose = await prisma.dose.findFirst({
@@ -619,6 +619,98 @@ describe('UpdateDoseUseCase - Integration', () => {
         });
     });
 
+    describe('Status de administração - On Schedule vs Off Schedule', () => {
+        it('deve marcar como ADMINISTERED_ON_SCHEDULE quando administrada na data agendada', async () => {
+            const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
+
+            const patient = await factories.patients.create({
+                primaryOrganizationId: authenticatedUser.activeOrgId,
+                createdById: authenticatedUser.id,
+                updatedById: authenticatedUser.id
+            });
+
+            const immunotherapy = await factories.immunotherapies.create({
+                inductionStartDate: new Date('2026-01-15'),
+                targetConcentration: 10,
+                targetVolume: 0.5,
+                responsiblePhysicianId: authenticatedUser.id,
+                createdById: authenticatedUser.id,
+                updatedById: authenticatedUser.id,
+                patientId: patient.id
+            });
+
+            const scheduledDate = new Date('2026-01-22');
+            const scheduledDose = await factories.doses.create({
+                concentration: STARTING_DOSE_CONCENTRATION,
+                volume: STARTING_DOSE_VOLUME,
+                scheduledAt: scheduledDate,
+                immunotherapyId: immunotherapy.id,
+                createdById: authenticatedUser.id,
+                updatedById: authenticatedUser.id,
+                status: 'SCHEDULED',
+                nextIntervalInDays: BUILD_UP_INTERVAL
+            });
+
+            // Administrar na mesma data agendada
+            const dto = {
+                concentration: STARTING_DOSE_CONCENTRATION,
+                volume: STARTING_DOSE_VOLUME,
+                administeredAt: new Date('2026-01-22T10:00:00') // Mesma data, hora diferente
+            };
+
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+
+            expect(result).toBeDefined();
+            expect(result.status).toBe(DoseStatus.ADMINISTERED_ON_SCHEDULE);
+            expect(result.administeredAt).toBeDefined();
+        });
+
+        it('deve marcar como ADMINISTERED_OFF_SCHEDULE quando administrada em data diferente da agendada', async () => {
+            const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
+
+            const patient = await factories.patients.create({
+                primaryOrganizationId: authenticatedUser.activeOrgId,
+                createdById: authenticatedUser.id,
+                updatedById: authenticatedUser.id
+            });
+
+            const immunotherapy = await factories.immunotherapies.create({
+                inductionStartDate: new Date('2026-01-15'),
+                targetConcentration: 10,
+                targetVolume: 0.5,
+                responsiblePhysicianId: authenticatedUser.id,
+                createdById: authenticatedUser.id,
+                updatedById: authenticatedUser.id,
+                patientId: patient.id
+            });
+
+            const scheduledDate = new Date('2026-01-22');
+            const scheduledDose = await factories.doses.create({
+                concentration: STARTING_DOSE_CONCENTRATION,
+                volume: STARTING_DOSE_VOLUME,
+                scheduledAt: scheduledDate,
+                immunotherapyId: immunotherapy.id,
+                createdById: authenticatedUser.id,
+                updatedById: authenticatedUser.id,
+                status: 'SCHEDULED',
+                nextIntervalInDays: BUILD_UP_INTERVAL
+            });
+
+            // Administrar em data diferente (um dia antes)
+            const dto = {
+                concentration: STARTING_DOSE_CONCENTRATION,
+                volume: STARTING_DOSE_VOLUME,
+                administeredAt: new Date('2026-01-21T10:00:00')
+            };
+
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+
+            expect(result).toBeDefined();
+            expect(result.status).toBe(DoseStatus.ADMINISTERED_OFF_SCHEDULE);
+            expect(result.administeredAt).toBeDefined();
+        });
+    });
+
     describe('Casos de erro', () => {
         it('deve lançar exceção quando dose não é encontrada', async () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
@@ -630,7 +722,7 @@ describe('UpdateDoseUseCase - Integration', () => {
             };
 
             await expect(
-                updateDoseUseCase.execute(ulid(), dto, authenticatedUser)
+                registerAdministeredDoseUseCase.execute(ulid(), dto, authenticatedUser)
             ).rejects.toThrow(DoseNotFoundException);
         });
 
@@ -669,7 +761,7 @@ describe('UpdateDoseUseCase - Integration', () => {
                 // Sem administeredAt - não deve criar próxima dose
             };
 
-            const result = await updateDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
+            const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
             expect(result).toBeDefined();
             expect(result.notes).toBe(dto.notes);

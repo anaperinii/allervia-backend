@@ -74,7 +74,7 @@ describe('UpdateDoseUseCase - Integration', () => {
             administeredById: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
-            status: 'ADMINISTERED'
+            status: 'ADMINISTERED_ON_SCHEDULE'
         });
 
         console.log(dose)
@@ -110,7 +110,7 @@ describe('UpdateDoseUseCase - Integration', () => {
             administeredById: authenticatedUser.id,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
-            status: 'ADMINISTERED'
+            status: 'ADMINISTERED_ON_SCHEDULE'
         });
 
         console.log(dose)

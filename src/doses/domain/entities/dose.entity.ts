@@ -106,7 +106,20 @@ export class Dose {
   administered(props: Partial<UpdateDoseData>): void {
     const administeredAt = props.administeredAt ?? this.administeredAt;
     if (administeredAt && this.status === 'SCHEDULED') {
-      this.status = 'ADMINISTERED';
+      const administeredDate = new Date(administeredAt);
+      const scheduledDate = new Date(this.scheduledAt);
+      
+      // Comparar strings de data no formato YYYY-MM-DD para evitar problemas de timezone
+      const administeredDateStr = administeredDate.toISOString().split('T')[0];
+      const scheduledDateStr = scheduledDate.toISOString().split('T')[0];
+      
+      const isSameDate = administeredDateStr === scheduledDateStr;
+      
+      if (isSameDate) {
+        this.status = 'ADMINISTERED_ON_SCHEDULE';
+      } else {
+        this.status = 'ADMINISTERED_OFF_SCHEDULE';
+      }
     }
   }
 
@@ -114,9 +127,10 @@ export class Dose {
 
     const newStatus = props.status;
 
-    if (this.status === 'ADMINISTERED' && newStatus !== 'ENTERED_IN_ERROR') {
+    // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
+    if (String(this.status).startsWith('ADMINISTERED') && newStatus !== 'ENTERED_IN_ERROR') {
       throw new InvalidDoseStatusException(
-      'Doses administradas podem ser alteradas apenas para registro errôneo'
+        'Doses administradas podem ser alteradas apenas para registro errôneo'
       );
     }
 
@@ -132,7 +146,8 @@ export class Dose {
       );
     }
 
-    if (this.status === 'ADMINISTERED' && newStatus === 'ENTERED_IN_ERROR') {
+    // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
+    if (String(this.status).startsWith('ADMINISTERED') && newStatus === 'ENTERED_IN_ERROR') {
       this.status = newStatus;
       this.archive();
       return;
@@ -152,4 +167,3 @@ export class Dose {
     this.isArchived = true;
   }
 }
-

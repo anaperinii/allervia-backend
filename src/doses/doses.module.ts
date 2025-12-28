@@ -4,7 +4,7 @@ import { ImmunotherapiesModule } from 'src/immunotherapies/immunotherapies.modul
 import { CreateDoseUseCase } from './application/use-cases/create-dose.use-case';
 import { FindDoseUseCase } from './application/use-cases/find-dose.use-case';
 import { ListDosesByTherapyUseCase } from './application/use-cases/list-doses-by-therapy.use-case';
-import { UpdateDoseUseCase } from './application/use-cases/update-dose.use-case';
+import { RegisterAdministeredDoseUseCase } from './application/use-cases/register-administered-dose.use-case';
 import { UpdateDoseStatusUseCase } from './application/use-cases/update-dose-status.use-case';
 import { IDoseRepository } from './domain/contracts/dose.repository.interface';
 import { PrismaDoseRepository } from './infrastructure/persistence/prisma-dose.repository';
@@ -21,7 +21,7 @@ import { TreatmentProtocolsModule } from 'src/treatment-protocols/treatment-prot
     CreateDoseUseCase,
     FindDoseUseCase,
     ListDosesByTherapyUseCase,
-    UpdateDoseUseCase,
+    RegisterAdministeredDoseUseCase,
     UpdateDoseStatusUseCase,
     CountDosesByConcentration,
     CountDosesByIntervalUseCase,

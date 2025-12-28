@@ -6,7 +6,7 @@ import { Roles } from 'src/security/decorators/roles.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { FindDoseUseCase } from '../../application/use-cases/find-dose.use-case';
 import { ListDosesByTherapyUseCase } from '../../application/use-cases/list-doses-by-therapy.use-case';
-import { UpdateDoseUseCase } from '../../application/use-cases/update-dose.use-case';
+import { RegisterAdministeredDoseUseCase } from '../../application/use-cases/register-administered-dose.use-case';
 import { UpdateDoseStatusUseCase } from '../../application/use-cases/update-dose-status.use-case';
 import { UpdateDoseDto } from '../../application/dtos/update-dose.dto';
 import { UpdateDoseStatusDto } from '../../application/dtos/update-dose-status.dto';
@@ -16,7 +16,7 @@ export class DosesController {
   constructor(
     private readonly findDoseUseCase: FindDoseUseCase,
     private readonly listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
-    private readonly updateDoseUseCase: UpdateDoseUseCase,
+    private readonly updateDoseUseCase: RegisterAdministeredDoseUseCase,
     private readonly updateDoseStatusUseCase: UpdateDoseStatusUseCase,
   ) {}
 
@@ -51,5 +51,6 @@ export class DosesController {
     return this.updateDoseStatusUseCase.execute(id, dto, currentUser);
   }
 }
+
 
 
