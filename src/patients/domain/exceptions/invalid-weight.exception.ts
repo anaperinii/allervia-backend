@@ -7,3 +7,4 @@ export class InvalidWeightException extends DomainException {
 }
 
 
+

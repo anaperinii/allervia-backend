@@ -1,0 +1,23 @@
+import { Injectable } from "@nestjs/common";
+import { IImmunotherapyRepository } from "../domain/interfaces/immunotherapy.repository.interface";
+import { ImmunotherapyResponseDto } from "../dtos/immunotherapy-response.dto";
+import { ImmunotherapyNotFoundException } from "../domain/exceptions/immunotherapy-not-found.exception";
+
+@Injectable()
+export class FindImmunotherapyUseCase {
+  constructor(
+    private readonly immunotherapyRepository: IImmunotherapyRepository
+  ) {}
+
+  async execute(id: string, organizationId: string): Promise<ImmunotherapyResponseDto> {
+    const immunotherapy = await this.immunotherapyRepository.findById(id, organizationId);
+
+    if (!immunotherapy) {
+      throw new ImmunotherapyNotFoundException(id);
+    }
+
+    return immunotherapy;
+  }
+}
+
+

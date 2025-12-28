@@ -6,21 +6,21 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OrganizationContextGuard } from './guards/organization-context.guard';
 import { MembershipsModule } from 'src/memberships/memberships.module';
-import { PrismaModule } from 'src/database/prisma/prisma.module';
+import { PrismaModule } from 'src/database/prisma.module';
 import { AccountModule } from 'src/account/account.module';
-import { LoginUseCase } from './application/use-cases/login.use-case';
-import { SwitchOrganizationUseCase } from './application/use-cases/switch-organization.use-case';
-import { IPasswordHashingService } from './domain/contracts/password-hashing.service.interface';
+import { LoginUseCase } from './use-cases/login.use-case';
+import { SwitchOrganizationUseCase } from './use-cases/switch-organization.use-case';
+import { IPasswordHashingService } from './interfaces/password-hashing.service.interface';
 import { BcryptPasswordHashingService } from './infrastructure/cryptography/bcrypt-password-hashing.service';
-import { IJwtTokenService } from './domain/contracts/jwt-token.service.interface';
+import { IJwtTokenService } from './interfaces/jwt-token.service.interface';
 import { NestJwtTokenService } from './infrastructure/jwt/jwt-token.service';
-import { IUserAuthRepository } from './domain/contracts/user-auth.repository.interface';
-import { PrismaUserAuthRepository } from './infrastructure/persistence/prisma-user-auth.repository';
-import { TokenGeneratorFactory } from './application/factories/token-generator.factory';
-import { AuthController } from './presentation/controllers/auth.controller';
-import { RoleValidationFactory } from './guards/strategies/role-validation.factory';
-import { OrganizationContextFactory } from './guards/strategies/organization-context.factory';
+import { IUserAuthRepository } from './interfaces/user-auth.repository.interface';
+import { PrismaUserAuthRepository } from './infrastructure/repositories/prisma-user-auth.repository';
+import { TokenGeneratorFactory } from './factories/token-generator.factory';
 import { RolesGuard } from './guards/roles.guard';
+import { AuthController } from './controllers/auth.controller';
+import { OrganizationContextFactory } from './factories/organization-context.factory';
+import { RoleValidationFactory } from './factories/role-validation.factory';
 
 @Module({
   imports: [

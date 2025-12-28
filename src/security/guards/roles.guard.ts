@@ -9,7 +9,8 @@ import { Observable } from 'rxjs';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { AuthenticatedUserPayload } from '../types/auth.types';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { RoleValidationFactory } from './strategies/role-validation.factory';
+import { RoleValidationFactory } from '../factories/role-validation.factory';
+
 
 @Injectable()
 export class RolesGuard implements CanActivate {

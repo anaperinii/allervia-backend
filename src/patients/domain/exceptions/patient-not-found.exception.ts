@@ -7,3 +7,4 @@ export class PatientNotFoundException extends DomainException {
 }
 
 
+
