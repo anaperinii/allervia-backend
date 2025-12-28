@@ -11,7 +11,6 @@ import { DosesModule } from './doses/doses.module';
 import { OrganizationContextGuard } from './security/guards/organization-context.guard';
 import { RolesGuard } from './security/guards/roles.guard';
 import { OrganizationsModule } from './organizations/organizations.module';
-import { RolesModule } from './roles/roles.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { AccountModule } from './account/account.module';
 import { TreatmentProtocolsModule } from './treatment-protocols/treatment-protocols.module';
@@ -28,7 +27,6 @@ import { TreatmentProtocolsModule } from './treatment-protocols/treatment-protoc
     ImmunotherapiesModule,
     DosesModule,
     OrganizationsModule,
-    RolesModule,
     OnboardingModule,
     AccountModule,
     TreatmentProtocolsModule,
