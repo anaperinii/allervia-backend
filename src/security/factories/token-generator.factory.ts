@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { IJwtTokenService } from '../interfaces/jwt-token.service.interface';
 import { IMembershipRepository } from 'src/memberships/domain/interfaces/membership.repository.interface';
-import { ProfessionalTokenGenerator } from '../strategies/professional-token-generator.strategy';
-import { SystemAdminTokenGenerator } from '../strategies/system-admin-token-generator.strategy';
-import { AdminTokenGenerator } from '../strategies/admin-token-generator.strategy';
-import { PatientTokenGenerator } from '../strategies/patient-token-generator.strategy';
-import { ITokenGenerator } from '../strategies/token-generator.interface';
+import { ProfessionalTokenGenerator } from '../strategies/token-generator/professional-token-generator.strategy';
+import { PatientTokenGenerator } from '../strategies/token-generator/patient-token-generator.strategy';
+import { ITokenGenerator } from '../interfaces/token-generator.interface';
+import { AdminTokenGenerator } from '../strategies/token-generator/admin-token-generator.strategy';
+import { SystemAdminTokenGenerator } from '../strategies/token-generator/system-admin-token-generator.strategy';
 
 @Injectable()
 export class TokenGeneratorFactory {

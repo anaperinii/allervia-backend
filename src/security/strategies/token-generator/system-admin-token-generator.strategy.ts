@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { IJwtTokenService } from '../interfaces/jwt-token.service.interface';
 import { IMembershipRepository } from 'src/memberships/domain/interfaces/membership.repository.interface';
-import { ITokenGenerator } from './token-generator.interface';
+import { ITokenGenerator } from '../interfaces/token-generator.interface';
 import { LoginResponseDto } from '../dtos/login-response.dto';
 import { UserForAuth } from '../interfaces/user-auth.repository.interface';
 
