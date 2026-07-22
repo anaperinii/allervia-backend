@@ -11,7 +11,7 @@ import { InviteStrategyContext } from './strategies/invites/invite-strategy.cont
 import { InviteStrategyFactory } from './strategies/invites/invite-strategy.factory';
 import { IUserInviteRepository } from 'src/onboarding/domain/interfaces/user-invite.repository.interface';
 import { PrismaUserInviteRepository } from 'src/onboarding/infrastructure/repositories/prisma-user-invite.repository';
-import { OrganizationsModule } from 'src/organizations/organizations.module';
+import { OrganizationsModule } from 'src/organization/organization.module';
 import { AdminInviteStrategy } from './strategies/invites/admin-invite.strategy';
 import { SystemAdminInviteStrategy } from './strategies/invites/system-admin-invite.strategy';
 import { FindInviteByIdUseCase } from './use-cases/find-invite-by-id.use-case';
