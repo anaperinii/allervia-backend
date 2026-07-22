@@ -4,12 +4,12 @@ import { ActiveOrganization } from 'src/security/decorators/active-organization.
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { FindDoseUseCase } from '../use-cases/find-dose.use-case';
-import { ListDosesByTherapyUseCase } from '../use-cases/list-doses-by-therapy.use-case';
-import { RegisterAdministeredDoseUseCase } from '../use-cases/register-administered-dose.use-case';
-import { UpdateDoseStatusUseCase } from '../use-cases/update-dose-status.use-case';
-import { UpdateDoseDto } from '../dtos/update-dose.dto';
-import { UpdateDoseStatusDto } from '../dtos/update-dose-status.dto';
+import { FindDoseUseCase } from './use-cases/find-dose.use-case';
+import { ListDosesByTherapyUseCase } from './use-cases/list-doses-by-therapy.use-case';
+import { RegisterAdministeredDoseUseCase } from './use-cases/register-administered-dose.use-case';
+import { UpdateDoseStatusUseCase } from './use-cases/update-dose-status.use-case';
+import { UpdateDoseDto } from './dtos/update-dose.dto';
+import { UpdateDoseStatusDto } from './dtos/update-dose-status.dto';
 
 @Controller('doses')
 export class DosesController {

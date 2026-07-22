@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ProfileInternalUserDto } from 'src/account/dtos/users/profile-internal-user.dto';
 import { Public } from 'src/security/decorators/public.decorator';
-import { RegisterStrategyContext } from '../strategies/register/register-strategy.context';
+import { RegisterStrategyContext } from './strategies/register/register-strategy.context';
 
 @Controller('onboarding/registration')
 export class RegistrationController {

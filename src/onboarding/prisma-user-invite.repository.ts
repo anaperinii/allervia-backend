@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
-import { IUserInviteRepository } from '../../domain/interfaces/user-invite.repository.interface';
-import { UserInvite } from '../../domain/entities/user-invite.entity';
+import { IUserInviteRepository } from './domain/interfaces/user-invite.repository.interface';
+import { UserInvite } from './domain/entities/user-invite.entity';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { FindInvitesFilters, UpdateInviteData } from '../../domain/interfaces/invite.interface';
+import { FindInvitesFilters, UpdateInviteData } from './domain/interfaces/invite.interface';
 import { ITransactionContext } from 'src/database/transaction.interface';
 import { Prisma } from '@prisma/client';
 

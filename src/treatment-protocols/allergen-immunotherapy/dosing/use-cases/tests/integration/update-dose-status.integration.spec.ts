@@ -3,7 +3,7 @@ import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface";
-import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/infrastructure/repositories/prisma-dose.repository";
+import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/prisma-dose.repository";
 import { ulid } from "ulid";
 import { DoseNotFoundException } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/dose-not-found.exception";
 import { IBuildUpPhase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface";
@@ -13,7 +13,7 @@ import { MaintenancePhaseService } from "src/treatment-protocols/allergen-immuno
 import { FindDoseUseCase } from "../../find-dose.use-case";
 import { FindImmunotherapyUseCase } from "src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case";
 import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
-import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/infrastructure/repositories/prisma-immunotherapy.repository";
+import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository";
 import { CreateDoseUseCase } from "../../create-dose.use-case";
 import { CountDosesByConcentration } from "../../count-doses-by-concentration.use-case";
 import { CountDosesByIntervalUseCase } from "../../count-doses-by-interval.use-case";

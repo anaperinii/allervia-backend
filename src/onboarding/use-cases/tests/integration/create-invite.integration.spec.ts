@@ -11,7 +11,7 @@ import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ConflictException } from "@nestjs/common";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
 import { EmailInviteAlreadyActiveException } from "src/onboarding/domain/exceptions/email-invite-already-active.exception";
-import { PrismaUserInviteRepository } from "src/onboarding/infrastructure/repositories/prisma-user-invite.repository";
+import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 import { CreateInviteDto } from "../../../dtos/create-invite.dto";
 import { AdminInviteStrategy } from "../../../strategies/invites/admin-invite.strategy";
 import { InviteStrategyContext } from "../../../strategies/invites/invite-strategy.context";

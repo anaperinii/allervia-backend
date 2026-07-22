@@ -7,7 +7,7 @@ import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ConfigService } from "@nestjs/config";
 import { UnauthorizedException } from "@nestjs/common";
 import { IPasswordHashingService } from "src/security/interfaces/password-hashing.service.interface";
-import { BcryptPasswordHashingService } from "src/security/infrastructure/cryptography/bcrypt-password-hashing.service";
+import { BcryptPasswordHashingService } from "src/security/bcrypt-password-hashing.service";
 import { IUserRepository } from "src/account/user.repository";
 import { UserAlreadyExistsException } from "src/account/exceptions/users/user-already-exists.exception";
 import { ProfileSystemUserDto } from "src/account/dtos/users/profile-system-user.dto";

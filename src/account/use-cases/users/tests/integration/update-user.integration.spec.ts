@@ -6,7 +6,7 @@ import { TestDatabaseManager } from "test/database/test-database.manager";
 import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ulid } from "ulid";
 import { IPasswordHashingService } from "src/security/interfaces/password-hashing.service.interface";
-import { BcryptPasswordHashingService } from "src/security/infrastructure/cryptography/bcrypt-password-hashing.service";
+import { BcryptPasswordHashingService } from "src/security/bcrypt-password-hashing.service";
 import { UserNotFoundException } from "src/account/exceptions/users/user-not-found.exception";
 import { IUserRepository } from "src/account/user.repository";
 import { UpdateUserPersonalDto } from "src/account/dtos/users/update-user-personal.dto";

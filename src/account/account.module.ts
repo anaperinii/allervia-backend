@@ -18,7 +18,7 @@ import { ListRolesUseCase } from './use-cases/roles/list-roles.use-case';
 import { UpdateRoleUseCase } from './use-cases/roles/update-role.use-case';
 import { IRoleRepository } from './role.repository';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
-import { BcryptPasswordHashingService } from 'src/security/infrastructure/cryptography/bcrypt-password-hashing.service';
+import { BcryptPasswordHashingService } from 'src/security/bcrypt-password-hashing.service';
 import { RolesController } from './roles.controller';
 import { IUserRepository } from './user.repository';
 import { ProfileInternalUserDto } from './dtos/users/profile-internal-user.dto';

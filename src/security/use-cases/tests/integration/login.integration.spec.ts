@@ -12,9 +12,9 @@ import { IUserAuthRepository } from "src/security/interfaces/user-auth.repositor
 import { IJwtTokenService } from "src/security/interfaces/jwt-token.service.interface";
 import { IPasswordHashingService } from "src/security/interfaces/password-hashing.service.interface";
 import { LoginDto } from "src/security/dtos/login.dto";
-import { BcryptPasswordHashingService } from "src/security/infrastructure/cryptography/bcrypt-password-hashing.service";
-import { NestJwtTokenService } from "src/security/infrastructure/jwt/jwt-token.service";
-import { PrismaUserAuthRepository } from "src/security/infrastructure/repositories/prisma-user-auth.repository";
+import { BcryptPasswordHashingService } from "src/security/bcrypt-password-hashing.service";
+import { NestJwtTokenService } from "src/security/jwt-token.service";
+import { PrismaUserAuthRepository } from "src/security/prisma-user-auth.repository";
 import { IMembershipRepository } from "src/memberships/domain/interfaces/membership.repository.interface";
 import { PrismaMembershipRepository } from "src/memberships/infrastructure/repositories/prisma-membership.repository";
 

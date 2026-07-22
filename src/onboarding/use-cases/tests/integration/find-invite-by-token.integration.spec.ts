@@ -5,7 +5,7 @@ import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
 import { UserInviteNotFoundException } from "src/onboarding/domain/exceptions/user-invite-not-found.exception";
-import { PrismaUserInviteRepository } from "src/onboarding/infrastructure/repositories/prisma-user-invite.repository";
+import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 
 
 describe('FindInviteByTokenUseCase - Integration', () => {

@@ -8,7 +8,7 @@ import { FindUserByIdUseCase } from "src/account/use-cases/users/find-user-by-id
 import { IUserRepository } from "src/account/user.repository";
 import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
-import { PrismaUserInviteRepository } from "src/onboarding/infrastructure/repositories/prisma-user-invite.repository";
+import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 import { ListInvitesQueryDto } from "../../../dtos/list-invites-query.dto";
 
 describe('ListInvitesUseCase - Integration', () => {

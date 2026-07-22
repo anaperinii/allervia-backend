@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtStrategy } from './infrastructure/jwt/jwt.strategy';
+import { JwtStrategy } from './jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
@@ -11,14 +11,14 @@ import { AccountModule } from 'src/account/account.module';
 import { LoginUseCase } from './use-cases/login.use-case';
 import { SwitchOrganizationUseCase } from './use-cases/switch-organization.use-case';
 import { IPasswordHashingService } from './interfaces/password-hashing.service.interface';
-import { BcryptPasswordHashingService } from './infrastructure/cryptography/bcrypt-password-hashing.service';
+import { BcryptPasswordHashingService } from './bcrypt-password-hashing.service';
 import { IJwtTokenService } from './interfaces/jwt-token.service.interface';
-import { NestJwtTokenService } from './infrastructure/jwt/jwt-token.service';
+import { NestJwtTokenService } from './jwt-token.service';
 import { IUserAuthRepository } from './interfaces/user-auth.repository.interface';
-import { PrismaUserAuthRepository } from './infrastructure/repositories/prisma-user-auth.repository';
+import { PrismaUserAuthRepository } from './prisma-user-auth.repository';
 import { TokenGeneratorFactory } from './factories/token-generator.factory';
 import { RolesGuard } from './guards/roles.guard';
-import { AuthController } from './controllers/auth.controller';
+import { AuthController } from './auth.controller';
 import { OrganizationContextFactory } from './factories/organization-context.factory';
 import { RoleValidationFactory } from './factories/role-validation.factory';
 

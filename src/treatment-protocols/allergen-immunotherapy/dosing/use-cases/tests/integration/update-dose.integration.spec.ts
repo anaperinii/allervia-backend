@@ -3,7 +3,7 @@ import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface";
-import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/infrastructure/repositories/prisma-dose.repository";
+import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/prisma-dose.repository";
 import { UpdateDoseStatusUseCase } from "../../update-dose-status.use-case";
 import { DoseStatus } from "@prisma/client";
 import { InvalidDoseStatusException } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/invalid-dose-status.exception";
