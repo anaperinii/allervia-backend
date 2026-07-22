@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IRoleRepository } from '../../domain/interfaces/role.repository.interface';
+import { IRoleRepository } from '../../role.repository';
 import { RoleResponseDto } from '../../dtos/roles/role-response.dto';
 import { Prisma } from '@prisma/client';
 

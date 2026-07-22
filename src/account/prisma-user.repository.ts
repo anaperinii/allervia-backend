@@ -3,8 +3,8 @@ import { PrismaService } from "src/database/prisma.service";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { User } from "../../domain/entities/user.entity";
 import { ITransactionContext } from "src/database/transaction.interface";
-import { UserCreationData, UserUpdateData } from "src/account/domain/interfaces/account.interface";
-import { IUserRepository } from "src/account/domain/interfaces/user.repository.interface";
+import { UserCreationData, UserUpdateData } from "src/account/account.interface";
+import { IUserRepository } from "src/account/user.repository";
 
 
 @Injectable()

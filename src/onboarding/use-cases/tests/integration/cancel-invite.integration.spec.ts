@@ -8,7 +8,7 @@ import { FindInviteByIdUseCase } from "../../find-invite-by-id.use-case";
 import { ulid } from "ulid";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
 import { UserInviteNotFoundException } from "src/onboarding/domain/exceptions/user-invite-not-found.exception";
-import { PrismaUserInviteRepository } from "src/onboarding/infrastructure/repositories/prisma-user-invite.repository";
+import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 
 
 describe('CancelInviteUseCase - Integration', () => {

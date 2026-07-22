@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { IUserRepository } from '../../domain/interfaces/user.repository.interface';
+import { IUserRepository } from '../../user.repository';
 import { UserResponseDto } from '../../dtos/users/user-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { UserNotFoundException } from '../../domain/exceptions/users/user-not-found.exception';
+import { UserNotFoundException } from '../../exceptions/users/user-not-found.exception';
 import { UpdateUserDto } from '../../dtos/users/update-user.dto';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 

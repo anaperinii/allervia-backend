@@ -4,7 +4,7 @@ import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
-import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/infrastructure/repositories/prisma-immunotherapy.repository";
+import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository";
 
 describe('ListImmunotherapiesByTypeUseCase - Integration', () => {
     let module: TestingModule;

@@ -14,8 +14,8 @@ import { ListDosesByTherapyUseCase } from './allergen-immunotherapy/dosing/use-c
 import { RegisterAdministeredDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/register-administered-dose.use-case';
 import { UpdateDoseStatusUseCase } from './allergen-immunotherapy/dosing/use-cases/update-dose-status.use-case';
 import { IDoseRepository } from './allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface';
-import { PrismaDoseRepository } from './allergen-immunotherapy/dosing/infrastructure/repositories/prisma-dose.repository';
-import { DosesController } from './allergen-immunotherapy/dosing/controllers/doses.controller';
+import { PrismaDoseRepository } from './allergen-immunotherapy/dosing/prisma-dose.repository';
+import { DosesController } from './allergen-immunotherapy/dosing/doses.controller';
 import { CreateImmunotherapyUseCase } from './allergen-immunotherapy/therapies/use-cases/create-immunotherapy.use-case';
 import { FindImmunotherapyUseCase } from './allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case';
 import { ListAllImmunotherapiesUseCase } from './allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
@@ -24,8 +24,8 @@ import { ListImmunotherapiesForPatientUseCase } from './allergen-immunotherapy/t
 import { UpdateImmunotherapyStatusUseCase } from './allergen-immunotherapy/therapies/use-cases/update-immunotherapy-status.use-case';
 import { UpdateImmunotherapyUseCase } from './allergen-immunotherapy/therapies/use-cases/update-immunotherapy.use-case';
 import { IImmunotherapyRepository } from './allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
-import { PrismaImmunotherapyRepository } from './allergen-immunotherapy/therapies/infrastructure/repositories/prisma-immunotherapy.repository';
-import { ImmunotherapiesController } from './allergen-immunotherapy/therapies/controllers/immunotherapies.controller';
+import { PrismaImmunotherapyRepository } from './allergen-immunotherapy/therapies/prisma-immunotherapy.repository';
+import { ImmunotherapiesController } from './allergen-immunotherapy/therapies/immunotherapies.controller';
 import { PatientsModule } from 'src/patients/patients.module';
 import { PrismaModule } from 'src/database/prisma.module';
 

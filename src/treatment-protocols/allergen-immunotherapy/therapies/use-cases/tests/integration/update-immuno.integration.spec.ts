@@ -1,6 +1,6 @@
 import { TestingModule, Test } from "@nestjs/testing";
 import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
-import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/infrastructure/repositories/prisma-immunotherapy.repository";
+import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository";
 import { PrismaService } from "src/database/prisma.service";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { TestFactories } from "test/factories";

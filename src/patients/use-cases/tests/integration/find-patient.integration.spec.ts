@@ -3,7 +3,7 @@ import { FindPatientUseCase } from "../../find-patient.use-case";
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { IPatientRepository } from "src/patients/domain/interfaces/patient.repository.interface";
+import { PatientRepository } from "src/patients/patient.repository";
 import { PrismaPatientRepository } from "src/patients/prisma-patient.repository";
 import { ulid } from "ulid";
 import { PatientNotFoundException } from "src/patients/exceptions/patient-not-found.exception";
@@ -26,7 +26,7 @@ describe('FindPatientUseCase - Integration', () => {
                     useValue: TestDatabaseManager.getInstance()
                 },
                 {
-                    provide: IPatientRepository,
+                    provide: PatientRepository,
                     useClass: PrismaPatientRepository
                 }
             ]

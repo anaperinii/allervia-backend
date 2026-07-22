@@ -3,8 +3,8 @@ import { FindUserRoleByNameUseCase } from "../../find-user-role-by-name.use-case
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { IRoleRepository } from "src/account/domain/interfaces/role.repository.interface";
-import { PrismaRoleRepository } from "src/account/roles/infrastructure/persistence/prisma-role.repository";
+import { IRoleRepository } from "src/account/role.repository";
+import { PrismaRoleRepository } from "src/account/prisma-role.repository";
 
 
 describe('FindUserRoleByNameUseCase - Integration', () => {

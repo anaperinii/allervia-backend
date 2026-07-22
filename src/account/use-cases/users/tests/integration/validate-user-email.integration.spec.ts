@@ -3,8 +3,8 @@ import { ValidateUserEmailUseCase } from "../../validate-user-email.use-case";
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { PrismaUserRepository } from "src/account/infrastructure/repositories/prisma-user.repository";
-import { IUserRepository } from "src/account/domain/interfaces/user.repository.interface";
+import { PrismaUserRepository } from "src/account/prisma-user.repository";
+import { IUserRepository } from "src/account/user.repository";
 
 describe('ValidateUserEmailUseCase - Integration', () => {
     let module: TestingModule;

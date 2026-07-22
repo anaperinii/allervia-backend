@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { IRoleRepository } from '../../domain/interfaces/role.repository.interface';
+import { IRoleRepository } from '../../role.repository';
 import { UpdateRoleDto } from '../../dtos/roles/update-role.dto';
 import { RoleResponseDto } from '../../dtos/roles/role-response.dto';
-import { RoleNotFoundException } from '../../domain/exceptions/roles/role-not-found.exception';
+import { RoleNotFoundException } from '../../exceptions/roles/role-not-found.exception';
 import { Prisma } from '@prisma/client';
 
 @Injectable()

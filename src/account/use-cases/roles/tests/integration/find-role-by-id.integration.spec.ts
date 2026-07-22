@@ -3,9 +3,9 @@ import { FindRoleByIdUseCase } from "../../find-role-by-id.use-case";
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { RoleNotFoundException } from "src/account/domain/exceptions/roles/role-not-found.exception";
-import { IRoleRepository } from "src/account/domain/interfaces/role.repository.interface";
-import { PrismaRoleRepository } from "src/account/roles/infrastructure/persistence/prisma-role.repository";
+import { RoleNotFoundException } from "src/account/exceptions/roles/role-not-found.exception";
+import { IRoleRepository } from "src/account/role.repository";
+import { PrismaRoleRepository } from "src/account/prisma-role.repository";
 import { ulid } from "ulid";
 
 

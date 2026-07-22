@@ -6,12 +6,12 @@ import { TestDatabaseManager } from "test/database/test-database.manager";
 import { FindUserByIdUseCase } from "src/account/use-cases/users/find-user-by-id.use-case";
 import { FindRoleByNameUseCase } from "../../find-role-by-name.use-case";
 import { FindUserRoleByNameUseCase } from "../../find-user-role-by-name.use-case";
-import { PrismaUserRepository } from "src/account/infrastructure/repositories/prisma-user.repository";
+import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ConflictException } from "@nestjs/common";
-import { InactiveRoleException } from "src/account/domain/exceptions/roles/inactive-role.exception";
-import { IRoleRepository } from "src/account/domain/interfaces/role.repository.interface";
-import { IUserRepository } from "src/account/domain/interfaces/user.repository.interface";
-import { PrismaRoleRepository } from "src/account/infrastructure/repositories/prisma-role.repository";
+import { InactiveRoleException } from "src/account/exceptions/roles/inactive-role.exception";
+import { IRoleRepository } from "src/account/role.repository";
+import { IUserRepository } from "src/account/user.repository";
+import { PrismaRoleRepository } from "src/account/prisma-role.repository";
 
 describe('AddRoleToUserUseCase - Integration', () => {
     let module: TestingModule;

@@ -4,7 +4,7 @@ import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
-import { PrismaUserInviteRepository } from "src/onboarding/infrastructure/repositories/prisma-user-invite.repository";
+import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 
 describe('FindActiveInviteUseCase - Integration', () => {
     let module: TestingModule;

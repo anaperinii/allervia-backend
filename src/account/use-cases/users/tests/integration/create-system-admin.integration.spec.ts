@@ -3,13 +3,13 @@ import { CreateSystemAdminUseCase } from "../../create-system-admin.use-case";
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { PrismaUserRepository } from "src/account/infrastructure/repositories/prisma-user.repository";
+import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ConfigService } from "@nestjs/config";
 import { UnauthorizedException } from "@nestjs/common";
 import { IPasswordHashingService } from "src/security/interfaces/password-hashing.service.interface";
-import { BcryptPasswordHashingService } from "src/security/infrastructure/cryptography/bcrypt-password-hashing.service";
-import { IUserRepository } from "src/account/domain/interfaces/user.repository.interface";
-import { UserAlreadyExistsException } from "src/account/domain/exceptions/users/user-already-exists.exception";
+import { BcryptPasswordHashingService } from "src/security/bcrypt-password-hashing.service";
+import { IUserRepository } from "src/account/user.repository";
+import { UserAlreadyExistsException } from "src/account/exceptions/users/user-already-exists.exception";
 import { ProfileSystemUserDto } from "src/account/dtos/users/profile-system-user.dto";
 
 describe('CreateSystemAdminUseCase - Integration', () => {

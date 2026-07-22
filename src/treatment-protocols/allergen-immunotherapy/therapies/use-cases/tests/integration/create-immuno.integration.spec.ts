@@ -5,9 +5,9 @@ import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { CreatePatientUseCase } from "src/patients/use-cases/create-patient.use-case";
 import { CreateImmunotherapyDto } from "src/treatment-protocols/allergen-immunotherapy/therapies/dtos/create-immunotherapy.dto";
-import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/infrastructure/repositories/prisma-immunotherapy.repository";
+import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository";
 import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
-import { IPatientRepository } from "src/patients/domain/interfaces/patient.repository.interface";
+import { PatientRepository } from "src/patients/patient.repository";
 import { PrismaPatientRepository } from "src/patients/prisma-patient.repository";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { IBuildUpPhase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface";
@@ -16,7 +16,7 @@ import { RegisterStartingDoseUseCase } from "src/treatment-protocols/allergen-im
 import { RegisterNextScheduledBuildUpUseCase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/register-scheduled-build-up.use-case";
 import { CreateDoseUseCase } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/create-dose.use-case";
 import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface";
-import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/infrastructure/repositories/prisma-dose.repository";
+import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/prisma-dose.repository";
 import { CountDosesByConcentration } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/count-doses-by-concentration.use-case";
 
 describe('CreateImmunotherapyUseCase - Integration', () => {
@@ -47,7 +47,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
                     useClass: PrismaImmunotherapyRepository
                 },
                 {
-                    provide: IPatientRepository,
+                    provide: PatientRepository,
                     useClass: PrismaPatientRepository
                 },
                 {

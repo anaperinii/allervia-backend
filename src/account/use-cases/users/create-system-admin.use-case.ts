@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { IUserRepository } from '../../domain/interfaces/user.repository.interface';
+import { IUserRepository } from '../../user.repository';
 import { UserResponseDto } from '../../dtos/users/user-response.dto';
-import { UserAlreadyExistsException } from '../../domain/exceptions/users/user-already-exists.exception';
+import { UserAlreadyExistsException } from '../../exceptions/users/user-already-exists.exception';
 import { PrismaService } from 'src/database/prisma.service';
 import { ProfileSystemUserDto } from '../../dtos/users/profile-system-user.dto';
 import { ConfigService } from '@nestjs/config';

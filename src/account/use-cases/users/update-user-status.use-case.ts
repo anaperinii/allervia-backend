@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { IUserRepository } from '../../domain/interfaces/user.repository.interface';
+import { IUserRepository } from '../../user.repository';
 import { UpdateUserStatusDto } from '../../dtos/users/update-user-status.dto';
 import { UserResponseDto } from '../../dtos/users/user-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { UserNotFoundException } from '../../domain/exceptions/users/user-not-found.exception';
+import { UserNotFoundException } from '../../exceptions/users/user-not-found.exception';
 
 @Injectable()
 export class UpdateUserStatusUseCase {

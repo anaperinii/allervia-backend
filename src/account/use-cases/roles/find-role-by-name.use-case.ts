@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma, RoleType } from "@prisma/client";
-import { RoleNotFoundException } from "src/account/domain/exceptions/roles/role-not-found.exception";
-import { IRoleRepository } from "src/account/domain/interfaces/role.repository.interface";
+import { RoleNotFoundException } from "src/account/exceptions/roles/role-not-found.exception";
+import { IRoleRepository } from "src/account/role.repository";
 
 @Injectable()
 export class FindRoleByNameUseCase {

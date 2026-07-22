@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { IRoleRepository } from '../../domain/interfaces/role.repository.interface';
+import { IRoleRepository } from '../../role.repository';
 import { RoleType } from '@prisma/client';
-import { RoleInUseException } from '../../domain/exceptions/roles/role-in-use.exception';
+import { RoleInUseException } from '../../exceptions/roles/role-in-use.exception';
 import { FindRoleByNameUseCase } from './find-role-by-name.use-case';
 
 @Injectable()

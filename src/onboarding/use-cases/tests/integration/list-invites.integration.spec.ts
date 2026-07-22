@@ -5,10 +5,10 @@ import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { FindInviteByOrgUseCase } from "../../find-invite-by-org.use-case";
 import { FindUserByIdUseCase } from "src/account/use-cases/users/find-user-by-id.use-case";
-import { IUserRepository } from "src/account/profiles/domain/interfaces/user.repository.interface";
-import { PrismaUserRepository } from "src/account/infrastructure/repositories/prisma-user.repository";
+import { IUserRepository } from "src/account/user.repository";
+import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
-import { PrismaUserInviteRepository } from "src/onboarding/infrastructure/repositories/prisma-user-invite.repository";
+import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 import { ListInvitesQueryDto } from "../../../dtos/list-invites-query.dto";
 
 describe('ListInvitesUseCase - Integration', () => {
