@@ -1,11 +1,8 @@
 import { ITransactionContext } from 'src/database/transaction.interface';
-import { Patient } from '../entities/patient.entity';
-import {
-  CreatePatientData,
-  UpdatePatientData,
-} from './patients.interface';
+import { CreatePatientData, UpdatePatientData } from './patients.interface';
+import { Patient } from '@prisma/client';
 
-export abstract class IPatientRepository {
+export abstract class PatientRepository {
   abstract create(
     patient: CreatePatientData,
     tx?: ITransactionContext,

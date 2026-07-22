@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IPatientRepository } from '../domain/interfaces/patient.repository.interface';
-import { PatientNotFoundException } from '../domain/exceptions/patient-not-found.exception';
+import { PatientRepository } from '../patient.repository';
+import { PatientNotFoundException } from '../exceptions/patient-not-found.exception';
 import { UpdatePatientDto } from '../dtos/update-patient.dto';
 import { PatientResponseDto } from '../dtos/patient-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
@@ -9,7 +9,7 @@ import { ITransactionContext } from 'src/database/transaction.interface';
 @Injectable()
 export class UpdatePatientUseCase {
   constructor(
-    private patientRepository: IPatientRepository
+    private patientRepository: PatientRepository
   ) {}
 
   async execute(
@@ -17,7 +17,7 @@ export class UpdatePatientUseCase {
     dto: UpdatePatientDto,
     currentUser: AuthenticatedUserPayload,
     tx?: ITransactionContext
-  ): Promise<PatientResponseDto> {
+  ) {
 
     const patient = await this.patientRepository.findById(id, currentUser.activeOrgId);
 

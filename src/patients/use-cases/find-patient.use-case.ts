@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { IPatientRepository } from '../domain/interfaces/patient.repository.interface';
-import { PatientNotFoundException } from '../domain/exceptions/patient-not-found.exception';
-import { Patient } from 'src/patients/domain/entities/patient.entity';
+import { PatientRepository } from '../patient.repository';
+import { PatientNotFoundException } from '../exceptions/patient-not-found.exception';
 import { ITransactionContext } from 'src/database/transaction.interface';
 
 @Injectable()
 export class FindPatientUseCase {
   constructor(
-    private patientRepository: IPatientRepository
+    private patientRepository: PatientRepository
   ) {}
 
-  async execute(id: string, organizationId: string, tx?: ITransactionContext): Promise<Patient> {
+  async execute(id: string, organizationId: string, tx?: ITransactionContext) {
 
     const patient = await this.patientRepository.findById(id, organizationId, tx);
 

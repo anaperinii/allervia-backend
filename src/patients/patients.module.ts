@@ -5,27 +5,24 @@ import { FindPatientUseCase } from './use-cases/find-patient.use-case';
 import { ListPatientsUseCase } from './use-cases/list-patients.use-case';
 import { UpdatePatientUseCase } from './use-cases/update-patient.use-case';
 import { UpdatePatientStatusUseCase } from './use-cases/update-patient-status.use-case';
-import { IPatientRepository } from './domain/interfaces/patient.repository.interface';
-import { PrismaPatientRepository } from './infrastructure/persistence/prisma-patient.repository';
-import { PatientsController } from './controllers/patients.controller';
+import { PatientRepository } from './patient.repository';
+import { PrismaPatientRepository } from './prisma-patient.repository';
+import { PatientsController } from './patients.controller';
 
 @Module({
   imports: [PrismaModule],
   controllers: [PatientsController],
   providers: [
-    // Use Cases
     CreatePatientUseCase,
     FindPatientUseCase,
     ListPatientsUseCase,
     UpdatePatientUseCase,
     UpdatePatientStatusUseCase,
-
-    // Repositories
     {
-      provide: IPatientRepository,
+      provide: PatientRepository,
       useClass: PrismaPatientRepository,
     },
   ],
-  exports: [IPatientRepository, CreatePatientUseCase, FindPatientUseCase],
+  exports: [PatientRepository, CreatePatientUseCase, FindPatientUseCase],
 })
 export class PatientsModule {}

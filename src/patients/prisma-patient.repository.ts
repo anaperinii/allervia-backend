@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
-import { Patient } from '../../domain/entities/patient.entity';
-import { IPatientRepository } from '../../domain/interfaces/patient.repository.interface';
-import { CreatePatientData, UpdatePatientData } from 'src/patients/domain/interfaces/patients.interface';
+import { PatientRepository } from './patient.repository';
+import { CreatePatientData, UpdatePatientData } from 'src/patients/patients.interface';
 import { ITransactionContext } from 'src/database/transaction.interface';
+import { Patient } from '@prisma/client';
 
 @Injectable()
-export class PrismaPatientRepository extends IPatientRepository {
+export class PrismaPatientRepository extends PatientRepository {
   constructor(private readonly prisma: PrismaService) {
     super();
   }
@@ -21,7 +21,7 @@ export class PrismaPatientRepository extends IPatientRepository {
         birthDate: patient.birthDate,
         weightInKg: patient.weightInKg,
         phoneNumber: patient.phoneNumber,
-        primaryOrganizationId: patient.primaryOrganizationId,
+        organizationId: patient.primaryOrganizationId,
         isActive: patient.isActive,
         isArchived: patient.isArchived,
         createdById: patient.createdById,
@@ -29,7 +29,7 @@ export class PrismaPatientRepository extends IPatientRepository {
       },
     });
 
-    return new Patient(created);
+    return created;
   }
 
   async update(patientId: string, patient: Partial<UpdatePatientData>, tx?: ITransactionContext): Promise<Patient> {
@@ -52,7 +52,7 @@ export class PrismaPatientRepository extends IPatientRepository {
       },
     });
 
-    return new Patient(updated);
+    return updated;
   }
 
   async findById(id: string, organizationId: string, tx?: ITransactionContext): Promise<Patient | null> {
@@ -62,11 +62,11 @@ export class PrismaPatientRepository extends IPatientRepository {
     const patient = await prismaClient.patient.findFirst({
       where: {
         id,
-        primaryOrganizationId: organizationId,
+        organizationId: organizationId,
       },
     });
 
-    return patient ? new Patient(patient) : null;
+    return patient;
   }
 
   async findByOrganization(organizationId: string, tx?: ITransactionContext): Promise<Patient[]> {
@@ -75,13 +75,13 @@ export class PrismaPatientRepository extends IPatientRepository {
 
     const patients = await prismaClient.patient.findMany({
       where: {
-        primaryOrganizationId: organizationId,
+        organizationId: organizationId,
         isArchived: false,
       },
       orderBy: { fullName: 'asc' },
     });
 
-    return patients.map(p => new Patient(p));
+    return patients;
   }
 
   async exists(id: string, organizationId: string, tx?: ITransactionContext): Promise<boolean> {
@@ -91,7 +91,7 @@ export class PrismaPatientRepository extends IPatientRepository {
     const count = await prismaClient.patient.count({
       where: {
         id,
-        primaryOrganizationId: organizationId,
+        organizationId: organizationId,
       },
     });
 

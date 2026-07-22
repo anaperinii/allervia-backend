@@ -4,13 +4,13 @@ import { ActiveOrganization } from 'src/security/decorators/active-organization.
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { UpdatePatientStatusDto } from '../dtos/update-patient-status.dto';
-import { UpdatePatientDto } from '../dtos/update-patient.dto';
-import { CreatePatientUseCase } from '../use-cases/create-patient.use-case';
-import { FindPatientUseCase } from '../use-cases/find-patient.use-case';
-import { ListPatientsUseCase } from '../use-cases/list-patients.use-case';
-import { UpdatePatientStatusUseCase } from '../use-cases/update-patient-status.use-case';
-import { UpdatePatientUseCase } from '../use-cases/update-patient.use-case';
+import { UpdatePatientStatusDto } from './dtos/update-patient-status.dto';
+import { UpdatePatientDto } from './dtos/update-patient.dto';
+import { CreatePatientUseCase } from './use-cases/create-patient.use-case';
+import { FindPatientUseCase } from './use-cases/find-patient.use-case';
+import { ListPatientsUseCase } from './use-cases/list-patients.use-case';
+import { UpdatePatientStatusUseCase } from './use-cases/update-patient-status.use-case';
+import { UpdatePatientUseCase } from './use-cases/update-patient.use-case';
 
 @Controller('patients')
 export class PatientsController {

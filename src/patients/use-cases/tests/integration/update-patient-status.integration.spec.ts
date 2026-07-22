@@ -4,9 +4,9 @@ import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IPatientRepository } from "src/patients/domain/interfaces/patient.repository.interface";
-import { PrismaPatientRepository } from "src/patients/infrastructure/persistence/prisma-patient.repository";
+import { PrismaPatientRepository } from "src/patients/prisma-patient.repository";
 import { ulid } from "ulid";
-import { PatientNotFoundException } from "src/patients/domain/exceptions/patient-not-found.exception";
+import { PatientNotFoundException } from "src/patients/exceptions/patient-not-found.exception";
 import { UpdatePatientStatusDto } from "src/patients/dtos/update-patient-status.dto";
 
 describe('UpdatePatientStatusUseCase - Integration', () => {
