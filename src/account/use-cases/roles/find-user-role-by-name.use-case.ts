@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { RoleType } from "@prisma/client";
-import { IRoleRepository } from "src/account/domain/interfaces/role.repository.interface";
+import { IRoleRepository } from "src/account/role.repository";
 import { UserRoleResponseDto } from "../../dtos/roles/user-role-respose.dto";
 
 @Injectable()

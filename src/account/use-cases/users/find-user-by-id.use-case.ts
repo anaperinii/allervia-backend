@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { IUserRepository } from '../../domain/interfaces/user.repository.interface';
+import { IUserRepository } from '../../user.repository';
 import { UserResponseDto } from '../../dtos/users/user-response.dto';
-import { UserNotFoundException } from '../../domain/exceptions/users/user-not-found.exception';
+import { UserNotFoundException } from '../../exceptions/users/user-not-found.exception';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { ITransactionContext } from 'src/database/transaction.interface';
 

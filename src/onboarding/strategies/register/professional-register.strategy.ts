@@ -7,7 +7,7 @@ import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-inv
 import { RegisterUser } from "../../domain/interfaces/register.interface";
 import { IPasswordHashingService } from "src/security/interfaces/password-hashing.service.interface";
 import { User } from "src/account/domain/entities/user.entity";
-import { IUserRepository } from "src/account/domain/interfaces/user.repository.interface";
+import { IUserRepository } from "src/account/user.repository";
 import { ProfileInternalUserDto } from "src/account/dtos/users/profile-internal-user.dto";
 
 

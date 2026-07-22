@@ -3,14 +3,14 @@ import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/security/decorators/public.decorator';
 import { RoleType } from '@prisma/client';
 import { ActiveOrganization } from 'src/security/decorators/active-organization.decorator';
-import { CreateRoleDto } from '../dtos/roles/create-role.dto';
-import { RoleResponseDto } from '../dtos/roles/role-response.dto';
-import { UpdateRoleDto } from '../dtos/roles/update-role.dto';
-import { CreateRoleUseCase } from '../use-cases/roles/create-role.use-case';
-import { DeleteRoleUseCase } from '../use-cases/roles/delete-role.use-case';
-import { FindRoleByIdUseCase } from '../use-cases/roles/find-role-by-id.use-case';
-import { ListRolesUseCase } from '../use-cases/roles/list-roles.use-case';
-import { UpdateRoleUseCase } from '../use-cases/roles/update-role.use-case';
+import { CreateRoleDto } from './dtos/roles/create-role.dto';
+import { RoleResponseDto } from './dtos/roles/role-response.dto';
+import { UpdateRoleDto } from './dtos/roles/update-role.dto';
+import { CreateRoleUseCase } from './use-cases/roles/create-role.use-case';
+import { DeleteRoleUseCase } from './use-cases/roles/delete-role.use-case';
+import { FindRoleByIdUseCase } from './use-cases/roles/find-role-by-id.use-case';
+import { ListRolesUseCase } from './use-cases/roles/list-roles.use-case';
+import { UpdateRoleUseCase } from './use-cases/roles/update-role.use-case';
 
 @ApiTags('roles')
 @Controller('roles')

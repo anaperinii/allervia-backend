@@ -2,10 +2,10 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { RoleType } from '@prisma/client';
 import { FindUserRoleByNameUseCase } from './find-user-role-by-name.use-case';
 import { FindRoleByNameUseCase } from './find-role-by-name.use-case';
-import { InactiveRoleException } from 'src/account/domain/exceptions/roles/inactive-role.exception';
-import { IRoleRepository } from 'src/account/domain/interfaces/role.repository.interface';
+import { InactiveRoleException } from 'src/account/exceptions/roles/inactive-role.exception';
+import { IRoleRepository } from 'src/account/role.repository';
 import { ITransactionContext } from 'src/database/transaction.interface';
-import { RoleNotFoundException } from '../../domain/exceptions/roles/role-not-found.exception';
+import { RoleNotFoundException } from '../../exceptions/roles/role-not-found.exception';
 
 @Injectable()
 export class AddRoleToUserUseCase {

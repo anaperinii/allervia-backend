@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { IRoleRepository } from '../../domain/interfaces/role.repository.interface';
+import { IRoleRepository } from '../../role.repository';
 import { CreateRoleDto } from '../../dtos/roles/create-role.dto';
 import { RoleResponseDto } from '../../dtos/roles/role-response.dto';
 import { Role } from '../../domain/entities/role.entity';

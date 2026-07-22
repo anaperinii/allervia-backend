@@ -3,10 +3,10 @@ import { ArchiveUserUseCase } from "../../archive-user.use-case";
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { PrismaUserRepository } from "src/account/infrastructure/repositories/prisma-user.repository";
+import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ulid } from "ulid";
-import { IUserRepository } from "src/account/domain/interfaces/user.repository.interface";
-import { UserNotFoundException } from "src/account/domain/exceptions/users/user-not-found.exception";
+import { IUserRepository } from "src/account/user.repository";
+import { UserNotFoundException } from "src/account/exceptions/users/user-not-found.exception";
 
 describe('ArchiveUserUseCase - Integration', () => {
     let module: TestingModule;

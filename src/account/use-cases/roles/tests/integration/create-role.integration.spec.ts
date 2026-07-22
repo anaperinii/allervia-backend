@@ -6,8 +6,8 @@ import { TestDatabaseManager } from "test/database/test-database.manager";
 import { ConfigService } from "@nestjs/config";
 import { UnauthorizedException } from "@nestjs/common";
 import { CreateRoleDto } from "src/account/dtos/roles/create-role.dto";
-import { IRoleRepository } from "src/account/domain/interfaces/role.repository.interface";
-import { PrismaRoleRepository } from "src/account/roles/infrastructure/persistence/prisma-role.repository";
+import { IRoleRepository } from "src/account/role.repository";
+import { PrismaRoleRepository } from "src/account/prisma-role.repository";
 
 describe('CreateRoleUseCase - Integration', () => {
     let module: TestingModule;

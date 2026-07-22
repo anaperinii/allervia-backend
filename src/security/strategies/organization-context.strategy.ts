@@ -1,7 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import { AuthenticatedUserPayload, MembershipPayload } from '../types/auth.types';
 import { Request } from 'express';
-import { IUserRepository } from 'src/account/domain/interfaces/user.repository.interface';
+import { IUserRepository } from 'src/account/user.repository';
 
 export interface OrganizationContextStrategy {
   resolveContext(

@@ -7,7 +7,7 @@ import { CreatePatientUseCase } from "src/patients/use-cases/create-patient.use-
 import { CreateImmunotherapyDto } from "src/treatment-protocols/allergen-immunotherapy/therapies/dtos/create-immunotherapy.dto";
 import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/infrastructure/repositories/prisma-immunotherapy.repository";
 import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
-import { IPatientRepository } from "src/patients/domain/interfaces/patient.repository.interface";
+import { PatientRepository } from "src/patients/patient.repository";
 import { PrismaPatientRepository } from "src/patients/prisma-patient.repository";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { IBuildUpPhase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface";
@@ -47,7 +47,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
                     useClass: PrismaImmunotherapyRepository
                 },
                 {
-                    provide: IPatientRepository,
+                    provide: PatientRepository,
                     useClass: PrismaPatientRepository
                 },
                 {

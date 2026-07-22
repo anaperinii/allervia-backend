@@ -1,7 +1,7 @@
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { User } from '../entities/user.entity';
 import { UserCreationData, UserUpdateData } from './account.interface';
 import { ITransactionContext } from 'src/database/transaction.interface';
+import { User } from '@prisma/client';
 
 export abstract class IUserRepository {
   abstract create( userCreationData: UserCreationData, tx?: ITransactionContext ): Promise<User>;

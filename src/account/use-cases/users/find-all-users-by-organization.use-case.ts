@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { UserResponseDto } from '../../dtos/users/user-response.dto';
-import { IUserRepository } from 'src/account/domain/interfaces/user.repository.interface';
+import { IUserRepository } from 'src/account/user.repository';
 
 @Injectable()
 export class FindAllUsersByOrganizationUseCase {

@@ -4,7 +4,7 @@ import { RoleType } from '@prisma/client';
 import { CreateRoleProps, Role } from '../../domain/entities/role.entity';
 import { UserRoleResponseDto } from 'src/account/dtos/roles/user-role-respose.dto';
 import { ITransactionContext } from 'src/database/transaction.interface';
-import { IRoleRepository } from 'src/account/domain/interfaces/role.repository.interface';
+import { IRoleRepository } from 'src/account/role.repository';
 
 @Injectable()
 export class PrismaRoleRepository extends IRoleRepository {

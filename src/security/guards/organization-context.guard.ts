@@ -9,7 +9,7 @@ import { AuthenticatedUserPayload } from '../types/auth.types';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { Request } from 'express';
 import { OrganizationContextFactory } from '../factories/organization-context.factory';
-import { IUserRepository } from 'src/account/domain/interfaces/user.repository.interface';
+import { IUserRepository } from 'src/account/user.repository';
 
 @Injectable()
 export class OrganizationContextGuard implements CanActivate {
