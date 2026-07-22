@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { IOrganizationRepository } from '../domain/interfaces/organization.repository.interface';
+import { OrganizationRepository } from '../organization.repository';
 import { OrganizationResponseDto } from '../dtos/organization-response.dto';
-import { OrganizationNotFoundException } from '../domain/exceptions/organization-not-found.exception';
+import { OrganizationNotFoundException } from '../exceptions/organization-not-found.exception';
 
 @Injectable()
 export class FindOrganizationUseCase {
   constructor(
-    private readonly organizationRepository: IOrganizationRepository
+    private readonly organizationRepository: OrganizationRepository
   ) {}
 
   async execute(id: string): Promise<OrganizationResponseDto> {

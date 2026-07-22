@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
-import { IOrganizationRepository } from '../../domain/interfaces/organization.repository.interface';
-import { Organization } from '../../domain/entities/organization.entity';
-import { Prisma } from '@prisma/client';
+import { OrganizationRepository } from './organization.repository';
+import { Organization } from '@prisma/client';
 
 @Injectable()
-export class PrismaOrganizationRepository extends IOrganizationRepository {
+export class PrismaOrganizationRepository extends OrganizationRepository {
+
   constructor(private readonly prisma: PrismaService) {
     super();
   }
@@ -22,7 +22,7 @@ export class PrismaOrganizationRepository extends IOrganizationRepository {
       },
     });
 
-    return new Organization(created);
+    return created;
   }
 
   async update(organization: Organization): Promise<Organization> {
@@ -36,7 +36,7 @@ export class PrismaOrganizationRepository extends IOrganizationRepository {
       },
     });
 
-    return new Organization(updated);
+    return updated;
   }
 
   async save(organization: Organization): Promise<Organization> {
@@ -49,7 +49,7 @@ export class PrismaOrganizationRepository extends IOrganizationRepository {
       where: { id },
     });
 
-    return org ? new Organization(org) : null;
+    return org;
   }
 
   async findByName(name: string): Promise<Organization | null> {
@@ -57,7 +57,7 @@ export class PrismaOrganizationRepository extends IOrganizationRepository {
       where: { name },
     });
 
-    return org ? new Organization(org) : null;
+    return org;
   }
 
   async findByTaxId(taxId: string): Promise<Organization | null> {
@@ -65,7 +65,7 @@ export class PrismaOrganizationRepository extends IOrganizationRepository {
       where: { taxId },
     });
 
-    return org ? new Organization(org) : null;
+    return org;
   }
 
   async exists(id: string): Promise<boolean> {

@@ -5,10 +5,10 @@ export class CreateOrganizationDto {
   @ApiProperty({ description: 'Nome da organização' })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'CNPJ da organização' })
   @IsString()
   @IsNotEmpty()
-  taxId: string;
+  taxId!: string;
 }

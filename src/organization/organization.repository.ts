@@ -1,6 +1,6 @@
-import { Organization } from '../entities/organization.entity';
+import { Organization } from "@prisma/client";
 
-export abstract class IOrganizationRepository {
+export abstract class OrganizationRepository {
   abstract create(organization: Organization): Promise<Organization>;
   abstract update(organization: Organization): Promise<Organization>;
   abstract save(organization: Organization): Promise<Organization>;

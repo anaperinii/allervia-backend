@@ -3,10 +3,10 @@ import { CreateOrganizationUseCase } from "../../create-organization.use-case";
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { CreateOrganizationDto } from "src/organizations/dtos/create-organization.dto";
-import { OrganizationAlreadyExistsException } from "src/organizations/domain/exceptions/organization-already-exists.exception";
-import { IOrganizationRepository } from "src/organizations/domain/interfaces/organization.repository.interface";
-import { PrismaOrganizationRepository } from "src/organizations/infrastructure/repositories/prisma-organization.repository";
+import { CreateOrganizationDto } from "src/organization/dtos/create-organization.dto";
+import { OrganizationAlreadyExistsException } from "src/organization/exceptions/organization-already-exists.exception";
+import { OrganizationRepository } from "src/organization/organization.repository";
+import { PrismaOrganizationRepository } from "src/organization/prisma-organization.repository";
 
 
 describe('CreateOrganizationUseCase - Integration', () => {
@@ -27,7 +27,7 @@ describe('CreateOrganizationUseCase - Integration', () => {
                     useValue: TestDatabaseManager.getInstance()
                 },
                 {
-                    provide: IOrganizationRepository,
+                    provide: OrganizationRepository,
                     useClass: PrismaOrganizationRepository
                 }
             ]

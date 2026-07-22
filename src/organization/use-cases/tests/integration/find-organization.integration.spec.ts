@@ -3,9 +3,9 @@ import { FindOrganizationUseCase } from "../../find-organization.use-case";
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { OrganizationNotFoundException } from "src/organizations/domain/exceptions/organization-not-found.exception";
-import { IOrganizationRepository } from "src/organizations/domain/interfaces/organization.repository.interface";
-import { PrismaOrganizationRepository } from "src/organizations/infrastructure/repositories/prisma-organization.repository";
+import { OrganizationNotFoundException } from "src/organization/exceptions/organization-not-found.exception";
+import { OrganizationRepository } from "src/organization/organization.repository";
+import { PrismaOrganizationRepository } from "src/organization/prisma-organization.repository";
 import { ulid } from "ulid";
 
 describe('FindOrganizationUseCase - Integration', () => {
@@ -26,7 +26,7 @@ describe('FindOrganizationUseCase - Integration', () => {
                     useValue: TestDatabaseManager.getInstance()
                 },
                 {
-                    provide: IOrganizationRepository,
+                    provide: OrganizationRepository,
                     useClass: PrismaOrganizationRepository
                 }
             ]
