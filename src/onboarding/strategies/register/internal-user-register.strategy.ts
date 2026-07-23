@@ -3,6 +3,7 @@ import { PrismaService } from 'src/database/prisma.service';
 import { IUserRepository } from 'src/account/user.repository';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 import { CreateProfessionalUseCase } from 'src/professionals/use-cases/create-professional.use-case';
+import { ProfessionalRepository } from 'src/professionals/professional.repository';
 import { GrantRoleUseCase } from 'src/account/use-cases/roles/grant-role.use-case';
 import { IUserInviteRepository } from 'src/onboarding/domain/interfaces/user-invite.repository.interface';
 import { UserInvite } from 'src/onboarding/domain/entities/user-invite.entity';
@@ -17,6 +18,7 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
     private userRepository: IUserRepository,
     private hashingService: IPasswordHashingService,
     private createProfessional: CreateProfessionalUseCase,
+    private professionalRepository: ProfessionalRepository,
     private grantRole: GrantRoleUseCase,
     private inviteRepository: IUserInviteRepository,
   ) {}
@@ -48,14 +50,19 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
         tx,
       );
 
-      // grantedById provisório: o próprio profissional recém-criado. A
-      // resolução do concedente (o inviter) depende do contexto de Professional
-      // do usuário autenticado — débito registrado no plano de migração.
+      // O concedente é quem criou o convite (o inviter). Resolvemos o
+      // Professional dele a partir do User que registrou o convite; se não
+      // houver (estado de bootstrap), cai para o próprio profissional criado.
+      const inviter = await this.professionalRepository.findByUserId(
+        invite.createdById,
+        tx,
+      );
+
       await this.grantRole.execute(
         {
           professionalId: professional.id,
           role: invite.role,
-          grantedById: professional.id,
+          grantedById: inviter?.id ?? professional.id,
         },
         tx,
       );

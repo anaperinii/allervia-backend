@@ -52,8 +52,7 @@ describe('UpdateUserStatusUseCase - Integration', () => {
 
     it('should activate user correctly', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({
-            organizationId: authenticatedUser.activeOrgId,
+        const targetUser = await factories.users.create({
             isActive: false
         });
 
@@ -69,8 +68,7 @@ describe('UpdateUserStatusUseCase - Integration', () => {
 
     it('should deactivate user correctly', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({
-            organizationId: authenticatedUser.activeOrgId,
+        const targetUser = await factories.users.create({
             isActive: true
         });
 
@@ -97,9 +95,7 @@ describe('UpdateUserStatusUseCase - Integration', () => {
     it('should throw a not found exception when updating user from another organization', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
         const authenticatedUserAnotherOrg = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({
-            organizationId: authenticatedUser.activeOrgId
-        });
+        const targetUser = await factories.users.create({});
 
         const dto: UpdateUserStatusDto = {
             isActive: true

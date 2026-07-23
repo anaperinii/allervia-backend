@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/security/decorators/public.decorator';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
@@ -37,10 +45,14 @@ export class RolesController {
     @Body() dto: CreateProfessionalRoleDto,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
+    if (!currentUser.professionalId) {
+      throw new ForbiddenException('Apenas profissionais podem conceder roles');
+    }
+
     return this.grantRoleUseCase.execute({
       professionalId: dto.professionalId,
       role: dto.name,
-      grantedById: currentUser.id,
+      grantedById: currentUser.professionalId,
     });
   }
 

@@ -15,8 +15,6 @@ import { LoginDto } from "src/security/dtos/login.dto";
 import { BcryptPasswordHashingService } from "src/security/bcrypt-password-hashing.service";
 import { NestJwtTokenService } from "src/security/jwt-token.service";
 import { PrismaUserAuthRepository } from "src/security/prisma-user-auth.repository";
-import { IMembershipRepository } from "src/memberships/domain/interfaces/membership.repository.interface";
-import { PrismaMembershipRepository } from "src/memberships/infrastructure/repositories/prisma-membership.repository";
 
 describe('LoginUseCase - Integration', () => {
     let module: TestingModule;
@@ -54,10 +52,6 @@ describe('LoginUseCase - Integration', () => {
                 {
                     provide: IJwtTokenService,
                     useClass: NestJwtTokenService
-                },
-                {
-                    provide: IMembershipRepository,
-                    useClass: PrismaMembershipRepository
                 }
             ]
         }).compile();
@@ -86,7 +80,6 @@ describe('LoginUseCase - Integration', () => {
         const user = await factories.users.create({
             email: 'test@example.com',
             password: hashedPassword,
-            organizationId: organization.id
         });
 
         const dto: LoginDto = {

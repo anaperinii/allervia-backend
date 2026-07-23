@@ -59,7 +59,7 @@ describe('FindUserByIdUseCase - Integration', () => {
     });
 
     it('should return system admin user when current user is system admin', async () => {
-        const systemAdmin = await factories.users.createAuthenticatedSystemAdmin();
+        const systemAdmin = await factories.users.createAuthenticatedAdmin();
 
         const result = await findUserByIdUseCase.execute(systemAdmin.id, systemAdmin);
 
