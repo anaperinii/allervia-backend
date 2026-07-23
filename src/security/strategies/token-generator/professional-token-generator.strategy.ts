@@ -8,7 +8,7 @@ import { UserForAuth } from '../../interfaces/user-auth.repository.interface';
 export class ProfessionalTokenGenerator implements ITokenGenerator {
   constructor(private jwtTokenService: IJwtTokenService) {}
 
-  async generate(user: UserForAuth, activeOrgId?: string): Promise<LoginResponseDto> {
+  async generate(user: UserForAuth): Promise<LoginResponseDto> {
     if (!user.organizationId) {
       throw new BadRequestException('Profissional sem organização vinculada');
     }
@@ -18,7 +18,8 @@ export class ProfessionalTokenGenerator implements ITokenGenerator {
       email: user.email,
       type: 'PROFESSIONAL',
       activeOrgId: user.organizationId,
-      roles: user.roles?.map(r => r.roleTag || r.name || '') || [],
+      professionalId: user.professionalId,
+      roles: user.roles,
     };
 
     const access_token = await this.jwtTokenService.generateToken(payload);
@@ -28,10 +29,7 @@ export class ProfessionalTokenGenerator implements ITokenGenerator {
       user: {
         type: 'PROFESSIONAL',
         activeOrgId: user.organizationId,
-        organizationName: user.organization?.name,
       },
     };
   }
 }
-
-

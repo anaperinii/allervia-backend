@@ -1,9 +1,9 @@
-import { RoleType } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 export interface CreateInviteData {
   email: string;
   fullName: string;
-  roleType: RoleType;
+  role: Role;
   organizationId: string;
   createdById: string;
   token: string;
@@ -20,7 +20,7 @@ export interface UpdateInviteData {
 }
 
 export interface FindInvitesFilters {
-  roleType?: RoleType;
+  role?: Role;
   onlyActive?: boolean;
   includeExpired?: boolean;
 }

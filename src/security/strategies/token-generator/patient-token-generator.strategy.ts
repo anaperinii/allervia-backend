@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { IJwtTokenService } from '../../interfaces/jwt-token.service.interface';
 import { ITokenGenerator } from '../../interfaces/token-generator.interface';
 import { LoginResponseDto } from '../../dtos/login-response.dto';
@@ -8,28 +8,18 @@ import { UserForAuth } from '../../interfaces/user-auth.repository.interface';
 export class PatientTokenGenerator implements ITokenGenerator {
   constructor(private readonly jwtTokenService: IJwtTokenService) {}
 
-  async generate(user: UserForAuth, activeOrgId?: string): Promise<LoginResponseDto> {
-    if (!user.memberships || user.memberships.length === 0) {
-      throw new BadRequestException('Paciente sem organizações vinculadas');
-    }
-
-    const selectedOrgId = activeOrgId || user.memberships[0].organizationId;
-
-    const hasAccess = user.memberships.some(m => m.organizationId === selectedOrgId);
-
-    if (!hasAccess) {
-      throw new ForbiddenException('Acesso negado a esta organização');
+  async generate(user: UserForAuth): Promise<LoginResponseDto> {
+    if (!user.organizationId) {
+      throw new BadRequestException('Paciente sem organização vinculada');
     }
 
     const payload = {
       sub: user.id,
       email: user.email,
       type: 'PATIENT',
-      activeOrgId: selectedOrgId,
-      memberships: user.memberships.map(m => ({
-        organizationId: m.organizationId,
-        organizationName: m.organization.name,
-      })),
+      activeOrgId: user.organizationId,
+      professionalId: null,
+      roles: [],
     };
 
     const access_token = await this.jwtTokenService.generateToken(payload);
@@ -38,11 +28,8 @@ export class PatientTokenGenerator implements ITokenGenerator {
       access_token,
       user: {
         type: 'PATIENT',
-        activeOrgId: selectedOrgId,
-        memberships: payload.memberships,
+        activeOrgId: user.organizationId,
       },
     };
   }
 }
-
-

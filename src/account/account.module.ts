@@ -2,20 +2,15 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/database/prisma.module';
 import { AccountController } from './account.controller';
 import { FindUserByIdUseCase } from './use-cases/users/find-user-by-id.use-case';
-import { CreateSystemAdminUseCase } from './use-cases/users/create-system-admin.use-case';
 import { UpdateUserStatusUseCase } from './use-cases/users/update-user-status.use-case';
 import { PrismaUserRepository } from './prisma-user.repository';
 import { ArchiveUserUseCase } from './use-cases/users/archive-user.use-case';
 import { ValidateUserEmailUseCase } from './use-cases/users/validate-user-email.use-case';
 import { UpdateUserUseCase } from './use-cases/users/update-user.use-case';
-import { AddRoleToUserUseCase } from './use-cases/roles/add-role-to-user.use-case';
-import { CreateRoleUseCase } from './use-cases/roles/create-role.use-case';
-import { DeleteRoleUseCase } from './use-cases/roles/delete-role.use-case';
+import { GrantRoleUseCase } from './use-cases/roles/grant-role.use-case';
+import { RevokeRoleUseCase } from './use-cases/roles/revoke-role.use-case';
 import { FindRoleByIdUseCase } from './use-cases/roles/find-role-by-id.use-case';
-import { FindRoleByNameUseCase } from './use-cases/roles/find-role-by-name.use-case';
-import { FindUserRoleByNameUseCase } from './use-cases/roles/find-user-role-by-name.use-case';
-import { ListRolesUseCase } from './use-cases/roles/list-roles.use-case';
-import { UpdateRoleUseCase } from './use-cases/roles/update-role.use-case';
+import { ListProfessionalRolesUseCase } from './use-cases/roles/list-professional-roles.use-case';
 import { IRoleRepository } from './role.repository';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 import { BcryptPasswordHashingService } from 'src/security/bcrypt-password-hashing.service';
@@ -34,19 +29,14 @@ import { PrismaRoleRepository } from './prisma-role.repository';
   providers: [
     // Use Cases
     FindUserByIdUseCase,
-    CreateSystemAdminUseCase,
     UpdateUserStatusUseCase,
     ArchiveUserUseCase,
     ValidateUserEmailUseCase,
     UpdateUserUseCase,
-    CreateRoleUseCase,
-    ListRolesUseCase,
+    GrantRoleUseCase,
+    RevokeRoleUseCase,
     FindRoleByIdUseCase,
-    UpdateRoleUseCase,
-    DeleteRoleUseCase,
-    AddRoleToUserUseCase,
-    FindRoleByNameUseCase,
-    FindUserRoleByNameUseCase,
+    ListProfessionalRolesUseCase,
 
     // DTOs
     UserResponseDto,
@@ -79,8 +69,8 @@ import { PrismaRoleRepository } from './prisma-role.repository';
     IUserRepository, 
     FindUserByIdUseCase, 
     ValidateUserEmailUseCase,
-    IRoleRepository, 
-    AddRoleToUserUseCase
+    IRoleRepository,
+    GrantRoleUseCase
   ],
 })
 export class AccountModule {}

@@ -1,10 +1,10 @@
-import { RoleType } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 export class InviteResponseDto {
     id: string;
     email: string;
     fullName: string;
-    roleType: RoleType;
+    role: Role;
     organizationId: string;
     professionalId: string | null;
     createdById: string;

@@ -1,23 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RoleType } from '@prisma/client';
+import { Role } from '@prisma/client';
 
 export class RoleResponseDto {
-  @ApiProperty({ description: 'ID do role' })
+  @ApiProperty({ description: 'ID da concessão de role' })
   id: string;
 
-  @ApiProperty({ description: 'Nome do role' })
-  name: RoleType;
+  @ApiProperty({ description: 'Role concedida' })
+  role: Role;
 
-  @ApiProperty({ description: 'Descrição do role', required: false })
-  description: string | null;
+  @ApiProperty({ description: 'ID do profissional' })
+  professionalId: string;
 
-  @ApiProperty({ description: 'Indica se o role está ativo' })
-  isActive: boolean;
+  @ApiProperty({ description: 'Data da concessão' })
+  grantedAt: Date;
 
-  @ApiProperty({ description: 'Data de criação do role' })
-  createdAt: Date;
+  @ApiProperty({ description: 'ID de quem concedeu' })
+  grantedById: string;
 
-  @ApiProperty({ description: 'Data da última atualização do role' })
-  updatedAt: Date;
+  @ApiProperty({ description: 'Data da revogação', required: false, nullable: true })
+  revokedAt: Date | null;
+
+  @ApiProperty({ description: 'ID de quem revogou', required: false, nullable: true })
+  revokedById: string | null;
 }
-

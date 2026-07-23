@@ -1,23 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RoleType } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from '@nestjs/class-validator';
+import { IsEnum, IsString } from '@nestjs/class-validator';
 import { IsNotEmpty } from 'class-validator';
+import { Role } from '@prisma/client';
 
-export class CreateRoleDto {
+export class CreateProfessionalRoleDto {
   @ApiProperty({ description: 'Nome do role' })
   @IsNotEmpty()
-  @IsEnum(RoleType, { message: 'Role especificada inválida' })
-  name: RoleType;
+  @IsEnum(Role, { message: 'Role especificada inválida' })
+  name: Role;
 
-  @ApiProperty({ description: 'Descrição do role', required: false })
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @ApiProperty({ description: 'ID da organização'})
+  @ApiProperty({ description: 'ID do professional a ser vinculado'})
   @IsString()
   @IsNotEmpty()
-  organizationId: string;
+  professionalId: string;
 
   @ApiProperty({ description: 'Key para register via first onboarding'})
   @IsString()

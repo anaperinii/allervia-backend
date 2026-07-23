@@ -1,27 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { IJwtTokenService } from '../interfaces/jwt-token.service.interface';
-import { IMembershipRepository } from 'src/memberships/domain/interfaces/membership.repository.interface';
 import { ProfessionalTokenGenerator } from '../strategies/token-generator/professional-token-generator.strategy';
 import { PatientTokenGenerator } from '../strategies/token-generator/patient-token-generator.strategy';
 import { ITokenGenerator } from '../interfaces/token-generator.interface';
-import { AdminTokenGenerator } from '../strategies/token-generator/admin-token-generator.strategy';
-import { SystemAdminTokenGenerator } from '../strategies/token-generator/system-admin-token-generator.strategy';
 
 @Injectable()
 export class TokenGeneratorFactory {
-  constructor(
-    private jwtTokenService: IJwtTokenService,
-    private membershipRepository: IMembershipRepository,  
-  ) {}
+  constructor(private jwtTokenService: IJwtTokenService) {}
 
   create(userType: string): ITokenGenerator {
     switch (userType) {
       case 'PROFESSIONAL':
         return new ProfessionalTokenGenerator(this.jwtTokenService);
-      case 'ADMIN':
-        return new AdminTokenGenerator(this.jwtTokenService);
-      case 'SYSTEM_ADMIN':
-        return new SystemAdminTokenGenerator(this.jwtTokenService, this.membershipRepository);
       case 'PATIENT':
         return new PatientTokenGenerator(this.jwtTokenService);
       default:
@@ -29,4 +19,3 @@ export class TokenGeneratorFactory {
     }
   }
 }
-

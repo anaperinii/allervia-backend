@@ -1,9 +1,10 @@
+import { Profession } from '@prisma/client';
+
 export interface RegisterUser {
-    id: string;
-    fullName: string;
-    email: string;
-    createdAt: Date;
-    updatedAt: Date;
-    specialty: string | null;
-    phoneNumber: string | null;
-};
+  userId: string;
+  professionalId: string;
+  email: string;
+  fullName: string;
+  phoneNumber: string;
+  profession: Profession;
+}

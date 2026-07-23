@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { IUserRepository } from '../../user.repository';
 import { UserResponseDto } from '../../dtos/users/user-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { UserNotFoundException } from '../../exceptions/users/user-not-found.exception';
 import { UpdateUserDto } from '../../dtos/users/update-user.dto';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
+import { USER_MESSAGES } from '../../user.messages';
 
 @Injectable()
 export class UpdateUserUseCase {
@@ -16,27 +16,27 @@ export class UpdateUserUseCase {
   async execute(
     id: string,
     dto: UpdateUserDto,
-    currentUser: AuthenticatedUserPayload,
+    _currentUser: AuthenticatedUserPayload,
   ): Promise<UserResponseDto> {
-      
-      const user = await this.userRepository.findUserById(id, currentUser.activeOrgId);
+    const user = await this.userRepository.findUserById(id);
 
-      if (!user) {
-        throw new UserNotFoundException(id);
-      }
+    if (!user) {
+      throw new NotFoundException(USER_MESSAGES.notFound(id));
+    }
 
-      if (dto.fullName || dto.phoneNumber || dto.specialty) {
-          user.updateProfile(dto.fullName, dto.specialty, dto.phoneNumber);
-      }
+    // User cuida apenas de credencial (email/senha). Nome, telefone e
+    // especialidade pertencem ao Professional — atualizados no subsistema
+    // de Professional (ver ADR 006, "perfil via Professional").
+    const data: { id: string; email?: string; password?: string } = { id };
 
-      if (dto.password) {
-        const hashedPassword = await this.hashingService.hash(dto.password);
-        user.updatePassword(hashedPassword);
-      }
+    if (dto.email) {
+      data.email = dto.email;
+    }
 
-      const updatedUser = await this.userRepository.update(user);
+    if (dto.password) {
+      data.password = await this.hashingService.hash(dto.password);
+    }
 
-      return updatedUser;
-
+    return this.userRepository.update(data);
   }
 }

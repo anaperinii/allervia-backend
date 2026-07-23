@@ -67,17 +67,17 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     const immunotherapies = await prismaClient.immunotherapy.findMany({
       where: {
         patient: {
-          primaryOrganizationId: organizationId
+          organizationId: organizationId
         }
       },
       include: {
         patient: true,
         responsiblePhysician: true,
         createdBy : {
-          select: { id: true, fullName: true }
+          select: { id: true }
         },
         updatedBy: {
-          select: { id: true, fullName: true }
+          select: { id: true }
         }
       }
     });
@@ -92,7 +92,7 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     const therapy = await prismaClient.immunotherapy.findFirst({
       where: {
         id,
-        patient: { primaryOrganizationId: organizationId },
+        patient: { organizationId: organizationId },
       },
     });
 
@@ -106,17 +106,17 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     const therapies = await prismaClient.immunotherapy.findMany({
       where: {
         patientId,
-        patient: { primaryOrganizationId: organizationId },
+        patient: { organizationId: organizationId },
       },
       orderBy: { createdAt: 'desc' },
       include: {
         patient: true,
         responsiblePhysician: true,
         createdBy : {
-          select: { id: true, fullName: true }
+          select: { id: true }
         },
         updatedBy: {
-          select: { id: true, fullName: true }
+          select: { id: true }
         }
       }
     });
@@ -131,16 +131,16 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     const therapies = await prismaClient.immunotherapy.findMany({
       where: {
         immunoType: type,
-        patient: { primaryOrganizationId: organizationId },
+        patient: { organizationId: organizationId },
       },
       include: {
         patient: true,
         responsiblePhysician: true,
         createdBy : {
-          select: { id: true, fullName: true }
+          select: { id: true }
         },
         updatedBy: {
-          select: { id: true, fullName: true }
+          select: { id: true }
         }
       }
     });
@@ -155,7 +155,7 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     const count = await prismaClient.immunotherapy.count({
       where: {
         id,
-        patient: { primaryOrganizationId: organizationId },
+        patient: { organizationId: organizationId },
       },
     });
 

@@ -18,7 +18,7 @@ export class ListInvitesUseCase {
     const organizationId = currentUser.activeOrgId;
 
     const invites = await this.findInviteByOrgUseCase.execute(organizationId, {
-      roleType: query.roleType,
+      role: query.role,
       onlyActive: query.onlyActive ?? false,
       includeExpired: query.includeExpired ?? false
     });
@@ -33,7 +33,6 @@ export class ListInvitesUseCase {
         return {
           ...invite,
           createdById: createdByUser.id,
-          createdByName: createdByUser.fullName,
           createdByEmail: createdByUser.email,
         }
       }),

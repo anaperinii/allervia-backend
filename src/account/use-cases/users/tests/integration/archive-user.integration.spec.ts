@@ -50,9 +50,7 @@ describe('ArchiveUserUseCase - Integration', () => {
 
     it('should archive user correctly', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({
-            organizationId: authenticatedUser.activeOrgId
-        });
+        const targetUser = await factories.users.create({});
 
         const result = await archiveUserUseCase.execute(targetUser.id, authenticatedUser);
 
@@ -69,9 +67,7 @@ describe('ArchiveUserUseCase - Integration', () => {
     it('should throw a not found exception when archiving user from another organization', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
         const authenticatedUserAnotherOrg = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({
-            organizationId: authenticatedUser.activeOrgId
-        });
+        const targetUser = await factories.users.create({});
 
         await expect(archiveUserUseCase.execute(targetUser.id, authenticatedUserAnotherOrg)).rejects.toThrow(UserNotFoundException);
     });

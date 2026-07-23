@@ -3,7 +3,7 @@ export interface CreatePatientData {
     birthDate: Date,
     weightInKg: number,
     phoneNumber: string,
-    primaryOrganizationId: string,
+    organizationId: string,
     createdById: string,
     updatedById: string,
     isActive: boolean,

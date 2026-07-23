@@ -49,7 +49,7 @@ describe('ListImmunotherapiesByPatientUseCase - Integration', () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
         const patients = await factories.patients.createMany(3, {
-            primaryOrganizationId: authenticatedUser.activeOrgId,
+            organizationId: authenticatedUser.activeOrgId,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id
         });

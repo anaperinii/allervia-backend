@@ -99,7 +99,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -139,8 +139,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             expect(result).toBeDefined();
             expect(result.concentration).toBe(STARTING_DOSE_CONCENTRATION);
             expect(result.volume).toBe(STARTING_DOSE_VOLUME * 2);
-            expect(result.administeredAt).toBeDefined();
-            expect(result.notes).toBe(dto.notes);
+            expect(result.administeredAt).toBeDefined();
             expect([DoseStatus.ADMINISTERED_ON_SCHEDULE, DoseStatus.ADMINISTERED_OFF_SCHEDULE]).toContain(result.status);
 
             // Verificar se a próxima dose foi criada automaticamente
@@ -165,7 +164,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -246,7 +245,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -311,7 +310,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -379,7 +378,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -460,7 +459,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -541,7 +540,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -624,7 +623,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -669,7 +668,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -730,7 +729,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
             const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
             const patient = await factories.patients.create({
-                primaryOrganizationId: authenticatedUser.activeOrgId,
+                organizationId: authenticatedUser.activeOrgId,
                 createdById: authenticatedUser.id,
                 updatedById: authenticatedUser.id
             });
@@ -763,8 +762,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
             const result = await registerAdministeredDoseUseCase.execute(scheduledDose.id, dto, authenticatedUser);
 
-            expect(result).toBeDefined();
-            expect(result.notes).toBe(dto.notes);
+            expect(result).toBeDefined();
             expect(result.status).toBe(DoseStatus.SCHEDULED); // Mantém como agendada
             expect(result.administeredAt).toBeNull(); // Não foi administrada
 

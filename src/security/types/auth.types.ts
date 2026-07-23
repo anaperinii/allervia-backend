@@ -1,14 +1,8 @@
 export interface AuthenticatedUserPayload {
   id: string;
   email: string;
-  type: 'PATIENT' | 'PROFESSIONAL' | 'SYSTEM_ADMIN' | 'ADMIN';
+  type: 'PATIENT' | 'PROFESSIONAL';
   activeOrgId: string;
+  professionalId: string | null;
   roles: string[];
-  memberships?: MembershipPayload[]; 
-}
-
-export interface MembershipPayload {
-  id: string;
-  organizationId: string;
-  organizationName: string;
 }

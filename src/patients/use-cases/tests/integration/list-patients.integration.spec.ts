@@ -50,13 +50,13 @@ describe('ListPatientsUseCase - Integration', () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
         const patient1 = await factories.patients.create({
-            primaryOrganizationId: authenticatedUser.activeOrgId,
+            organizationId: authenticatedUser.activeOrgId,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id
         });
 
         const patient2 = await factories.patients.create({
-            primaryOrganizationId: authenticatedUser.activeOrgId,
+            organizationId: authenticatedUser.activeOrgId,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id
         });
@@ -83,13 +83,13 @@ describe('ListPatientsUseCase - Integration', () => {
         const authenticatedUserAnotherOrg = await factories.users.createAuthenticatedPhysicianProfessional();
 
         await factories.patients.create({
-            primaryOrganizationId: authenticatedUser.activeOrgId,
+            organizationId: authenticatedUser.activeOrgId,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id
         });
 
         await factories.patients.create({
-            primaryOrganizationId: authenticatedUserAnotherOrg.activeOrgId,
+            organizationId: authenticatedUserAnotherOrg.activeOrgId,
             createdById: authenticatedUserAnotherOrg.id,
             updatedById: authenticatedUserAnotherOrg.id
         });
@@ -98,7 +98,7 @@ describe('ListPatientsUseCase - Integration', () => {
 
         expect(result).toBeDefined();
         expect(result.length).toBe(1);
-        expect(result[0].primaryOrganizationId).toBe(authenticatedUser.activeOrgId);
+        expect(result[0].organizationId).toBe(authenticatedUser.activeOrgId);
     });
 })
 

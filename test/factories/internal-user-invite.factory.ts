@@ -8,7 +8,7 @@ export class InternalUserInviteFactory extends BaseFactory<InternalUserInvite> {
         return {
             email: faker.internet.email(),
             fullName: faker.person.fullName(),
-            roleType: 'PHYSICIAN',
+            role: 'PHYSICIAN',
             token: ulid()
         }
     }

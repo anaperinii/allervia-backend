@@ -63,7 +63,7 @@ describe('CreatePatientUseCase - Integration', () => {
         expect(result.fullName).toBe(dto.fullName);
         expect(result.weightInKg).toBe(dto.weightInKg);
         expect(result.phoneNumber).toBe(dto.phoneNumber);
-        expect(result.primaryOrganizationId).toBe(authenticatedUser.activeOrgId);
+        expect(result.organizationId).toBe(authenticatedUser.activeOrgId);
     });
 
     it('should create patient with correct created and updated by', async () => {

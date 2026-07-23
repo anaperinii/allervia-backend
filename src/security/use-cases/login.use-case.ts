@@ -29,7 +29,7 @@ export class LoginUseCase {
     }
 
     const tokenGenerator = this.tokenGeneratorFactory.create(user.type);
-    return await tokenGenerator.generate(user, dto.activeOrgId);
+    return await tokenGenerator.generate(user);
   }
 }
 

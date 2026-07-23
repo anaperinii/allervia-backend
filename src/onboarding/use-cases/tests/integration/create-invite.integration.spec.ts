@@ -15,7 +15,6 @@ import { CreateInviteDto } from "../../../dtos/create-invite.dto";
 import { AdminInviteStrategy } from "../../../strategies/invites/admin-invite.strategy";
 import { InviteStrategyContext } from "../../../strategies/invites/invite-strategy.context";
 import { InviteStrategyFactory } from "../../../strategies/invites/invite-strategy.factory";
-import { SystemAdminInviteStrategy } from "../../../strategies/invites/system-admin-invite.strategy";
 
 
 describe('CreateInviteUseCase - Integration', () => {
@@ -34,7 +33,6 @@ describe('CreateInviteUseCase - Integration', () => {
                 InviteStrategyContext,
                 InviteStrategyFactory,
                 AdminInviteStrategy,
-                SystemAdminInviteStrategy,
                 FindUserByIdUseCase,
                 ValidateUserEmailUseCase,
                 FindActiveInviteUseCase,
@@ -83,7 +81,7 @@ describe('CreateInviteUseCase - Integration', () => {
         expect(result).toBeDefined();
         expect(result.email).toBe(dto.email);
         expect(result.fullName).toBe(dto.fullName);
-        expect(result.roleType).toBe(dto.userRole);
+        expect(result.role).toBe(dto.userRole);
         expect(result.organizationId).toBe(authenticatedUser.activeOrgId);
     });
 
@@ -92,7 +90,6 @@ describe('CreateInviteUseCase - Integration', () => {
 
         const invite = await factories.internalUserInvite.create({
             email: 'existing@test.com',
-            organizationId: authenticatedUser.activeOrgId,
             isActive: true,
             expiresAt: new Date('2026-01-01'),
             createdById: authenticatedUser.id
@@ -110,7 +107,6 @@ describe('CreateInviteUseCase - Integration', () => {
     it('should throw exception when user already exists and is active', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedAdmin();
         const existingUser = await factories.users.create({
-            organizationId: authenticatedUser.activeOrgId,
             email: 'existing@test.com',
             isActive: true
         });

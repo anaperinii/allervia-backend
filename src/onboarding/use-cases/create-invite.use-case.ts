@@ -61,7 +61,7 @@ export class CreateInviteUseCase {
     const invite = UserInvite.createNew({
       email: dto.email,
       fullName: dto.fullName,
-      roleType: dto.userRole,
+      role: dto.userRole,
       organizationId,
       createdById: createdByUser.id,
       token,
@@ -73,7 +73,6 @@ export class CreateInviteUseCase {
     const inviteData = {
       ...created,
       createdById: createdByUser.id,
-      createdByName: createdByUser.fullName,
       createdByEmail: createdByUser.email,
     }
 

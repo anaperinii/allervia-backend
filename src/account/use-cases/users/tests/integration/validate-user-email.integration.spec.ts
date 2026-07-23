@@ -48,8 +48,7 @@ describe('ValidateUserEmailUseCase - Integration', () => {
 
     it('should return user when email exists in organization', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({
-            organizationId: authenticatedUser.activeOrgId,
+        const targetUser = await factories.users.create({
             email: 'test@example.com'
         });
 
@@ -70,8 +69,7 @@ describe('ValidateUserEmailUseCase - Integration', () => {
     it('should return null when email exists in another organization', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
         const authenticatedUserAnotherOrg = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({
-            organizationId: authenticatedUser.activeOrgId,
+        const targetUser = await factories.users.create({
             email: 'test@example.com'
         });
 

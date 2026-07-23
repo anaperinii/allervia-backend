@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
-import { IUserAuthRepository, UserForAuth } from './interfaces/user-auth.repository.interface';
+import {
+  IUserAuthRepository,
+  UserForAuth,
+} from './interfaces/user-auth.repository.interface';
 
 @Injectable()
 export class PrismaUserAuthRepository extends IUserAuthRepository {
@@ -12,9 +15,12 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
-        roles: { include: { role: true } },
-        memberships: { include: { organization: true } },
-        organization: true
+        professional: {
+          include: {
+            professionalRoles: { where: { revokedAt: null } },
+          },
+        },
+        patient: true,
       },
     });
 
@@ -22,23 +28,19 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
       return null;
     }
 
+    const organizationId =
+      user.professional?.organizationId ??
+      user.patient?.organizationId ??
+      null;
+
     return {
       id: user.id,
       email: user.email,
       password: user.password,
       type: user.type,
-      organizationId: user.organizationId,
-      roles: user.roles.map(r => ({
-        roleTag: r.roleTag,
-        name: r.role.name
-      })),
-      memberships: user.memberships.map(m => ({
-        organizationId: m.organizationId,
-        organization: { name: m.organization.name },
-      })),
-      organization: user.organization ? { name: user.organization.name } : undefined
+      organizationId,
+      professionalId: user.professional?.id ?? null,
+      roles: user.professional?.professionalRoles.map((pr) => pr.role) ?? [],
     };
   }
 }
-
-
