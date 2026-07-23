@@ -4,7 +4,7 @@ import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { CreateOrganizationDto } from "src/organization/dtos/create-organization.dto";
-import { OrganizationAlreadyExistsException } from "src/organization/exceptions/organization-already-exists.exception";
+import { ConflictException } from "@nestjs/common";
 import { OrganizationRepository } from "src/organization/organization.repository";
 import { PrismaOrganizationRepository } from "src/organization/prisma-organization.repository";
 
@@ -72,7 +72,7 @@ describe('CreateOrganizationUseCase - Integration', () => {
             taxId: '98765432000110'
         };
 
-        await expect(createOrganizationUseCase.execute(dto)).rejects.toThrow(OrganizationAlreadyExistsException);
+        await expect(createOrganizationUseCase.execute(dto)).rejects.toThrow(ConflictException);
     });
 
     it('should throw exception when organization with same taxId exists', async () => {
@@ -85,7 +85,7 @@ describe('CreateOrganizationUseCase - Integration', () => {
             taxId: existingOrg.taxId
         };
 
-        await expect(createOrganizationUseCase.execute(dto)).rejects.toThrow(OrganizationAlreadyExistsException);
+        await expect(createOrganizationUseCase.execute(dto)).rejects.toThrow(ConflictException);
     });
 })
 

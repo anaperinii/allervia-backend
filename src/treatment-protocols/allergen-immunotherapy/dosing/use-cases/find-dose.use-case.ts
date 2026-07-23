@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { IDoseRepository } from '../domain/interfaces/dose.repository.interface';
-import { DoseNotFoundException } from '../domain/exceptions/dose-not-found.exception';
+import { DOSE_MESSAGES } from '../dose.messages';
 import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class FindDoseUseCase {
     const dose = await this.doseRepository.findById(id, orgId);
 
     if (!dose) {
-      throw new DoseNotFoundException(id);
+      throw new NotFoundException(DOSE_MESSAGES.notFound(id));
     }
 
     return dose;

@@ -6,7 +6,7 @@ import { TestDatabaseManager } from "test/database/test-database.manager";
 import { PatientRepository } from "src/patients/patient.repository";
 import { PrismaPatientRepository } from "src/patients/prisma-patient.repository";
 import { ulid } from "ulid";
-import { PatientNotFoundException } from "src/patients/exceptions/patient-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 import { UpdatePatientDto } from "src/patients/dtos/update-patient.dto";
 
 describe('UpdatePatientUseCase - Integration', () => {
@@ -98,7 +98,7 @@ describe('UpdatePatientUseCase - Integration', () => {
             fullName: 'Nome Atualizado'
         };
 
-        await expect(updatePatientUseCase.execute(ulid(), dto, authenticatedUser)).rejects.toThrow(PatientNotFoundException);
+        await expect(updatePatientUseCase.execute(ulid(), dto, authenticatedUser)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw a not found exception when updating patient from another organization', async () => {
@@ -115,7 +115,7 @@ describe('UpdatePatientUseCase - Integration', () => {
             fullName: 'Nome Atualizado'
         };
 
-        await expect(updatePatientUseCase.execute(patient.id, dto, authenticatedUserAnotherOrg)).rejects.toThrow(PatientNotFoundException);
+        await expect(updatePatientUseCase.execute(patient.id, dto, authenticatedUserAnotherOrg)).rejects.toThrow(NotFoundException);
     });
 })
 

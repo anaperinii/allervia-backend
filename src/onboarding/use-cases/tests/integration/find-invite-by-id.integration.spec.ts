@@ -5,7 +5,7 @@ import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { ulid } from "ulid";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
-import { UserInviteNotFoundException } from "src/onboarding/domain/exceptions/user-invite-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 
 describe('FindInviteByIdUseCase - Integration', () => {
@@ -67,7 +67,7 @@ describe('FindInviteByIdUseCase - Integration', () => {
     it('should throw not found exception when invite does not exist', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedAdmin();
 
-        await expect(findInviteByIdUseCase.execute(ulid(), authenticatedUser)).rejects.toThrow(UserInviteNotFoundException);
+        await expect(findInviteByIdUseCase.execute(ulid(), authenticatedUser)).rejects.toThrow(NotFoundException);
     });
 })
 

@@ -8,7 +8,7 @@ import { UpdateImmunotherapyStatusUseCase } from "../../update-immunotherapy-sta
 import { TherapyStatus } from "@prisma/client";
 import { BadRequestException } from "@nestjs/common";
 import { ulid } from "ulid";
-import { ImmunotherapyNotFoundException } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/exceptions/immunotherapy-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 
 describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
     let module: TestingModule;
@@ -119,7 +119,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
     it('should throw not found exception when updating a non exist immunotherapy', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
         
-        await expect(immunoUpdateStatusUseCase.execute(ulid(), { status: 'IN_PROGRESS' }, authenticatedUser.activeOrgId, authenticatedUser)).rejects.toThrow(ImmunotherapyNotFoundException);
+        await expect(immunoUpdateStatusUseCase.execute(ulid(), { status: 'IN_PROGRESS' }, authenticatedUser.activeOrgId, authenticatedUser)).rejects.toThrow(NotFoundException);
     });
 
     // TO DO 

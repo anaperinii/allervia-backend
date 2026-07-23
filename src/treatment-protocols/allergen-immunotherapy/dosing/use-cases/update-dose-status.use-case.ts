@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Dose, DoseStatus } from '@prisma/client';
 import { IDoseRepository } from '../domain/interfaces/dose.repository.interface';
-import { DoseNotFoundException } from '../domain/exceptions/dose-not-found.exception';
+import { DOSE_MESSAGES } from '../dose.messages';
 import { UpdateDoseStatusDto } from '../dtos/update-dose-status.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 
@@ -19,7 +19,7 @@ export class UpdateDoseStatusUseCase {
     const dose = await this.doseRepository.findById(id, currentUser.activeOrgId);
 
     if (!dose) {
-      throw new DoseNotFoundException(id);
+      throw new NotFoundException(DOSE_MESSAGES.notFound(id));
     }
 
     dose.changeStatus(dto);

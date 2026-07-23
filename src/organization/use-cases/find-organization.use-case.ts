@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrganizationRepository } from '../organization.repository';
 import { OrganizationResponseDto } from '../dtos/organization-response.dto';
-import { OrganizationNotFoundException } from '../exceptions/organization-not-found.exception';
+import { ORGANIZATION_MESSAGES } from '../organization.messages';
 
 @Injectable()
 export class FindOrganizationUseCase {
@@ -13,7 +13,7 @@ export class FindOrganizationUseCase {
     const organization = await this.organizationRepository.findById(id);
 
     if (!organization) {
-      throw new OrganizationNotFoundException(id);
+      throw new NotFoundException(ORGANIZATION_MESSAGES.notFound(id));
     }
 
     return organization;

@@ -4,7 +4,7 @@ import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
-import { UserInviteNotFoundException } from "src/onboarding/domain/exceptions/user-invite-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 
 
@@ -67,7 +67,7 @@ describe('FindInviteByTokenUseCase - Integration', () => {
     });
 
     it('should throw not found exception when invite does not exist', async () => {
-        await expect(findInviteByTokenUseCase.execute('non-existent-token')).rejects.toThrow(UserInviteNotFoundException);
+        await expect(findInviteByTokenUseCase.execute('non-existent-token')).rejects.toThrow(NotFoundException);
     });
 })
 

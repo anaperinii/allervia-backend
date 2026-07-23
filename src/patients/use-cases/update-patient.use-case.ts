@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PatientRepository } from '../patient.repository';
-import { PatientNotFoundException } from '../exceptions/patient-not-found.exception';
+import { PATIENT_MESSAGES } from '../patient.messages';
 import { UpdatePatientDto } from '../dtos/update-patient.dto';
 import { PatientResponseDto } from '../dtos/patient-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
@@ -22,7 +22,7 @@ export class UpdatePatientUseCase {
     const patient = await this.patientRepository.findById(id, currentUser.activeOrgId);
 
     if (!patient) {
-      throw new PatientNotFoundException(id);
+      throw new NotFoundException(PATIENT_MESSAGES.notFound(id));
     }
 
     const updatedPatient = await this.patientRepository.update(id, dto, tx);

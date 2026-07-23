@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PatientRepository } from '../patient.repository';
-import { PatientNotFoundException } from '../exceptions/patient-not-found.exception';
+import { PATIENT_MESSAGES } from '../patient.messages';
 import { ITransactionContext } from 'src/database/transaction.interface';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class FindPatientUseCase {
     const patient = await this.patientRepository.findById(id, organizationId, tx);
 
     if (!patient) {
-      throw new PatientNotFoundException(id);
+      throw new NotFoundException(PATIENT_MESSAGES.notFound(id));
     }
 
     return patient;
