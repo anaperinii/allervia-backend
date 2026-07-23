@@ -5,7 +5,7 @@ import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface";
 import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/prisma-dose.repository";
 import { ulid } from "ulid";
-import { DoseNotFoundException } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/dose-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 import { IBuildUpPhase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface";
 import { BuildUpPhaseService } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.service";
 import { IMaintenancePhase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.interface";
@@ -723,7 +723,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
             await expect(
                 registerAdministeredDoseUseCase.execute(ulid(), dto, authenticatedUser)
-            ).rejects.toThrow(DoseNotFoundException);
+            ).rejects.toThrow(NotFoundException);
         });
 
         it('deve atualizar apenas campos fornecidos sem criar próxima dose quando não há dados de administração', async () => {

@@ -6,7 +6,7 @@ import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/
 import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/prisma-dose.repository";
 import { FindDoseUseCase } from "../../find-dose.use-case";
 import { ulid } from "ulid";
-import { DoseNotFoundException } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/dose-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 
 describe('FindDoseUseCase - Integration', () => {
     let module: TestingModule;
@@ -86,7 +86,7 @@ describe('FindDoseUseCase - Integration', () => {
     it('should throw a not found exception when querying a non-existent dose', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
-        await expect(findDoseUseCase.execute(ulid(), authenticatedUser.activeOrgId)).rejects.toThrow(DoseNotFoundException);
+        await expect(findDoseUseCase.execute(ulid(), authenticatedUser.activeOrgId)).rejects.toThrow(NotFoundException);
         
     });
 
@@ -118,6 +118,6 @@ describe('FindDoseUseCase - Integration', () => {
             updatedById: authenticatedUser.id
         });
 
-        await expect(findDoseUseCase.execute(dose.id, authenticatedUserAnotherOrg.activeOrgId)).rejects.toThrow(DoseNotFoundException);
+        await expect(findDoseUseCase.execute(dose.id, authenticatedUserAnotherOrg.activeOrgId)).rejects.toThrow(NotFoundException);
     });
 })

@@ -8,7 +8,7 @@ import { UpdateDoseStatusUseCase } from "../../update-dose-status.use-case";
 import { DoseStatus } from "@prisma/client";
 import { InvalidDoseStatusException } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/invalid-dose-status.exception";
 import { ulid } from "ulid";
-import { DoseNotFoundException } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/dose-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 
 describe('UpdateDoseUseCase - Integration', () => {
     let module: TestingModule;
@@ -179,6 +179,6 @@ describe('UpdateDoseUseCase - Integration', () => {
 
         console.log(dose)
 
-       await expect(updateDoseStatusUseCase.execute(ulid(), { status: 'ENTERED_IN_ERROR' }, authenticatedUser)).rejects.toThrow(DoseNotFoundException);
+       await expect(updateDoseStatusUseCase.execute(ulid(), { status: 'ENTERED_IN_ERROR' }, authenticatedUser)).rejects.toThrow(NotFoundException);
     });
 })

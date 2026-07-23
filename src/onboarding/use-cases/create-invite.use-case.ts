@@ -8,7 +8,7 @@ import { FindUserByIdUseCase } from "src/account/use-cases/users/find-user-by-id
 import { UserInvite } from "../domain/entities/user-invite.entity";
 import { InviteResponseDto } from "../dtos/invite-response.dto";
 import { IUserInviteRepository } from "../domain/interfaces/user-invite.repository.interface";
-import { EmailInviteAlreadyActiveException } from "../domain/exceptions/email-invite-already-active.exception";
+import { INVITE_MESSAGES } from "../invite.messages";
 import { FindActiveInviteUseCase } from "./find-active-invite.use-case";
 
 
@@ -35,7 +35,7 @@ export class CreateInviteUseCase {
     const user = await this.validateUserEmail.execute(dto.email, currentUser);
 
     if (user && user.isActive) {
-      throw new EmailInviteAlreadyActiveException();
+      throw new ConflictException(INVITE_MESSAGES.emailAlreadyActive);
     }
 
     const existingInvite = await this.findActiveInviteUseCase.execute(

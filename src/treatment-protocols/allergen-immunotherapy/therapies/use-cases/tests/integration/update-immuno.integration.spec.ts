@@ -7,7 +7,7 @@ import { TestFactories } from "test/factories";
 import { UpdateImmunotherapyUseCase } from "../../update-immunotherapy.use-case";
 import { ulid } from "ulid";
 import { AdministrationRoute } from "@prisma/client";
-import { ImmunotherapyNotFoundException } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/exceptions/immunotherapy-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 
 describe('UpdateImmunotherapyUseCase - Integration', () => {
     let module: TestingModule;
@@ -57,7 +57,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
             administrationRoute: AdministrationRoute.SUBLINGUAL
         }
 
-        await expect(immunoUpdateUseCase.execute(ulid(), dto, authenticatedUser.activeOrgId)).rejects.toThrow(ImmunotherapyNotFoundException);
+        await expect(immunoUpdateUseCase.execute(ulid(), dto, authenticatedUser.activeOrgId)).rejects.toThrow(NotFoundException);
     });
 
     it('should update an existing immunotherapy correctly', async () => {
@@ -110,6 +110,6 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
             administrationRoute: AdministrationRoute.SUBLINGUAL
         }
 
-        await expect(immunoUpdateUseCase.execute(immunotherapy.id, dto, authenticatedUserAnotherOrg.activeOrgId)).rejects.toThrow(ImmunotherapyNotFoundException);
+        await expect(immunoUpdateUseCase.execute(immunotherapy.id, dto, authenticatedUserAnotherOrg.activeOrgId)).rejects.toThrow(NotFoundException);
     })
 })

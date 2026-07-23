@@ -6,7 +6,7 @@ import { TestDatabaseManager } from "test/database/test-database.manager";
 import { PatientRepository } from "src/patients/patient.repository";
 import { PrismaPatientRepository } from "src/patients/prisma-patient.repository";
 import { ulid } from "ulid";
-import { PatientNotFoundException } from "src/patients/exceptions/patient-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 
 describe('FindPatientUseCase - Integration', () => {
     let module: TestingModule;
@@ -67,7 +67,7 @@ describe('FindPatientUseCase - Integration', () => {
     it('should throw a not found exception when querying a non-existent patient', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
-        await expect(findPatientUseCase.execute(ulid(), authenticatedUser.activeOrgId)).rejects.toThrow(PatientNotFoundException);
+        await expect(findPatientUseCase.execute(ulid(), authenticatedUser.activeOrgId)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw a not found exception when querying with another organization id', async () => {
@@ -80,7 +80,7 @@ describe('FindPatientUseCase - Integration', () => {
             updatedById: authenticatedUser.id
         });
 
-        await expect(findPatientUseCase.execute(patient.id, authenticatedUserAnotherOrg.activeOrgId)).rejects.toThrow(PatientNotFoundException);
+        await expect(findPatientUseCase.execute(patient.id, authenticatedUserAnotherOrg.activeOrgId)).rejects.toThrow(NotFoundException);
     });
 })
 

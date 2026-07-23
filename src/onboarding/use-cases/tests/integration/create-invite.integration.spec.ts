@@ -10,7 +10,6 @@ import { IUserRepository } from "src/account/user.repository";
 import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ConflictException } from "@nestjs/common";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
-import { EmailInviteAlreadyActiveException } from "src/onboarding/domain/exceptions/email-invite-already-active.exception";
 import { PrismaUserInviteRepository } from "src/onboarding/prisma-user-invite.repository";
 import { CreateInviteDto } from "../../../dtos/create-invite.dto";
 import { AdminInviteStrategy } from "../../../strategies/invites/admin-invite.strategy";
@@ -122,7 +121,7 @@ describe('CreateInviteUseCase - Integration', () => {
             userRole: 'PHYSICIAN'
         };
 
-        await expect(createInviteUseCase.execute(dto, authenticatedUser)).rejects.toThrow(EmailInviteAlreadyActiveException);
+        await expect(createInviteUseCase.execute(dto, authenticatedUser)).rejects.toThrow(ConflictException);
     });
 })
 

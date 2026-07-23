@@ -6,7 +6,7 @@ import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
 import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository";
 import { ulid } from "ulid";
-import { ImmunotherapyNotFoundException } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/exceptions/immunotherapy-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 
 describe('FindImmunotherapyUseCase - Integration', () => {
     let module: TestingModule;
@@ -74,7 +74,7 @@ describe('FindImmunotherapyUseCase - Integration', () => {
     it('should throw a not found exception if the respectively immunotherapy doesnt exists', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
-        await expect(immunoFindUseCase.execute(ulid(), authenticatedUser.activeOrgId)).rejects.toThrow(ImmunotherapyNotFoundException);
+        await expect(immunoFindUseCase.execute(ulid(), authenticatedUser.activeOrgId)).rejects.toThrow(NotFoundException);
         
     });
 
@@ -95,6 +95,6 @@ describe('FindImmunotherapyUseCase - Integration', () => {
             patientId: patient.id
         });
 
-       await expect(immunoFindUseCase.execute(immunotherapy.id, authenticatedUser.activeOrgId)).rejects.toThrow(ImmunotherapyNotFoundException);
+       await expect(immunoFindUseCase.execute(immunotherapy.id, authenticatedUser.activeOrgId)).rejects.toThrow(NotFoundException);
     });
 })

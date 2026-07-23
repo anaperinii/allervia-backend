@@ -3,7 +3,7 @@ import { FindOrganizationUseCase } from "../../find-organization.use-case";
 import { PrismaService } from "src/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { OrganizationNotFoundException } from "src/organization/exceptions/organization-not-found.exception";
+import { NotFoundException } from "@nestjs/common";
 import { OrganizationRepository } from "src/organization/organization.repository";
 import { PrismaOrganizationRepository } from "src/organization/prisma-organization.repository";
 import { ulid } from "ulid";
@@ -59,7 +59,7 @@ describe('FindOrganizationUseCase - Integration', () => {
     });
 
     it('should throw not found exception when organization does not exist', async () => {
-        await expect(findOrganizationUseCase.execute(ulid())).rejects.toThrow(OrganizationNotFoundException);
+        await expect(findOrganizationUseCase.execute(ulid())).rejects.toThrow(NotFoundException);
     });
 })
 
