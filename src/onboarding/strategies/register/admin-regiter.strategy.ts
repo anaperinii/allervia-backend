@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { UserInvite } from "src/onboarding/domain/entities/user-invite.entity";
 import { PrismaService } from "src/database/prisma.service";
-import { AddRoleToUserUseCase } from "src/account/use-cases/roles/add-role-to-user.use-case";
+import { GrantRoleUseCase } from "src/account/use-cases/roles/grant-role.use-case";
 import { RegisterStrategy } from "./register.strategy";
 import { IUserInviteRepository } from "src/onboarding/domain/interfaces/user-invite.repository.interface";
 import { RegisterUser } from "../../domain/interfaces/register.interface";
@@ -16,7 +16,7 @@ export class AdminRegisterStrategy implements RegisterStrategy {
         private prisma: PrismaService,
         private userRepository: IUserRepository,
         private hashingService: IPasswordHashingService,
-        private addRoleToUserUseCase: AddRoleToUserUseCase,
+        private grantRoleUseCase: GrantRoleUseCase,
         private inviteRepository: IUserInviteRepository
     ) {};
     
@@ -44,7 +44,7 @@ export class AdminRegisterStrategy implements RegisterStrategy {
 
         await this.inviteRepository.update(invite, tx);
 
-        await this.addRoleToUserUseCase.execute(savedUser.id, invite.roleType, invite.organizationId, tx);
+        await this.grantRoleUseCase.execute({ professionalId: savedUser.id, role: invite.roleType, grantedById: savedUser.id }, tx);
 
         return savedUser;
     });

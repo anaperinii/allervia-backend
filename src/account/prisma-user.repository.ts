@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/database/prisma.service";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
-import { User } from "../../domain/entities/user.entity";
 import { ITransactionContext } from "src/database/transaction.interface";
 import { UserCreationData, UserUpdateData } from "src/account/account.interface";
 import { IUserRepository } from "src/account/user.repository";
@@ -11,7 +10,7 @@ import { IUserRepository } from "src/account/user.repository";
 export class PrismaUserRepository extends IUserRepository {
     constructor(private prismaService: PrismaService) { super() }
     
-    async create(user: UserCreationData, tx?: ITransactionContext): Promise<User> {
+    async create(user: UserCreationData, tx?: ITransactionContext) {
 
         const prismaClient = this.prismaService.getClient(tx);
 
@@ -19,17 +18,16 @@ export class PrismaUserRepository extends IUserRepository {
             data: user
         });
 
-        return new User(created);
+        return created;
     }
 
-    async update(user: Partial<UserUpdateData>, tx?: ITransactionContext): Promise<User> {
+    async update(user: Partial<UserUpdateData>, tx?: ITransactionContext) {
 
         const prismaClient = this.prismaService.getClient(tx);
 
         const updated = await prismaClient.user.update({
                 where: { id: user.id },
                 data: {
-                    fullName: user.fullName,
                     email: user.email,
                     password: user.password, 
                     isActive: user.isActive,
@@ -37,60 +35,33 @@ export class PrismaUserRepository extends IUserRepository {
                 },
             });
 
-        return new User(updated);
+        return updated;
     }
 
-    async findUserByEmail(email: string, currentUser: AuthenticatedUserPayload, tx?: ITransactionContext): Promise<User | null> {
+    async findUserByEmail(email: string, currentUser: AuthenticatedUserPayload, tx?: ITransactionContext) {
 
         const prismaClient = this.prismaService.getClient(tx);
 
         const user = await prismaClient.user.findFirst({
             where: {
-                email,
-                organizationId: currentUser.activeOrgId,
+                email
             },
         });
         
-        return user ? new User(user) : null;
+        return user;
     }
 
-    async findUserById(id: string, organizationId: string, tx?: ITransactionContext): Promise<User | null> {
+    async findUserById(id: string, organizationId: string, tx?: ITransactionContext) {
         
         const prismaClient = this.prismaService.getClient(tx);;
 
         const user = await prismaClient.user.findFirst({
             where: {
-                id: id,
-                organizationId: organizationId,
+                id: id
             },
         });
         
-        return user ? new User(user) : null;
-    }
-
-    async findUserSystemById(id: string, tx?: ITransactionContext): Promise<User | null> {
-        
-        const prismaClient = this.prismaService.getClient(tx);
-
-        const user = await prismaClient.user.findFirst({
-            where: {
-                id,
-                type: 'SYSTEM_ADMIN'
-            },
-        });
-        
-        return user ? new User(user) : null;
-    }
-
-    async findAllUsersByOrg(organizationId: string): Promise<User[]> {
-        
-        const users = await this.prismaService.user.findMany({
-            where: {
-                organizationId
-            }
-        });
-
-        return users.map(u => new User(u));
+        return user;
     }
 
     async existsByEmail(email: string, tx?: ITransactionContext): Promise<boolean> {
