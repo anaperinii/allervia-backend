@@ -17,8 +17,21 @@ export class CreatePatientUseCase {
     tx?: ITransactionContext
   ) {
    
-    const savedPatient = await this.patientRepository.create(dto, tx);
-    
+    const savedPatient = await this.patientRepository.create(
+      {
+        fullName: dto.fullName,
+        birthDate: dto.birthDate,
+        weightInKg: dto.weightInKg,
+        phoneNumber: dto.phoneNumber,
+        organizationId: currentUser.activeOrgId,
+        createdById: currentUser.id,
+        updatedById: currentUser.id,
+        isActive: true,
+        isArchived: false,
+      },
+      tx,
+    );
+
     return savedPatient;
   }
 }

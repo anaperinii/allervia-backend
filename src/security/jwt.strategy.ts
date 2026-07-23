@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       type: payload.type,
       roles: payload.roles || [],
       activeOrgId: payload.activeOrgId,
-      memberships: payload.memberships || [],
+      professionalId: payload.professionalId ?? null,
     };
   }
 }

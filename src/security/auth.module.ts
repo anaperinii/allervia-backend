@@ -4,12 +4,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { OrganizationContextGuard } from './guards/organization-context.guard';
-import { MembershipsModule } from 'src/memberships/memberships.module';
 import { PrismaModule } from 'src/database/prisma.module';
 import { AccountModule } from 'src/account/account.module';
 import { LoginUseCase } from './use-cases/login.use-case';
-import { SwitchOrganizationUseCase } from './use-cases/switch-organization.use-case';
 import { IPasswordHashingService } from './interfaces/password-hashing.service.interface';
 import { BcryptPasswordHashingService } from './bcrypt-password-hashing.service';
 import { IJwtTokenService } from './interfaces/jwt-token.service.interface';
@@ -19,7 +16,6 @@ import { PrismaUserAuthRepository } from './prisma-user-auth.repository';
 import { TokenGeneratorFactory } from './factories/token-generator.factory';
 import { RolesGuard } from './guards/roles.guard';
 import { AuthController } from './auth.controller';
-import { OrganizationContextFactory } from './factories/organization-context.factory';
 import { RoleValidationFactory } from './factories/role-validation.factory';
 
 @Module({
@@ -27,7 +23,6 @@ import { RoleValidationFactory } from './factories/role-validation.factory';
     PrismaModule,
     PassportModule,
     ConfigModule,
-    MembershipsModule,
     AccountModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -43,7 +38,6 @@ import { RoleValidationFactory } from './factories/role-validation.factory';
   providers: [
     // Use Cases
     LoginUseCase,
-    SwitchOrganizationUseCase,
 
     // Services
     {
@@ -68,17 +62,13 @@ import { RoleValidationFactory } from './factories/role-validation.factory';
     JwtStrategy,
     JwtAuthGuard,
     RolesGuard,
-    OrganizationContextGuard,
     RoleValidationFactory,
-    OrganizationContextFactory,
   ],
   controllers: [AuthController],
   exports: [
     IJwtTokenService,
     IUserAuthRepository,
     IPasswordHashingService,
-    OrganizationContextFactory,
-    OrganizationContextGuard,
     RoleValidationFactory,
     RolesGuard,
   ],

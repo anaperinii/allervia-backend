@@ -13,7 +13,6 @@ import { IUserInviteRepository } from 'src/onboarding/domain/interfaces/user-inv
 import { PrismaUserInviteRepository } from 'src/onboarding/prisma-user-invite.repository';
 import { OrganizationModule } from 'src/organization/organization.module';
 import { AdminInviteStrategy } from './strategies/invites/admin-invite.strategy';
-import { SystemAdminInviteStrategy } from './strategies/invites/system-admin-invite.strategy';
 import { FindInviteByIdUseCase } from './use-cases/find-invite-by-id.use-case';
 import { FindInviteByOrgUseCase } from './use-cases/find-invite-by-org.use-case';
 import { FindInviteByTokenUseCase } from './use-cases/find-invite-by-token.use-case';
@@ -48,7 +47,6 @@ import { ProfessionalsModule } from 'src/professionals/professionals.module';
     RegisterStrategyContext,
     InternalUserRegisterStrategy,
     AdminInviteStrategy,
-    SystemAdminInviteStrategy,
 
     {
       provide: IUserInviteRepository,
