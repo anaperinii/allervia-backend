@@ -11,7 +11,7 @@ import { InviteStrategyContext } from './strategies/invites/invite-strategy.cont
 import { InviteStrategyFactory } from './strategies/invites/invite-strategy.factory';
 import { IUserInviteRepository } from 'src/onboarding/domain/interfaces/user-invite.repository.interface';
 import { PrismaUserInviteRepository } from 'src/onboarding/prisma-user-invite.repository';
-import { OrganizationsModule } from 'src/organization/organization.module';
+import { OrganizationModule } from 'src/organization/organization.module';
 import { AdminInviteStrategy } from './strategies/invites/admin-invite.strategy';
 import { SystemAdminInviteStrategy } from './strategies/invites/system-admin-invite.strategy';
 import { FindInviteByIdUseCase } from './use-cases/find-invite-by-id.use-case';
@@ -19,13 +19,18 @@ import { FindInviteByOrgUseCase } from './use-cases/find-invite-by-org.use-case'
 import { FindInviteByTokenUseCase } from './use-cases/find-invite-by-token.use-case';
 import { ValidateInviteForRegisterUseCase } from './use-cases/validate-invite-for-registration.use-case';
 import { FindActiveInviteUseCase } from './use-cases/find-active-invite.use-case';
-import { AdminRegisterStrategy } from './strategies/register/admin-regiter.strategy';
-import { ProfessionalRegisterStrategy } from './strategies/register/professional-register.strategy';
 import { RegisterStrategyContext } from './strategies/register/register-strategy.context';
-import { RegisterStrategyFactory } from './strategies/register/register-strategy.factory';
+import { InternalUserRegisterStrategy } from './strategies/register/internal-user-register.strategy';
+import { ProfessionalsModule } from 'src/professionals/professionals.module';
 
 @Module({
-  imports: [PrismaModule, AccountModule, AuthModule, OrganizationsModule],
+  imports: [
+    PrismaModule,
+    AccountModule,
+    AuthModule,
+    OrganizationModule,
+    ProfessionalsModule,
+  ],
   providers: [
     // Use Cases
     CreateInviteUseCase,
@@ -41,12 +46,10 @@ import { RegisterStrategyFactory } from './strategies/register/register-strategy
     InviteStrategyContext,
     InviteStrategyFactory,
     RegisterStrategyContext,
-    RegisterStrategyFactory,
+    InternalUserRegisterStrategy,
     AdminInviteStrategy,
-    AdminRegisterStrategy,
     SystemAdminInviteStrategy,
-    ProfessionalRegisterStrategy,
- 
+
     {
       provide: IUserInviteRepository,
       useClass: PrismaUserInviteRepository,

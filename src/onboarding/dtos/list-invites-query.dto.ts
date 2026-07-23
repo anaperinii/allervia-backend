@@ -5,7 +5,7 @@ import { Role } from '@prisma/client';
 export class ListInvitesQueryDto {
   @IsOptional()
   @IsEnum(Role)
-  roleType?: Role;
+  role?: Role;
 
   @IsOptional()
   @Transform(({ value }) => value === 'false')

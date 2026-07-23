@@ -3,7 +3,7 @@ import { Role } from "@prisma/client";
 export interface CreateInviteData {
   email: string;
   fullName: string;
-  roleType: Role;
+  role: Role;
   organizationId: string;
   createdById: string;
   token: string;
@@ -20,7 +20,7 @@ export interface UpdateInviteData {
 }
 
 export interface FindInvitesFilters {
-  roleType?: Role;
+  role?: Role;
   onlyActive?: boolean;
   includeExpired?: boolean;
 }

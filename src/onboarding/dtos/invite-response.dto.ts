@@ -4,7 +4,7 @@ export class InviteResponseDto {
     id: string;
     email: string;
     fullName: string;
-    roleType: Role;
+    role: Role;
     organizationId: string;
     professionalId: string | null;
     createdById: string;

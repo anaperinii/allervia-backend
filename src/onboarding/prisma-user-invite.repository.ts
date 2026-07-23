@@ -84,8 +84,8 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
 
     const where: Prisma.InternalUserInviteWhereInput = { organizationId };
 
-    if (filters?.roleType) {
-      where.roleType = filters.roleType;
+    if (filters?.role) {
+      where.role = filters.role;
     }
 
     if (filters?.onlyActive) {

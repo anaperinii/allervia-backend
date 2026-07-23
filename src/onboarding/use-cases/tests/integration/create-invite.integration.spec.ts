@@ -83,7 +83,7 @@ describe('CreateInviteUseCase - Integration', () => {
         expect(result).toBeDefined();
         expect(result.email).toBe(dto.email);
         expect(result.fullName).toBe(dto.fullName);
-        expect(result.roleType).toBe(dto.userRole);
+        expect(result.role).toBe(dto.userRole);
         expect(result.organizationId).toBe(authenticatedUser.activeOrgId);
     });
 

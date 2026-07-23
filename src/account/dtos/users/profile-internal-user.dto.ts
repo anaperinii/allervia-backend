@@ -1,26 +1,24 @@
-import { IsNotEmpty, IsString } from "@nestjs/class-validator";
-import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { Profession } from '@prisma/client';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class ProfileInternalUserDto {
+  @ApiProperty({ description: 'Nome Completo' })
+  @IsNotEmpty()
+  @IsString()
+  fullName: string;
 
-    @ApiProperty({ description: 'Nome Completo' })
-    @IsNotEmpty()
-    @IsString()
-    fullName: string;
-    
-    @ApiProperty({ description: 'Senha' })
-    @IsNotEmpty()
-    @IsString()
-    password: string;
+  @ApiProperty({ description: 'Senha' })
+  @IsNotEmpty()
+  @IsString()
+  password: string;
 
-    @ApiProperty({ description: 'Especialidade/Atuação', required: false})
-    @IsString()
-    @IsOptional()
-    specialty?: string;
- 
-    @ApiProperty({ description: 'Telefone Comercial de Contato'})
-    @IsString()
-    @IsOptional()
-    phoneNumber: string; 
+  @ApiProperty({ description: 'Profissão', enum: Profession })
+  @IsEnum(Profession, { message: 'Profissão inválida' })
+  profession: Profession;
+
+  @ApiProperty({ description: 'Telefone Comercial de Contato' })
+  @IsString()
+  @IsNotEmpty()
+  phoneNumber: string;
 }
