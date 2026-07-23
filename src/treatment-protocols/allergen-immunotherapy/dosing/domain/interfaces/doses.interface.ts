@@ -6,9 +6,7 @@ export interface CreateDoseData {
     scheduledAt: Date;
     administeredAt: Date | null;
     nextIntervalInDays: number;
-    sideEffect: string | null;
-    medicationRequired: string | null;
-    notes: string | null;
+    betweenDosesReport?: string;
     status: DoseStatus;
     immunotherapyId: string;
     administeredById: string | null;
@@ -32,9 +30,7 @@ export interface UpdateDoseData {
     scheduledAt: Date | null;
     administeredAt: Date | null;
     nextIntervalInDays: number;
-    sideEffect: string | null;
-    medicationRequired: string | null;
-    notes: string | null;
+    betweenDosesReport: string | null;
     status: DoseStatus;
     isArchived: boolean;
     administeredById: string | null;

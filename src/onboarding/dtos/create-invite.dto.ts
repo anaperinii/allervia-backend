@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { RoleType } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { IsEmail, IsEnum, IsNotEmpty, IsString } from "class-validator";
 
 export class CreateInviteDto {
@@ -14,7 +14,7 @@ export class CreateInviteDto {
     @IsString()
     fullName: string;
 
-    @IsEnum(RoleType, {message: 'Role especificada inválida'})
+    @IsEnum(Role, {message: 'Role especificada inválida'})
     @IsNotEmpty()
-    userRole: RoleType;
+    userRole: Role;
 }

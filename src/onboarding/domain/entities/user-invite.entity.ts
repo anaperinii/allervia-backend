@@ -1,4 +1,4 @@
-import { RoleType } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { UserInviteExpiredException } from '../exceptions/user-invite-expired.exception';
 import { UserInviteAlreadyUsedException } from '../exceptions/user-invite-already-used.exception';
 import { UserInviteCancelledException } from '../exceptions/user-invite-cancelled.exception';
@@ -7,7 +7,7 @@ interface UserInviteProps {
   id: string;
   email: string;
   fullName: string;
-  roleType: RoleType;
+  roleType: Role;
   organizationId: string;
   professionalId: string | null;
   createdById: string;
@@ -22,7 +22,7 @@ interface UserInviteProps {
 interface CreateUserInviteProps {
   email: string;
   fullName: string;
-  roleType: RoleType;
+  roleType: Role;
   organizationId: string;
   createdById: string;
   token: string;
@@ -33,7 +33,7 @@ export class UserInvite {
   id: string;
   email: string;
   fullName: string;
-  roleType: RoleType;
+  roleType: Role;
   organizationId: string;
   professionalId: string | null;
   createdById: string;

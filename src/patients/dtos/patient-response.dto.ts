@@ -4,7 +4,7 @@ export class PatientResponseDto {
   birthDate: Date;
   weightInKg: number;
   phoneNumber: string;
-  primaryOrganizationId: string;
+  organizationId: string;
   userId: string | null;
   createdAt: Date;
   updatedAt: Date;

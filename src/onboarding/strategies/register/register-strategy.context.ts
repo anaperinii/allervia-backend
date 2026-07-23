@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { RegisterStrategy } from "./register.strategy";
-import { RoleType } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { RegisterStrategyFactory } from "./register-strategy.factory";
 import { ValidateInviteForRegisterUseCase } from "src/onboarding/use-cases/validate-invite-for-registration.use-case";
 import { RegisterUser } from "../../domain/interfaces/register.interface";
@@ -15,7 +15,7 @@ export class RegisterStrategyContext{
         private validateInviteForRegistration: ValidateInviteForRegisterUseCase
     ) {};
 
-    private setStrategyForUser(roleType: RoleType) {
+    private setStrategyForUser(roleType: Role) {
         this.strategy = this.registerFactory.getStrategy(roleType);
     }
 

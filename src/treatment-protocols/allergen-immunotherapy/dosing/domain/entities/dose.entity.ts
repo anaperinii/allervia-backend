@@ -11,9 +11,7 @@ export interface DoseProps {
   scheduledAt: Date;
   administeredAt: Date | null;
   nextIntervalInDays: number;
-  sideEffect: string | null;
-  medicationRequired: string | null;
-  notes: string | null;
+  betweenDosesReport: string;
   status: DoseStatus;
   isArchived: boolean;
   immunotherapyId: string;
@@ -32,9 +30,7 @@ export interface CreateDoseProps {
   scheduledAt: Date;
   administeredAt?: Date | null;
   nextIntervalInDays: number;
-  sideEffect?: string | null;
-  medicationRequired?: string | null;
-  notes?: string | null;
+  betweenDosesReport?: string;
   immunotherapyId: string;
   administeredById?: string | null;
   createdById: string;
@@ -48,9 +44,7 @@ export class Dose {
   scheduledAt: Date;
   administeredAt: Date | null;
   nextIntervalInDays: number;
-  sideEffect: string | null;
-  medicationRequired: string | null;
-  notes: string | null;
+  betweenDosesReport: string;
   status: DoseStatus;
   isArchived: boolean;
   immunotherapyId: string;
@@ -69,9 +63,7 @@ export class Dose {
     this.scheduledAt = props.scheduledAt;
     this.administeredAt = props.administeredAt;
     this.nextIntervalInDays = props.nextIntervalInDays;
-    this.sideEffect = props.sideEffect;
-    this.medicationRequired = props.medicationRequired;
-    this.notes = props.notes;
+    this.betweenDosesReport = props.betweenDosesReport;
     this.status = props.status;
     this.isArchived = props.isArchived;
     this.immunotherapyId = props.immunotherapyId;
@@ -91,16 +83,14 @@ export class Dose {
       scheduledAt: props.scheduledAt,
       administeredAt: props.administeredAt || null,
       nextIntervalInDays: props.nextIntervalInDays,
-      sideEffect: props.sideEffect || null,
-      medicationRequired: props.medicationRequired || null,
-      notes: props.notes || null,
+      betweenDosesReport: props.betweenDosesReport ?? '',
       status: DoseStatus.SCHEDULED,
       immunotherapyId: props.immunotherapyId,
       administeredById: props.administeredById || null,
       createdById: props.createdById,
       updatedById: props.updatedById,
-      isArchived: false
-    }
+      isArchived: false,
+    };
   }
 
   administered(props: Partial<UpdateDoseData>): void {
@@ -108,13 +98,13 @@ export class Dose {
     if (administeredAt && this.status === 'SCHEDULED') {
       const administeredDate = new Date(administeredAt);
       const scheduledDate = new Date(this.scheduledAt);
-      
+
       // Comparar strings de data no formato YYYY-MM-DD para evitar problemas de timezone
       const administeredDateStr = administeredDate.toISOString().split('T')[0];
       const scheduledDateStr = scheduledDate.toISOString().split('T')[0];
-      
+
       const isSameDate = administeredDateStr === scheduledDateStr;
-      
+
       if (isSameDate) {
         this.status = 'ADMINISTERED_ON_SCHEDULE';
       } else {
@@ -124,25 +114,24 @@ export class Dose {
   }
 
   changeStatus(props: UpdateDoseStatusDto): void {
-
     const newStatus = props.status;
 
     // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
     if (String(this.status).startsWith('ADMINISTERED') && newStatus !== 'ENTERED_IN_ERROR') {
       throw new InvalidDoseStatusException(
-        'Doses administradas podem ser alteradas apenas para registro errôneo'
+        'Doses administradas podem ser alteradas apenas para registro errôneo',
       );
     }
 
     if (this.status === 'ENTERED_IN_ERROR') {
       throw new InvalidDoseStatusException(
-        'Doses registradas erroneamente e arquivadas não podem ter status alterado'
+        'Doses registradas erroneamente e arquivadas não podem ter status alterado',
       );
     }
 
     if (this.status === 'SCHEDULED' && newStatus === 'ENTERED_IN_ERROR') {
       throw new InvalidDoseStatusException(
-        'Doses agendadas não podem ser marcadas como registros errôneos, caso seja necessário, edite os dados diretamente.'
+        'Doses agendadas não podem ser marcadas como registros errôneos, caso seja necessário, edite os dados diretamente.',
       );
     }
 
@@ -154,9 +143,9 @@ export class Dose {
     }
 
     if (props.status === this.status) {
-      throw new InvalidDoseStatusException(`Esta dose já possui o status ${props.status}`)
+      throw new InvalidDoseStatusException(`Esta dose já possui o status ${props.status}`);
     }
-    
+
     this.status = newStatus;
   }
 

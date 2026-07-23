@@ -52,7 +52,7 @@ describe('FindImmunotherapyUseCase - Integration', () => {
     it('should return the immunotherapy correctly by id', async () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
         const patient = await factories.patients.create({
-            primaryOrganizationId: authenticatedUser.activeOrgId,
+            organizationId: authenticatedUser.activeOrgId,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id
         });
@@ -83,7 +83,7 @@ describe('FindImmunotherapyUseCase - Integration', () => {
 
         const authenticatedUserAnotherOrg = await factories.users.createAuthenticatedPhysicianProfessional();
         const patient = await factories.patients.create({
-            primaryOrganizationId: authenticatedUserAnotherOrg.activeOrgId,
+            organizationId: authenticatedUserAnotherOrg.activeOrgId,
             createdById: authenticatedUserAnotherOrg.id,
             updatedById: authenticatedUserAnotherOrg.id
         });

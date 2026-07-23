@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { AdminRegisterStrategy } from "./admin-regiter.strategy";
 import { ProfessionalRegisterStrategy } from "./professional-register.strategy";
-import { RoleType } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { RegisterStrategy } from "./register.strategy";
 
 @Injectable()
@@ -11,7 +11,7 @@ export class RegisterStrategyFactory{
         private professionalRegisterStrategy: ProfessionalRegisterStrategy
     ) {};
 
-    getStrategy(roleType: RoleType): RegisterStrategy {
+    getStrategy(roleType: Role): RegisterStrategy {
         if(roleType === 'ADMIN') {
             return this.adminRegisterStrategy;
         }

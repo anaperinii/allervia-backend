@@ -1,23 +1,27 @@
-import { Injectable } from "@nestjs/common";
-import { User } from "@prisma/client";
-import { UserNotFoundException } from "src/account/exceptions/users/user-not-found.exception";
-import { IUserRepository } from "src/account/user.repository";
-import { AuthenticatedUserPayload } from "src/security/types/auth.types";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { User } from '@prisma/client';
+import { IUserRepository } from 'src/account/user.repository';
+import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { USER_MESSAGES } from '../../user.messages';
 
 @Injectable()
 export class ArchiveUserUseCase {
   constructor(private userRepository: IUserRepository) {}
 
-  async execute(id: string, currentUser: AuthenticatedUserPayload): Promise<User> {
-
-    const user = await this.userRepository.findUserById(id, currentUser.activeOrgId);
+  async execute(
+    id: string,
+    _currentUser: AuthenticatedUserPayload,
+  ): Promise<User> {
+    const user = await this.userRepository.findUserById(id);
 
     if (!user) {
-      throw new UserNotFoundException(id);
+      throw new NotFoundException(USER_MESSAGES.notFound(id));
     }
 
-    user.archive();
-
-    return this.userRepository.update(user);
+    return this.userRepository.update({
+      id,
+      isArchived: true,
+      isActive: false,
+    });
   }
 }

@@ -1,24 +1,17 @@
-import { UserType } from "@prisma/client";
+import { UserType } from '@prisma/client';
 
 export interface UserCreationData {
-  fullName: string;
   email: string;
   password: string;
   type: UserType;
-  organizationId: string | null;
-  specialty?: string | null;
-  phoneNumber?: string | null;
-  isActive: boolean;
-  isArchived: boolean;
+  isActive?: boolean;
+  isArchived?: boolean;
 }
 
 export interface UserUpdateData {
-  id: string
-  fullName: string;
+  id: string;
   email: string;
   password: string;
-  specialty: string | null;
-  phoneNumber: string | null;
   isActive: boolean;
   isArchived: boolean;
 }

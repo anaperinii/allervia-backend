@@ -21,7 +21,7 @@ export class PrismaPatientRepository extends PatientRepository {
         birthDate: patient.birthDate,
         weightInKg: patient.weightInKg,
         phoneNumber: patient.phoneNumber,
-        organizationId: patient.primaryOrganizationId,
+        organizationId: patient.organizationId,
         isActive: patient.isActive,
         isArchived: patient.isArchived,
         createdById: patient.createdById,

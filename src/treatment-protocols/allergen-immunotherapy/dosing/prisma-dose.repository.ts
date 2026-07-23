@@ -22,9 +22,7 @@ export class PrismaDoseRepository extends IDoseRepository {
         scheduledAt: dose.scheduledAt ? new Date(dose.scheduledAt) : dose.scheduledAt,
         administeredAt: dose.administeredAt,
         nextIntervalInDays: dose.nextIntervalInDays,
-        sideEffect: dose.sideEffect,
-        medicationRequired: dose.medicationRequired,
-        notes: dose.notes,
+        betweenDosesReport: dose.betweenDosesReport ?? '',
         status: dose.status,
         administeredById: dose.administeredById,
         isArchived: dose.isArchived,
@@ -45,9 +43,7 @@ export class PrismaDoseRepository extends IDoseRepository {
         scheduledAt: dose.scheduledAt ? new Date(dose.scheduledAt) : undefined,
         administeredAt: dose.administeredAt ? new Date(dose.administeredAt) : undefined,
         nextIntervalInDays: dose.nextIntervalInDays,
-        sideEffect: dose.sideEffect,
-        medicationRequired: dose.medicationRequired,
-        notes: dose.notes,
+        betweenDosesReport: dose.betweenDosesReport ?? undefined,
         status: dose.status,
         administeredById: dose.administeredById,
         isArchived: dose.isArchived,
@@ -66,7 +62,7 @@ export class PrismaDoseRepository extends IDoseRepository {
         id,
         immunotherapy: {
           patient: {
-            primaryOrganizationId: orgId
+            organizationId: orgId
           }
         }
       },
@@ -79,9 +75,7 @@ export class PrismaDoseRepository extends IDoseRepository {
     const doses = await this.prismaService.dose.findMany({
       where: { 
         immunotherapyId,
-        createdBy: {
-          organizationId: orgId
-        }
+        immunotherapy: { patient: { organizationId: orgId } }
        },
       orderBy: { administeredAt: 'desc' },
     });
@@ -102,9 +96,7 @@ export class PrismaDoseRepository extends IDoseRepository {
       where: {
         concentration,
         immunotherapyId,
-        createdBy: {
-          organizationId: orgId
-        },
+        immunotherapy: { patient: { organizationId: orgId } },
         status: {
           in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE']
         }
@@ -119,9 +111,7 @@ export class PrismaDoseRepository extends IDoseRepository {
       where: {
         nextIntervalInDays: interval,
         immunotherapyId,
-        createdBy: {
-          organizationId: orgId
-        },
+        immunotherapy: { patient: { organizationId: orgId } },
         status: {
           in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE']
         }

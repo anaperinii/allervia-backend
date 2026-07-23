@@ -1,11 +1,11 @@
 import { IsOptional, IsEnum, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { RoleType } from '@prisma/client';
+import { Role } from '@prisma/client';
 
 export class ListInvitesQueryDto {
   @IsOptional()
-  @IsEnum(RoleType)
-  roleType?: RoleType;
+  @IsEnum(Role)
+  roleType?: Role;
 
   @IsOptional()
   @Transform(({ value }) => value === 'false')

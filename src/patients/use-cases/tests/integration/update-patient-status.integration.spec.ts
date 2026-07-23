@@ -53,7 +53,7 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
         const patient = await factories.patients.create({
-            primaryOrganizationId: authenticatedUser.activeOrgId,
+            organizationId: authenticatedUser.activeOrgId,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             isActive: false
@@ -75,7 +75,7 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
         const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
 
         const patient = await factories.patients.create({
-            primaryOrganizationId: authenticatedUser.activeOrgId,
+            organizationId: authenticatedUser.activeOrgId,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id,
             isActive: true
@@ -106,7 +106,7 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
         const authenticatedUserAnotherOrg = await factories.users.createAuthenticatedPhysicianProfessional();
 
         const patient = await factories.patients.create({
-            primaryOrganizationId: authenticatedUser.activeOrgId,
+            organizationId: authenticatedUser.activeOrgId,
             createdById: authenticatedUser.id,
             updatedById: authenticatedUser.id
         });
