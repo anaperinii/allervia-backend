@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { Dose } from './domain/entities/dose.entity';
 import { IDoseRepository } from './domain/interfaces/dose.repository.interface';
-import { CreateDoseData, UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
+import {
+  CreateDoseData,
+  UpdateDoseData,
+} from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -11,15 +14,20 @@ export class PrismaDoseRepository extends IDoseRepository {
     super();
   }
 
-  async create(dose: CreateDoseData, tx?: Prisma.TransactionClient): Promise<Dose> {
+  async create(
+    dose: CreateDoseData,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Dose> {
     const prismaClient = tx ?? this.prismaService;
-    
+
     const created = await prismaClient.dose.create({
       data: {
         immunotherapyId: dose.immunotherapyId,
         concentration: dose.concentration,
         volume: dose.volume,
-        scheduledAt: dose.scheduledAt ? new Date(dose.scheduledAt) : dose.scheduledAt,
+        scheduledAt: dose.scheduledAt
+          ? new Date(dose.scheduledAt)
+          : dose.scheduledAt,
         administeredAt: dose.administeredAt,
         nextIntervalInDays: dose.nextIntervalInDays,
         betweenDosesReport: dose.betweenDosesReport ?? '',
@@ -27,8 +35,8 @@ export class PrismaDoseRepository extends IDoseRepository {
         administeredById: dose.administeredById,
         isArchived: dose.isArchived,
         updatedById: dose.updatedById,
-        createdById: dose.createdById
-      }
+        createdById: dose.createdById,
+      },
     });
 
     return new Dose(created);
@@ -41,7 +49,9 @@ export class PrismaDoseRepository extends IDoseRepository {
         concentration: dose.concentration,
         volume: dose.volume,
         scheduledAt: dose.scheduledAt ? new Date(dose.scheduledAt) : undefined,
-        administeredAt: dose.administeredAt ? new Date(dose.administeredAt) : undefined,
+        administeredAt: dose.administeredAt
+          ? new Date(dose.administeredAt)
+          : undefined,
         nextIntervalInDays: dose.nextIntervalInDays,
         betweenDosesReport: dose.betweenDosesReport ?? undefined,
         status: dose.status,
@@ -49,8 +59,8 @@ export class PrismaDoseRepository extends IDoseRepository {
         isArchived: dose.isArchived,
         updatedById: dose.updatedById,
         archivedById: dose.archivedById,
-        archivedAt: dose.archivedAt
-      }
+        archivedAt: dose.archivedAt,
+      },
     });
 
     return new Dose(updated);
@@ -58,29 +68,32 @@ export class PrismaDoseRepository extends IDoseRepository {
 
   async findById(id: string, orgId: string): Promise<Dose | null> {
     const dose = await this.prismaService.dose.findUnique({
-      where: { 
+      where: {
         id,
         immunotherapy: {
           patient: {
-            organizationId: orgId
-          }
-        }
+            organizationId: orgId,
+          },
+        },
       },
     });
 
     return dose ? new Dose(dose) : null;
   }
 
-  async findByImmunotherapy(immunotherapyId: string, orgId: string): Promise<Dose[]> {
+  async findByImmunotherapy(
+    immunotherapyId: string,
+    orgId: string,
+  ): Promise<Dose[]> {
     const doses = await this.prismaService.dose.findMany({
-      where: { 
+      where: {
         immunotherapyId,
-        immunotherapy: { patient: { organizationId: orgId } }
-       },
+        immunotherapy: { patient: { organizationId: orgId } },
+      },
       orderBy: { administeredAt: 'desc' },
     });
 
-    return doses.map(dose => new Dose(dose));
+    return doses.map((dose) => new Dose(dose));
   }
 
   async exists(id: string): Promise<boolean> {
@@ -91,35 +104,41 @@ export class PrismaDoseRepository extends IDoseRepository {
     return count > 0;
   }
 
-  async countDosesByConcentration(concentration: number, immunotherapyId: string, orgId: string): Promise<number> {
+  async countDosesByConcentration(
+    concentration: number,
+    immunotherapyId: string,
+    orgId: string,
+  ): Promise<number> {
     const count = await this.prismaService.dose.count({
       where: {
         concentration,
         immunotherapyId,
         immunotherapy: { patient: { organizationId: orgId } },
         status: {
-          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE']
-        }
-      }
+          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'],
+        },
+      },
     });
 
     return count;
   }
 
-  async countDosesByInterval(interval: number, immunotherapyId: string, orgId: string): Promise<number> {
+  async countDosesByInterval(
+    interval: number,
+    immunotherapyId: string,
+    orgId: string,
+  ): Promise<number> {
     const count = await this.prismaService.dose.count({
       where: {
         nextIntervalInDays: interval,
         immunotherapyId,
         immunotherapy: { patient: { organizationId: orgId } },
         status: {
-          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE']
-        }
-      }
+          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'],
+        },
+      },
     });
 
     return count;
   }
 }
-
-

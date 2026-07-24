@@ -8,17 +8,20 @@ import { InviteResponseDto } from 'src/invites/dtos/invite-response.dto';
 export class CancelInviteUseCase {
   constructor(
     private findInviteByIdUseCase: FindInviteByIdUseCase,
-    private inviteRepository: IUserInviteRepository
+    private inviteRepository: IUserInviteRepository,
   ) {}
 
   async execute(
     inviteId: string,
-    currentUser: AuthenticatedUserPayload
+    currentUser: AuthenticatedUserPayload,
   ): Promise<InviteResponseDto> {
-    const invite = await this.findInviteByIdUseCase.execute(inviteId, currentUser);
+    const invite = await this.findInviteByIdUseCase.execute(
+      inviteId,
+      currentUser,
+    );
 
     invite.deactive();
-    
+
     await this.inviteRepository.update(invite);
 
     return invite;

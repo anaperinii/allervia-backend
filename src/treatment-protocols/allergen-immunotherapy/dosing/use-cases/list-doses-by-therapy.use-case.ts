@@ -4,14 +4,13 @@ import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/doma
 
 @Injectable()
 export class ListDosesByTherapyUseCase {
-  constructor(
-    private readonly doseRepository: IDoseRepository
-  ) {}
+  constructor(private readonly doseRepository: IDoseRepository) {}
 
   async execute(immunotherapyId: string, orgId: string): Promise<Dose[]> {
-    const doses = await this.doseRepository.findByImmunotherapy(immunotherapyId, orgId);
+    const doses = await this.doseRepository.findByImmunotherapy(
+      immunotherapyId,
+      orgId,
+    );
     return doses;
   }
 }
-
-

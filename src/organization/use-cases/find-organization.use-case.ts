@@ -6,7 +6,7 @@ import { ORGANIZATION_MESSAGES } from 'src/organization/organization.messages';
 @Injectable()
 export class FindOrganizationUseCase {
   constructor(
-    private readonly organizationRepository: OrganizationRepository
+    private readonly organizationRepository: OrganizationRepository,
   ) {}
 
   async execute(id: string): Promise<OrganizationResponseDto> {
@@ -19,4 +19,3 @@ export class FindOrganizationUseCase {
     return organization;
   }
 }
-

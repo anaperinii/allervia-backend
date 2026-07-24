@@ -45,19 +45,19 @@ export class UserInvite {
   updatedAt: Date;
 
   constructor(props: UserInviteProps) {
-    this.id = props.id,
-    this.email = props.email,
-    this.fullName = props.fullName,
-    this.role = props.role,
-    this.organizationId = props.organizationId,
-    this.professionalId = props.professionalId,
-    this.createdById = props.createdById,
-    this.token = props.token,
-    this.expiresAt = props.expiresAt,
-    this.isActive = props.isActive,
-    this.usedAt = props.usedAt,
-    this.createdAt = props.createdAt,
-    this.updatedAt = props.updatedAt
+    ((this.id = props.id),
+      (this.email = props.email),
+      (this.fullName = props.fullName),
+      (this.role = props.role),
+      (this.organizationId = props.organizationId),
+      (this.professionalId = props.professionalId),
+      (this.createdById = props.createdById),
+      (this.token = props.token),
+      (this.expiresAt = props.expiresAt),
+      (this.isActive = props.isActive),
+      (this.usedAt = props.usedAt),
+      (this.createdAt = props.createdAt),
+      (this.updatedAt = props.updatedAt));
   }
 
   static createNew(props: CreateUserInviteProps) {
@@ -69,8 +69,8 @@ export class UserInvite {
       createdById: props.createdById,
       token: props.token,
       expiresAt: props.expiresAt,
-      isActive: true
-    }
+      isActive: true,
+    };
   }
 
   markAsUsed(): void {
@@ -80,9 +80,9 @@ export class UserInvite {
   }
 
   includeProfessional(professionalId: string): void {
-    this.professionalId = professionalId
+    this.professionalId = professionalId;
   }
- 
+
   deactive(): void {
     this.isActive = false;
   }
@@ -113,4 +113,3 @@ export class UserInvite {
     return this.isActive === false && this.usedAt === null;
   }
 }
-

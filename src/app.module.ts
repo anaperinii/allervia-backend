@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './security/auth.module';
-import { PrismaModule } from './infra/database/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './security/guards/jwt-auth.guard';

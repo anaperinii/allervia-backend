@@ -6,7 +6,6 @@ import { CreateOrganizationUseCase } from './use-cases/create-organization.use-c
 import { FindOrganizationUseCase } from './use-cases/find-organization.use-case';
 import { OrganizationResponseDto } from './dtos/organization-response.dto';
 
-
 @Controller('organization')
 export class OrganizationController {
   constructor(
@@ -17,13 +16,16 @@ export class OrganizationController {
   @Public()
   @Post('register')
   @ApiBody({ type: CreateOrganizationDto })
-  async registerOrganization(@Body() dto: CreateOrganizationDto): Promise<OrganizationResponseDto> {
+  async registerOrganization(
+    @Body() dto: CreateOrganizationDto,
+  ): Promise<OrganizationResponseDto> {
     return this.createOrganizationUseCase.execute(dto);
   }
 
   @Get(':id')
-  async findOneOrganization(@Param('id') id: string): Promise<OrganizationResponseDto> {
+  async findOneOrganization(
+    @Param('id') id: string,
+  ): Promise<OrganizationResponseDto> {
     return this.findOrganizationUseCase.execute(id);
   }
 }
-

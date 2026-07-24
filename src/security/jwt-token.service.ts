@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { IJwtTokenService, TokenPayload } from './interfaces/jwt-token.service.interface';
+import {
+  IJwtTokenService,
+  TokenPayload,
+} from './interfaces/jwt-token.service.interface';
 
 @Injectable()
 export class NestJwtTokenService extends IJwtTokenService {
@@ -13,9 +16,6 @@ export class NestJwtTokenService extends IJwtTokenService {
   }
 
   async validateToken(token: string): Promise<TokenPayload> {
-    return this.jwtService.verify(token) as TokenPayload;
+    return this.jwtService.verify(token);
   }
 }
-
-
-

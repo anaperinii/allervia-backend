@@ -14,6 +14,3 @@ export class BcryptPasswordHashingService extends IPasswordHashingService {
     return bcrypt.compare(password, hash);
   }
 }
-
-
-

@@ -17,9 +17,17 @@ export class RoleResponseDto {
   @ApiProperty({ description: 'ID de quem concedeu' })
   grantedById: string;
 
-  @ApiProperty({ description: 'Data da revogação', required: false, nullable: true })
+  @ApiProperty({
+    description: 'Data da revogação',
+    required: false,
+    nullable: true,
+  })
   revokedAt: Date | null;
 
-  @ApiProperty({ description: 'ID de quem revogou', required: false, nullable: true })
+  @ApiProperty({
+    description: 'ID de quem revogou',
+    required: false,
+    nullable: true,
+  })
   revokedById: string | null;
 }

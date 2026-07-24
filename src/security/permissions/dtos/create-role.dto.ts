@@ -9,14 +9,13 @@ export class CreateProfessionalRoleDto {
   @IsEnum(Role, { message: 'Role especificada inválida' })
   name: Role;
 
-  @ApiProperty({ description: 'ID do professional a ser vinculado'})
+  @ApiProperty({ description: 'ID do professional a ser vinculado' })
   @IsString()
   @IsNotEmpty()
   professionalId: string;
 
-  @ApiProperty({ description: 'Key para register via first onboarding'})
+  @ApiProperty({ description: 'Key para register via first onboarding' })
   @IsString()
   @IsNotEmpty()
   key: string;
 }
-

@@ -16,7 +16,7 @@ export class RegisterAdministeredDoseUseCase {
     private readonly buildUpProtocol: IBuildUpPhase,
     private readonly maintenanceProtocol: IMaintenancePhase,
     private readonly doseRepository: IDoseRepository,
-    private readonly findImmunotherapyUseCase: FindImmunotherapyUseCase
+    private readonly findImmunotherapyUseCase: FindImmunotherapyUseCase,
   ) {}
 
   async execute(
@@ -24,15 +24,20 @@ export class RegisterAdministeredDoseUseCase {
     dto: UpdateDoseDto,
     currentUser: AuthenticatedUserPayload,
   ): Promise<Dose> {
+    const dose = await this.findDoseUseCase.execute(
+      id,
+      currentUser.activeOrgId,
+    );
 
-    const dose = await this.findDoseUseCase.execute(id, currentUser.activeOrgId);
+    const immunotherapy = (await this.findImmunotherapyUseCase.execute(
+      dose.immunotherapyId,
+      currentUser.activeOrgId,
+    )) as Immunotherapy;
 
-    const immunotherapy = await this.findImmunotherapyUseCase.execute(dose.immunotherapyId, currentUser.activeOrgId) as Immunotherapy;
-    
     // Preparar dados de atualização
     const updateData: any = { ...dto };
     updateData.updatedById = currentUser.id;
-    
+
     // Se houver administeredAt, atualizar status e administeredById
     if (dto.administeredAt) {
       dose.administered(dto);
@@ -40,14 +45,25 @@ export class RegisterAdministeredDoseUseCase {
       updateData.status = dose.status;
       updateData.administeredById = currentUser.id;
     }
-    
+
     const updatedDose = await this.doseRepository.update(dose.id, updateData);
 
     if (dto.administeredAt) {
-      if (dto.concentration === immunotherapy.targetConcentration && dto.volume === immunotherapy.targetVolume) {
-        await this.maintenanceProtocol.registerScheduledMaintenanceDose(updatedDose, currentUser, immunotherapy);
+      if (
+        dto.concentration === immunotherapy.targetConcentration &&
+        dto.volume === immunotherapy.targetVolume
+      ) {
+        await this.maintenanceProtocol.registerScheduledMaintenanceDose(
+          updatedDose,
+          currentUser,
+          immunotherapy,
+        );
       } else {
-        await this.buildUpProtocol.registerNextScheduledDose(updatedDose, currentUser, immunotherapy);
+        await this.buildUpProtocol.registerNextScheduledDose(
+          updatedDose,
+          currentUser,
+          immunotherapy,
+        );
       }
     }
 

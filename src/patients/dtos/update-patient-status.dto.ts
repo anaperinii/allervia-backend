@@ -7,5 +7,3 @@ export class UpdatePatientStatusDto {
   @IsBoolean()
   status: boolean;
 }
-
-

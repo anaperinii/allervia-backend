@@ -3,7 +3,10 @@ import { Profession } from '@prisma/client';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateProfessionalDto {
-  @ApiProperty({ description: 'Nome completo do profissional', required: false })
+  @ApiProperty({
+    description: 'Nome completo do profissional',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   fullName?: string;

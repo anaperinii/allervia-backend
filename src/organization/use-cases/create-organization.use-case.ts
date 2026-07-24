@@ -8,25 +8,34 @@ import { Organization } from '@prisma/client';
 @Injectable()
 export class CreateOrganizationUseCase {
   constructor(
-    private readonly organizationRepository: OrganizationRepository
+    private readonly organizationRepository: OrganizationRepository,
   ) {}
 
   async execute(dto: CreateOrganizationDto): Promise<OrganizationResponseDto> {
-    const existingByName = await this.organizationRepository.findByName(dto.name);
+    const existingByName = await this.organizationRepository.findByName(
+      dto.name,
+    );
 
     if (existingByName) {
-      throw new ConflictException(ORGANIZATION_MESSAGES.alreadyExists('name', dto.name));
+      throw new ConflictException(
+        ORGANIZATION_MESSAGES.alreadyExists('name', dto.name),
+      );
     }
 
-    const existingByTaxId = await this.organizationRepository.findByTaxId(dto.taxId);
+    const existingByTaxId = await this.organizationRepository.findByTaxId(
+      dto.taxId,
+    );
 
     if (existingByTaxId) {
-      throw new ConflictException(ORGANIZATION_MESSAGES.alreadyExists('taxId', dto.taxId));
+      throw new ConflictException(
+        ORGANIZATION_MESSAGES.alreadyExists('taxId', dto.taxId),
+      );
     }
 
-    const savedOrganization = await this.organizationRepository.create(dto as Organization);
+    const savedOrganization = await this.organizationRepository.create(
+      dto as Organization,
+    );
 
     return savedOrganization;
   }
 }
-

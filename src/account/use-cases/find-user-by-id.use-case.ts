@@ -7,10 +7,7 @@ import { USER_MESSAGES } from 'src/account/user.messages';
 export class FindUserByIdUseCase {
   constructor(private roleRepository: IUserRepository) {}
 
-  async execute(
-    userId: string,
-    _currentUser: AuthenticatedUserPayload
-  ) {
+  async execute(userId: string, _currentUser: AuthenticatedUserPayload) {
     const user = await this.roleRepository.findUserById(userId);
 
     if (!user) {

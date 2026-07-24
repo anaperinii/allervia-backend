@@ -3,7 +3,10 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { IUserInviteRepository } from './domain/interfaces/user-invite.repository.interface';
 import { UserInvite } from './domain/entities/user-invite.entity';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { FindInvitesFilters, UpdateInviteData } from './domain/interfaces/invite.interface';
+import {
+  FindInvitesFilters,
+  UpdateInviteData,
+} from './domain/interfaces/invite.interface';
 import { Prisma } from '@prisma/client';
 
 @Injectable()

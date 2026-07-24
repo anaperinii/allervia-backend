@@ -89,13 +89,15 @@ export class Immunotherapy {
       status: TherapyStatus.IN_PROGRESS,
       createdById: props.createdById,
       updatedById: props.updatedById,
-      isArchived: false
-    }
+      isArchived: false,
+    };
   }
 
   updateStatus(status: TherapyStatus, updatedById: string): void {
-    if(this.status === status) {
-      throw new BadRequestException(`A respectiva imunoterapia já possui o status ${this.status}`);
+    if (this.status === status) {
+      throw new BadRequestException(
+        `A respectiva imunoterapia já possui o status ${this.status}`,
+      );
     }
     this.status = status;
     this.updatedById = updatedById;
@@ -111,4 +113,3 @@ export class Immunotherapy {
     this.archivedAt = new Date();
   }
 }
-

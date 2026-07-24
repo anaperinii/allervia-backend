@@ -34,12 +34,11 @@ export class GrantRoleUseCase {
       }
     }
 
-    const existing =
-      await this.roleRepository.findActiveByProfessionalAndRole(
-        params.professionalId,
-        params.role,
-        tx,
-      );
+    const existing = await this.roleRepository.findActiveByProfessionalAndRole(
+      params.professionalId,
+      params.role,
+      tx,
+    );
 
     if (existing) {
       throw new ConflictException(ROLE_MESSAGES.alreadyGranted(params.role));

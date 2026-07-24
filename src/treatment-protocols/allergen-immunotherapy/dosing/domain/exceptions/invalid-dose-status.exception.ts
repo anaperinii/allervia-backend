@@ -6,4 +6,3 @@ export class InvalidDoseStatusException extends DomainException {
     super(message, HttpStatus.CONFLICT);
   }
 }
-

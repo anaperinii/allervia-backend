@@ -13,28 +13,28 @@ export class ListInvitesUseCase {
 
   async execute(
     currentUser: AuthenticatedUserPayload,
-    query: ListInvitesQueryDto
+    query: ListInvitesQueryDto,
   ) {
     const organizationId = currentUser.activeOrgId;
 
     const invites = await this.findInviteByOrgUseCase.execute(organizationId, {
       role: query.role,
       onlyActive: query.onlyActive ?? false,
-      includeExpired: query.includeExpired ?? false
+      includeExpired: query.includeExpired ?? false,
     });
 
     const result = await Promise.all(
       invites.map(async (invite) => {
         const createdByUser = await this.findUserById.execute(
           invite.createdById,
-          currentUser
+          currentUser,
         );
 
         return {
           ...invite,
           createdById: createdByUser.id,
           createdByEmail: createdByUser.email,
-        }
+        };
       }),
     );
 

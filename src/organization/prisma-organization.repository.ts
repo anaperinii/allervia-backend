@@ -5,7 +5,6 @@ import { Organization } from '@prisma/client';
 
 @Injectable()
 export class PrismaOrganizationRepository extends OrganizationRepository {
-
   constructor(private readonly prisma: PrismaService) {
     super();
   }
@@ -41,7 +40,9 @@ export class PrismaOrganizationRepository extends OrganizationRepository {
 
   async save(organization: Organization): Promise<Organization> {
     const exists = await this.exists(organization.id);
-    return exists ? await this.update(organization) : await this.create(organization);
+    return exists
+      ? await this.update(organization)
+      : await this.create(organization);
   }
 
   async findById(id: string): Promise<Organization | null> {
@@ -76,4 +77,3 @@ export class PrismaOrganizationRepository extends OrganizationRepository {
     return count > 0;
   }
 }
-

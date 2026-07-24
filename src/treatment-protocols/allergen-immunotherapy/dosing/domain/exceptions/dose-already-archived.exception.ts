@@ -6,5 +6,3 @@ export class DoseAlreadyArchivedException extends DomainException {
     super('Dose já está arquivada.', HttpStatus.CONFLICT);
   }
 }
-
-

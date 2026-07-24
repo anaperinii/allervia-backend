@@ -10,4 +10,3 @@ export abstract class DomainException extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
-

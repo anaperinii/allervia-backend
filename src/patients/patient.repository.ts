@@ -13,7 +13,10 @@ export abstract class PatientRepository {
     patient: Partial<UpdatePatientData>,
   ): Promise<Patient>;
 
-  abstract findById(id: string, organizationId: string): Promise<Patient | null>;
+  abstract findById(
+    id: string,
+    organizationId: string,
+  ): Promise<Patient | null>;
 
   abstract findByOrganization(organizationId: string): Promise<Patient[]>;
 

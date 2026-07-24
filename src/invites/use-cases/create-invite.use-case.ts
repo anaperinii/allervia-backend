@@ -1,16 +1,15 @@
-import { ConflictException, Injectable } from "@nestjs/common";
-import { InviteStrategyContext } from "src/invites/strategies/invites/invite-strategy.context";
-import { CreateInviteDto } from "src/invites/dtos/create-invite.dto";
-import { AuthenticatedUserPayload } from "src/security/types/auth.types";
-import { ulid } from "ulid";
-import { ValidateUserEmailUseCase } from "src/account/use-cases/validate-user-email.use-case";
-import { FindUserByIdUseCase } from "src/account/use-cases/find-user-by-id.use-case";
-import { UserInvite } from "src/invites/domain/entities/user-invite.entity";
-import { InviteResponseDto } from "src/invites/dtos/invite-response.dto";
-import { IUserInviteRepository } from "src/invites/domain/interfaces/user-invite.repository.interface";
-import { INVITE_MESSAGES } from "src/invites/invite.messages";
-import { FindActiveInviteUseCase } from "./find-active-invite.use-case";
-
+import { ConflictException, Injectable } from '@nestjs/common';
+import { InviteStrategyContext } from 'src/invites/strategies/invites/invite-strategy.context';
+import { CreateInviteDto } from 'src/invites/dtos/create-invite.dto';
+import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { ulid } from 'ulid';
+import { ValidateUserEmailUseCase } from 'src/account/use-cases/validate-user-email.use-case';
+import { FindUserByIdUseCase } from 'src/account/use-cases/find-user-by-id.use-case';
+import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
+import { InviteResponseDto } from 'src/invites/dtos/invite-response.dto';
+import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
+import { INVITE_MESSAGES } from 'src/invites/invite.messages';
+import { FindActiveInviteUseCase } from './find-active-invite.use-case';
 
 @Injectable()
 export class CreateInviteUseCase {
@@ -19,18 +18,18 @@ export class CreateInviteUseCase {
     private findUserById: FindUserByIdUseCase,
     private validateUserEmail: ValidateUserEmailUseCase,
     private inviteRepository: IUserInviteRepository,
-    private findActiveInviteUseCase: FindActiveInviteUseCase
+    private findActiveInviteUseCase: FindActiveInviteUseCase,
   ) {}
 
   async execute(
     dto: CreateInviteDto,
-    currentUser: AuthenticatedUserPayload
+    currentUser: AuthenticatedUserPayload,
   ): Promise<InviteResponseDto> {
-
-    const organizationId = await this.validationContext.validateAndGetOrganizationId(
-      dto,
-      currentUser
-    );
+    const organizationId =
+      await this.validationContext.validateAndGetOrganizationId(
+        dto,
+        currentUser,
+      );
 
     const user = await this.validateUserEmail.execute(dto.email, currentUser);
 
@@ -40,23 +39,26 @@ export class CreateInviteUseCase {
 
     const existingInvite = await this.findActiveInviteUseCase.execute(
       dto.email,
-      organizationId
+      organizationId,
     );
 
     if (existingInvite) {
       throw new ConflictException(
-        `Já existe um convite ativo para ${dto.email} nesta organização`
+        `Já existe um convite ativo para ${dto.email} nesta organização`,
       );
     }
 
     const token = ulid();
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); 
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
     // 5. TODO: Disparar evento para envio de email
     // this.eventEmitter.emit('invite.created', { invite, inviteLink });
 
-    const createdByUser = await this.findUserById.execute(currentUser.id, currentUser);
+    const createdByUser = await this.findUserById.execute(
+      currentUser.id,
+      currentUser,
+    );
 
     const invite = UserInvite.createNew({
       email: dto.email,
@@ -74,8 +76,8 @@ export class CreateInviteUseCase {
       ...created,
       createdById: createdByUser.id,
       createdByEmail: createdByUser.email,
-    }
+    };
 
     return inviteData;
-   }
+  }
 }

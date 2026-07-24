@@ -1,11 +1,10 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-case';
 import { UpdateUserStatusUseCase } from './use-cases/update-user-status.use-case';
 import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
-import { UpdateUserAdminDto } from './dtos/update-user-admin.dto';
 import { UpdateUserBackofficeDto } from './dtos/update-user-backoffice.dto';
 import { UpdateUserPersonalDto } from './dtos/update-user-personal.dto';
 import { UpdateUserUseCase } from './use-cases/update-user.use-case';
@@ -15,7 +14,7 @@ export class AccountController {
   constructor(
     private findUserByIdUseCase: FindUserByIdUseCase,
     private updateUserStatusUseCase: UpdateUserStatusUseCase,
-    private updateUserPersonalUseCase: UpdateUserUseCase
+    private updateUserPersonalUseCase: UpdateUserUseCase,
   ) {}
 
   @Get('me')
@@ -40,9 +39,13 @@ export class AccountController {
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Body() updateUserDto: UpdateUserPersonalDto,
   ) {
-    return this.updateUserPersonalUseCase.execute(currentUser.id, updateUserDto, currentUser);
+    return this.updateUserPersonalUseCase.execute(
+      currentUser.id,
+      updateUserDto,
+      currentUser,
+    );
   }
-  
+
   @Patch('update/:id')
   @Roles('ADMIN', 'SYSTEM_ADMIN')
   async updateUserAsAdmin(
@@ -50,16 +53,10 @@ export class AccountController {
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Body() updateUserDto: UpdateUserBackofficeDto,
   ) {
-    return this.updateUserPersonalUseCase.execute(userId, updateUserDto, currentUser);
-  }
-
-  @Patch('update/backoffice/me')
-  @Roles('ADMIN', 'SYSTEM_ADMIN')
-  async updateUserPersonalAdmin(
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
-    @Body() updateUserDto: UpdateUserAdminDto,
-  ) {
-    return this.updateUserPersonalUseCase.execute(currentUser.id, updateUserDto, currentUser);
+    return this.updateUserPersonalUseCase.execute(
+      userId,
+      updateUserDto,
+      currentUser,
+    );
   }
 }
-

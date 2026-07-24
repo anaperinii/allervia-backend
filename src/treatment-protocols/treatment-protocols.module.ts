@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { IBuildUpPhase } from './allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface';
 import { IMaintenancePhase } from './allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.interface';
 import { MaintenancePhaseService } from './allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.service';
@@ -30,46 +30,54 @@ import { PatientsModule } from 'src/patients/patients.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 
 @Module({
-    providers: [
-        RegisterStartingDoseUseCase,
-        RegisterNextScheduledBuildUpUseCase,
-        RegisterNextScheduledMaintenanceUseCase,
-        CreateDoseUseCase,
-        FindDoseUseCase,
-        ListDosesByTherapyUseCase,
-        RegisterAdministeredDoseUseCase,
-        UpdateDoseStatusUseCase,
-        CountDosesByConcentration,
-        CountDosesByIntervalUseCase,
-        CreateImmunotherapyUseCase,
-        FindImmunotherapyUseCase,
-        ListImmunotherapiesForPatientUseCase,
-        ListImmunotherapiesByTypeUseCase,
-        UpdateImmunotherapyUseCase,
-        UpdateImmunotherapyStatusUseCase,
-        ListAllImmunotherapiesUseCase,
-        {
-            provide: IBuildUpPhase,
-            useClass: BuildUpPhaseService
-        },
-        {
-            provide: IMaintenancePhase,
-            useClass: MaintenancePhaseService
-        },
-        {
-            provide: IDoseRepository,
-            useClass: PrismaDoseRepository,
-        },
-        {
-            provide: IImmunotherapyRepository,
-            useClass: PrismaImmunotherapyRepository,
-        },
-    ],
-    imports: [
-        PatientsModule,
-        PrismaModule
-    ],
-    exports: [IBuildUpPhase, IMaintenancePhase, IDoseRepository, CreateDoseUseCase, ListDosesByTherapyUseCase, CountDosesByConcentration, CountDosesByIntervalUseCase, IImmunotherapyRepository, CreateImmunotherapyUseCase, FindImmunotherapyUseCase],
-    controllers: [DosesController, ImmunotherapiesController]
+  providers: [
+    RegisterStartingDoseUseCase,
+    RegisterNextScheduledBuildUpUseCase,
+    RegisterNextScheduledMaintenanceUseCase,
+    CreateDoseUseCase,
+    FindDoseUseCase,
+    ListDosesByTherapyUseCase,
+    RegisterAdministeredDoseUseCase,
+    UpdateDoseStatusUseCase,
+    CountDosesByConcentration,
+    CountDosesByIntervalUseCase,
+    CreateImmunotherapyUseCase,
+    FindImmunotherapyUseCase,
+    ListImmunotherapiesForPatientUseCase,
+    ListImmunotherapiesByTypeUseCase,
+    UpdateImmunotherapyUseCase,
+    UpdateImmunotherapyStatusUseCase,
+    ListAllImmunotherapiesUseCase,
+    {
+      provide: IBuildUpPhase,
+      useClass: BuildUpPhaseService,
+    },
+    {
+      provide: IMaintenancePhase,
+      useClass: MaintenancePhaseService,
+    },
+    {
+      provide: IDoseRepository,
+      useClass: PrismaDoseRepository,
+    },
+    {
+      provide: IImmunotherapyRepository,
+      useClass: PrismaImmunotherapyRepository,
+    },
+  ],
+  imports: [PatientsModule, PrismaModule],
+  exports: [
+    IBuildUpPhase,
+    IMaintenancePhase,
+    IDoseRepository,
+    CreateDoseUseCase,
+    ListDosesByTherapyUseCase,
+    CountDosesByConcentration,
+    CountDosesByIntervalUseCase,
+    IImmunotherapyRepository,
+    CreateImmunotherapyUseCase,
+    FindImmunotherapyUseCase,
+  ],
+  controllers: [DosesController, ImmunotherapiesController],
 })
 export class TreatmentProtocolsModule {}

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { PatientRepository } from './patient.repository';
-import { CreatePatientData, UpdatePatientData } from 'src/patients/patients.interface';
+import {
+  CreatePatientData,
+  UpdatePatientData,
+} from 'src/patients/patients.interface';
 import { Prisma } from '@prisma/client';
 import { Patient } from '@prisma/client';
 
@@ -11,7 +14,10 @@ export class PrismaPatientRepository extends PatientRepository {
     super();
   }
 
-  async create(patient: CreatePatientData, tx?: Prisma.TransactionClient): Promise<Patient> {
+  async create(
+    patient: CreatePatientData,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Patient> {
     const prismaClient = tx ?? this.prisma;
 
     return prismaClient.patient.create({
@@ -29,7 +35,10 @@ export class PrismaPatientRepository extends PatientRepository {
     });
   }
 
-  async update(patientId: string, patient: Partial<UpdatePatientData>): Promise<Patient> {
+  async update(
+    patientId: string,
+    patient: Partial<UpdatePatientData>,
+  ): Promise<Patient> {
     return this.prisma.patient.update({
       where: { id: patientId },
       data: {
