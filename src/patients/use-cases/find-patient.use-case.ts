@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PatientRepository } from '../patient.repository';
-import { PATIENT_MESSAGES } from '../patient.messages';
+import { PatientRepository } from 'src/patients/patient.repository';
+import { PATIENT_MESSAGES } from 'src/patients/patient.messages';
 import { Prisma } from '@prisma/client';
 
 @Injectable()

@@ -2,13 +2,13 @@ import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { FindUserByIdUseCase } from './use-cases/users/find-user-by-id.use-case';
-import { UpdateUserStatusUseCase } from './use-cases/users/update-user-status.use-case';
+import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-case';
+import { UpdateUserStatusUseCase } from './use-cases/update-user-status.use-case';
 import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
-import { UpdateUserAdminDto } from './dtos/users/update-user-admin.dto';
-import { UpdateUserBackofficeDto } from './dtos/users/update-user-backoffice.dto';
-import { UpdateUserPersonalDto } from './dtos/users/update-user-personal.dto';
-import { UpdateUserUseCase } from './use-cases/users/update-user.use-case';
+import { UpdateUserAdminDto } from './dtos/update-user-admin.dto';
+import { UpdateUserBackofficeDto } from './dtos/update-user-backoffice.dto';
+import { UpdateUserPersonalDto } from './dtos/update-user-personal.dto';
+import { UpdateUserUseCase } from './use-cases/update-user.use-case';
 
 @Controller('account')
 export class AccountController {

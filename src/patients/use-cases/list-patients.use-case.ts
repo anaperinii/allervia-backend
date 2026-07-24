@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PatientRepository } from '../patient.repository';
-import { PatientResponseDto } from '../dtos/patient-response.dto';
+import { PatientRepository } from 'src/patients/patient.repository';
+import { PatientResponseDto } from 'src/patients/dtos/patient-response.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()

@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { IUserInviteRepository } from "../domain/interfaces/user-invite.repository.interface";
+import { IUserInviteRepository } from "src/invites/domain/interfaces/user-invite.repository.interface";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
-import { INVITE_MESSAGES } from "../invite.messages";
-import { UserInvite } from "../domain/entities/user-invite.entity";
+import { INVITE_MESSAGES } from "src/invites/invite.messages";
+import { UserInvite } from "src/invites/domain/entities/user-invite.entity";
 
 @Injectable()
 export class FindInviteByIdUseCase {

@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PatientRepository } from '../patient.repository';
-import { PATIENT_MESSAGES } from '../patient.messages';
-import { UpdatePatientStatusDto } from '../dtos/update-patient-status.dto';
-import { PatientResponseDto } from '../dtos/patient-response.dto';
+import { PatientRepository } from 'src/patients/patient.repository';
+import { PATIENT_MESSAGES } from 'src/patients/patient.messages';
+import { UpdatePatientStatusDto } from 'src/patients/dtos/update-patient-status.dto';
+import { PatientResponseDto } from 'src/patients/dtos/patient-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Prisma } from '@prisma/client';
 

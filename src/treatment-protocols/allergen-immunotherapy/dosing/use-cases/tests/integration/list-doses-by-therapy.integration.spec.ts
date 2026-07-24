@@ -4,7 +4,7 @@ import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface";
 import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/prisma-dose.repository";
-import { ListDosesByTherapyUseCase } from "../../list-doses-by-therapy.use-case";
+import { ListDosesByTherapyUseCase } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/list-doses-by-therapy.use-case";
 
 describe('ListDosesByImmunotherapy - Integration', () => {
     let module: TestingModule;

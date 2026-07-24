@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Dose, DoseStatus } from '@prisma/client';
-import { IDoseRepository } from '../domain/interfaces/dose.repository.interface';
-import { DOSE_MESSAGES } from '../dose.messages';
-import { UpdateDoseStatusDto } from '../dtos/update-dose-status.dto';
+import { IDoseRepository } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface';
+import { DOSE_MESSAGES } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dose.messages';
+import { UpdateDoseStatusDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose-status.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 
 @Injectable()

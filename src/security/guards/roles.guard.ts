@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { ROLES_KEY } from '../decorators/roles.decorator';
-import { AuthenticatedUserPayload } from '../types/auth.types';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { RoleValidationFactory } from '../factories/role-validation.factory';
+import { ROLES_KEY } from 'src/security/decorators/roles.decorator';
+import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { IS_PUBLIC_KEY } from 'src/security/decorators/public.decorator';
+import { RoleValidationFactory } from 'src/security/factories/role-validation.factory';
 
 
 @Injectable()

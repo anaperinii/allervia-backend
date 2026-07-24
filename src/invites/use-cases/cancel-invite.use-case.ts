@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { FindInviteByIdUseCase } from './find-invite-by-id.use-case';
-import { IUserInviteRepository } from '../domain/interfaces/user-invite.repository.interface';
-import { InviteResponseDto } from '../dtos/invite-response.dto';
+import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
+import { InviteResponseDto } from 'src/invites/dtos/invite-response.dto';
 
 @Injectable()
 export class CancelInviteUseCase {

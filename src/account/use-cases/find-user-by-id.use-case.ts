@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { IUserRepository } from '../../user.repository';
+import { IUserRepository } from 'src/account/user.repository';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { USER_MESSAGES } from '../../user.messages';
+import { USER_MESSAGES } from 'src/account/user.messages';
 
 @Injectable()
 export class FindUserByIdUseCase {

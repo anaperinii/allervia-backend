@@ -1,8 +1,8 @@
 import { Injectable, ConflictException } from '@nestjs/common';
-import { OrganizationRepository } from '../organization.repository';
-import { CreateOrganizationDto } from '../dtos/create-organization.dto';
-import { OrganizationResponseDto } from '../dtos/organization-response.dto';
-import { ORGANIZATION_MESSAGES } from '../organization.messages';
+import { OrganizationRepository } from 'src/organization/organization.repository';
+import { CreateOrganizationDto } from 'src/organization/dtos/create-organization.dto';
+import { OrganizationResponseDto } from 'src/organization/dtos/organization-response.dto';
+import { ORGANIZATION_MESSAGES } from 'src/organization/organization.messages';
 import { Organization } from '@prisma/client';
 
 @Injectable()

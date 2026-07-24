@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { IJwtTokenService } from '../interfaces/jwt-token.service.interface';
-import { ProfessionalTokenGenerator } from '../strategies/token-generator/professional-token-generator.strategy';
-import { PatientTokenGenerator } from '../strategies/token-generator/patient-token-generator.strategy';
-import { ITokenGenerator } from '../interfaces/token-generator.interface';
+import { IJwtTokenService } from 'src/security/interfaces/jwt-token.service.interface';
+import { ProfessionalTokenGenerator } from 'src/security/strategies/token-generator/professional-token-generator.strategy';
+import { PatientTokenGenerator } from 'src/security/strategies/token-generator/patient-token-generator.strategy';
+import { ITokenGenerator } from 'src/security/interfaces/token-generator.interface';
 
 @Injectable()
 export class TokenGeneratorFactory {

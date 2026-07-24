@@ -1,20 +1,20 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { CreateInviteUseCase } from "../../create-invite.use-case";
+import { CreateInviteUseCase } from "src/invites/use-cases/create-invite.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { FindUserByIdUseCase } from "src/account/use-cases/users/find-user-by-id.use-case";
+import { FindUserByIdUseCase } from "src/account/use-cases/find-user-by-id.use-case";
 import { ValidateUserEmailUseCase } from "src/account/use-cases/validate-user-email.use-case";
-import { FindActiveInviteUseCase } from "../../find-active-invite.use-case";
+import { FindActiveInviteUseCase } from "src/invites/use-cases/find-active-invite.use-case";
 import { IUserRepository } from "src/account/user.repository";
 import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ConflictException } from "@nestjs/common";
 import { IUserInviteRepository } from "src/invites/domain/interfaces/user-invite.repository.interface";
 import { PrismaUserInviteRepository } from "src/invites/prisma-user-invite.repository";
-import { CreateInviteDto } from "../../../dtos/create-invite.dto";
-import { AdminInviteStrategy } from "../../../strategies/invites/admin-invite.strategy";
-import { InviteStrategyContext } from "../../../strategies/invites/invite-strategy.context";
-import { InviteStrategyFactory } from "../../../strategies/invites/invite-strategy.factory";
+import { CreateInviteDto } from "src/invites/dtos/create-invite.dto";
+import { AdminInviteStrategy } from "src/invites/strategies/invites/admin-invite.strategy";
+import { InviteStrategyContext } from "src/invites/strategies/invites/invite-strategy.context";
+import { InviteStrategyFactory } from "src/invites/strategies/invites/invite-strategy.factory";
 
 
 describe('CreateInviteUseCase - Integration', () => {

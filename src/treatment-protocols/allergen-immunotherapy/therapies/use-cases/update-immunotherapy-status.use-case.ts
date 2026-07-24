@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { IImmunotherapyRepository } from "../domain/interfaces/immunotherapy.repository.interface";
-import { UpdateImmunotherapyStatusDto } from "../dtos/update-immunotherapy-status.dto";
+import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
+import { UpdateImmunotherapyStatusDto } from "src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy-status.dto";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
-import { ImmunotherapyResponseDto } from "../dtos/immunotherapy-response.dto";
-import { IMMUNOTHERAPY_MESSAGES } from "../immunotherapy.messages";
+import { ImmunotherapyResponseDto } from "src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto";
+import { IMMUNOTHERAPY_MESSAGES } from "src/treatment-protocols/allergen-immunotherapy/therapies/immunotherapy.messages";
 
 @Injectable()
 export class UpdateImmunotherapyStatusUseCase {

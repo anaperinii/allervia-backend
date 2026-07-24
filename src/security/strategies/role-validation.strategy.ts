@@ -1,4 +1,4 @@
-import { AuthenticatedUserPayload } from '../types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 
 export interface RoleValidationStrategy {
   canAccess(requiredRoles: string[], user: AuthenticatedUserPayload): boolean;

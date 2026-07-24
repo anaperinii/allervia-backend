@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IRoleRepository } from '../role.repository';
+import { IRoleRepository } from 'src/security/permissions/role.repository';
 
 @Injectable()
 export class ListProfessionalRolesUseCase {

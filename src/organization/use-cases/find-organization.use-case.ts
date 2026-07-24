@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { OrganizationRepository } from '../organization.repository';
-import { OrganizationResponseDto } from '../dtos/organization-response.dto';
-import { ORGANIZATION_MESSAGES } from '../organization.messages';
+import { OrganizationRepository } from 'src/organization/organization.repository';
+import { OrganizationResponseDto } from 'src/organization/dtos/organization-response.dto';
+import { ORGANIZATION_MESSAGES } from 'src/organization/organization.messages';
 
 @Injectable()
 export class FindOrganizationUseCase {

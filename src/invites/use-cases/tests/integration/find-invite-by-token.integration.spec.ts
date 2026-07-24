@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { FindInviteByTokenUseCase } from "../../find-invite-by-token.use-case";
+import { FindInviteByTokenUseCase } from "src/invites/use-cases/find-invite-by-token.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";

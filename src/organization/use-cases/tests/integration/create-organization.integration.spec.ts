@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { CreateOrganizationUseCase } from "../../create-organization.use-case";
+import { CreateOrganizationUseCase } from "src/organization/use-cases/create-organization.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";

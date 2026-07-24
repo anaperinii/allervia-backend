@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { IImmunotherapyRepository } from "../domain/interfaces/immunotherapy.repository.interface";
-import { CreateImmunotherapyDto } from "../dtos/create-immunotherapy.dto";
+import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
+import { CreateImmunotherapyDto } from "src/treatment-protocols/allergen-immunotherapy/therapies/dtos/create-immunotherapy.dto";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
-import { ImmunotherapyResponseDto } from "../dtos/immunotherapy-response.dto";
+import { ImmunotherapyResponseDto } from "src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto";
 import { CreatePatientUseCase } from "src/patients/use-cases/create-patient.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { Immunotherapy } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity";

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { IUserInviteRepository } from "../domain/interfaces/user-invite.repository.interface";
+import { IUserInviteRepository } from "src/invites/domain/interfaces/user-invite.repository.interface";
 
 @Injectable()
 export class FindActiveInviteUseCase {

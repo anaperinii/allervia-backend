@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { UserInviteAlreadyUsedException } from "../domain/exceptions/user-invite-already-used.exception";
-import { UserInviteExpiredException } from "../domain/exceptions/user-invite-expired.exception";
+import { UserInviteAlreadyUsedException } from "src/invites/domain/exceptions/user-invite-already-used.exception";
+import { UserInviteExpiredException } from "src/invites/domain/exceptions/user-invite-expired.exception";
 import { FindInviteByTokenUseCase } from "./find-invite-by-token.use-case";
-import { UserInviteCancelledException } from "../domain/exceptions/user-invite-cancelled.exception";
+import { UserInviteCancelledException } from "src/invites/domain/exceptions/user-invite-cancelled.exception";
 
 @Injectable()
 export class ValidateInviteForRegisterUseCase {

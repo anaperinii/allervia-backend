@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Immunotherapy } from '../entities/immunotherapy.entity';
+import { Immunotherapy } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity';
 import {
   CreateImmunotherapyData,
   UpdateImmunotherapyData,

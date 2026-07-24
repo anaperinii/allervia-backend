@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PatientRepository } from '../patient.repository';
-import { CreatePatientDto } from '../dtos/create-patient.dto';
-import { PatientResponseDto } from '../dtos/patient-response.dto';
+import { PatientRepository } from 'src/patients/patient.repository';
+import { CreatePatientDto } from 'src/patients/dtos/create-patient.dto';
+import { PatientResponseDto } from 'src/patients/dtos/patient-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Prisma } from '@prisma/client';
 

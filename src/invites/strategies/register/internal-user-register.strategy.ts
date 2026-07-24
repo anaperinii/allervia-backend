@@ -8,7 +8,7 @@ import { GrantRoleUseCase } from 'src/security/permissions/use-cases/grant-role.
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
 import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
 import { ProfileInternalUserDto } from 'src/account/dtos/profile-internal-user.dto';
-import { RegisterUser } from '../../domain/interfaces/register.interface';
+import { RegisterUser } from 'src/invites/domain/interfaces/register.interface';
 import { RegisterStrategy } from './register.strategy';
 
 @Injectable()
