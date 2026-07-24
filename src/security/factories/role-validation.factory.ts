@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ProfessionalRoleValidationStrategy, RoleValidationStrategy } from '../strategies/role-validation.strategy';
-import { AuthenticatedUserPayload } from '../types/auth.types';
+import { ProfessionalRoleValidationStrategy, RoleValidationStrategy } from 'src/security/strategies/role-validation.strategy';
+import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 
 
 @Injectable()

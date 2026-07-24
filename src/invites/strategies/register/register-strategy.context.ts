@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ValidateInviteForRegisterUseCase } from 'src/invites/use-cases/validate-invite-for-registration.use-case';
-import { RegisterUser } from '../../domain/interfaces/register.interface';
+import { RegisterUser } from 'src/invites/domain/interfaces/register.interface';
 import { ProfileInternalUserDto } from 'src/account/dtos/profile-internal-user.dto';
 import { InternalUserRegisterStrategy } from './internal-user-register.strategy';
 

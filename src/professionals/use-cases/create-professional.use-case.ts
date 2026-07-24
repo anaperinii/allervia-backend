@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ProfessionalRepository } from '../professional.repository';
-import { CreateProfessionalData } from '../professional.interface';
+import { ProfessionalRepository } from 'src/professionals/professional.repository';
+import { CreateProfessionalData } from 'src/professionals/professional.interface';
 import { Prisma } from '@prisma/client';
 
 @Injectable()

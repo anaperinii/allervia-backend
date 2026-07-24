@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
-import { IRoleRepository } from '../role.repository';
-import { ROLE_MESSAGES } from '../role.messages';
+import { IRoleRepository } from 'src/security/permissions/role.repository';
+import { ROLE_MESSAGES } from 'src/security/permissions/role.messages';
 import { Prisma } from '@prisma/client';
 
 interface GrantRoleParams {

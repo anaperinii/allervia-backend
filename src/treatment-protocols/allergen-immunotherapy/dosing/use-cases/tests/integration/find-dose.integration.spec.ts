@@ -4,7 +4,7 @@ import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface";
 import { PrismaDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/prisma-dose.repository";
-import { FindDoseUseCase } from "../../find-dose.use-case";
+import { FindDoseUseCase } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/find-dose.use-case";
 import { ulid } from "ulid";
 import { NotFoundException } from "@nestjs/common";
 

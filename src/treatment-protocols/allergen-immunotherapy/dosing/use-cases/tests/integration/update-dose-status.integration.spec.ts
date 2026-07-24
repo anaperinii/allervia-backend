@@ -10,13 +10,13 @@ import { IBuildUpPhase } from "src/treatment-protocols/allergen-immunotherapy/cl
 import { BuildUpPhaseService } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.service";
 import { IMaintenancePhase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.interface";
 import { MaintenancePhaseService } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.service";
-import { FindDoseUseCase } from "../../find-dose.use-case";
+import { FindDoseUseCase } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/find-dose.use-case";
 import { FindImmunotherapyUseCase } from "src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case";
 import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
 import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository";
-import { CreateDoseUseCase } from "../../create-dose.use-case";
-import { CountDosesByConcentration } from "../../count-doses-by-concentration.use-case";
-import { CountDosesByIntervalUseCase } from "../../count-doses-by-interval.use-case";
+import { CreateDoseUseCase } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/create-dose.use-case";
+import { CountDosesByConcentration } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/count-doses-by-concentration.use-case";
+import { CountDosesByIntervalUseCase } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/count-doses-by-interval.use-case";
 import { RegisterStartingDoseUseCase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/register-starting-dose.use-case";
 import { RegisterNextScheduledBuildUpUseCase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/register-scheduled-build-up.use-case";
 import { RegisterNextScheduledMaintenanceUseCase } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/register-scheduled-maintenance.use-case";
@@ -24,7 +24,7 @@ import { BUILD_UP_INTERVAL, STARTING_DOSE_CONCENTRATION, STARTING_DOSE_VOLUME } 
 import { MAINTENANCE_INTERVALS } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.variables";
 import { DoseStatus } from "@prisma/client";
 import { addDate } from "src/utils/date.utils";
-import { RegisterAdministeredDoseUseCase } from "../../register-administered-dose.use-case";
+import { RegisterAdministeredDoseUseCase } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/register-administered-dose.use-case";
 
 describe('registerAdministeredDoseUseCase - Integration', () => {
     let module: TestingModule;

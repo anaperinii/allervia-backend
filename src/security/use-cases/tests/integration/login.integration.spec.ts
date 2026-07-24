@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { LoginUseCase } from "../../login.use-case";
+import { LoginUseCase } from "src/security/use-cases/login.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";

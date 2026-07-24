@@ -1,6 +1,6 @@
 import { BadRequestException, createParamDecorator, ExecutionContext, ForbiddenException } from "@nestjs/common";
 import { Request } from 'express'; 
-import { AuthenticatedUserPayload } from "../types/auth.types";
+import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 
 export const ActiveOrganization = createParamDecorator(
     (data: unknown, ctx: ExecutionContext): string => {

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IDoseRepository } from '../domain/interfaces/dose.repository.interface';
+import { IDoseRepository } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface';
 import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Dose } from '../entities/dose.entity';
+import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity';
 import { CreateDoseData, UpdateDoseData } from './doses.interface';
 
 export abstract class IDoseRepository {

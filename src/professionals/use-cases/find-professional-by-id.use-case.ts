@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ProfessionalRepository } from '../professional.repository';
-import { PROFESSIONAL_MESSAGES } from '../professional.messages';
+import { ProfessionalRepository } from 'src/professionals/professional.repository';
+import { PROFESSIONAL_MESSAGES } from 'src/professionals/professional.messages';
 
 @Injectable()
 export class FindProfessionalByIdUseCase {

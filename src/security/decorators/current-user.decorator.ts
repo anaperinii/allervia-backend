@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { AuthenticatedUserPayload } from '../types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Request } from 'express'; 
 
 export const CurrentUser = createParamDecorator(

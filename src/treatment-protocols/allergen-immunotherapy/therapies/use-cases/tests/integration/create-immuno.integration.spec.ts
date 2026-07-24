@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { CreateImmunotherapyUseCase } from "../../create-immunotherapy.use-case";
+import { CreateImmunotherapyUseCase } from "src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/create-immunotherapy.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";

@@ -4,7 +4,7 @@ import { PrismaImmunotherapyRepository } from "src/treatment-protocols/allergen-
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { TestFactories } from "test/factories";
-import { UpdateImmunotherapyUseCase } from "../../update-immunotherapy.use-case";
+import { UpdateImmunotherapyUseCase } from "src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/update-immunotherapy.use-case";
 import { ulid } from "ulid";
 import { AdministrationRoute } from "@prisma/client";
 import { NotFoundException } from "@nestjs/common";

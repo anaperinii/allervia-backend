@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { CancelInviteUseCase } from "../../cancel-invite.use-case";
+import { CancelInviteUseCase } from "src/invites/use-cases/cancel-invite.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 
-import { FindInviteByIdUseCase } from "../../find-invite-by-id.use-case";
+import { FindInviteByIdUseCase } from "src/invites/use-cases/find-invite-by-id.use-case";
 import { ulid } from "ulid";
 import { IUserInviteRepository } from "src/invites/domain/interfaces/user-invite.repository.interface";
 import { NotFoundException } from "@nestjs/common";

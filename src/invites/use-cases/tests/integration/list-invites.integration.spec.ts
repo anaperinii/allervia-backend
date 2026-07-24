@@ -1,15 +1,15 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { ListInvitesUseCase } from "../../list-invites.use-case";
+import { ListInvitesUseCase } from "src/invites/use-cases/list-invites.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
-import { FindInviteByOrgUseCase } from "../../find-invite-by-org.use-case";
+import { FindInviteByOrgUseCase } from "src/invites/use-cases/find-invite-by-org.use-case";
 import { FindUserByIdUseCase } from "src/account/use-cases/find-user-by-id.use-case";
 import { IUserRepository } from "src/account/user.repository";
 import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { IUserInviteRepository } from "src/invites/domain/interfaces/user-invite.repository.interface";
 import { PrismaUserInviteRepository } from "src/invites/prisma-user-invite.repository";
-import { ListInvitesQueryDto } from "../../../dtos/list-invites-query.dto";
+import { ListInvitesQueryDto } from "src/invites/dtos/list-invites-query.dto";
 
 describe('ListInvitesUseCase - Integration', () => {
     let module: TestingModule;

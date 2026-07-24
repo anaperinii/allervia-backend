@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { IPasswordHashingService } from '../interfaces/password-hashing.service.interface';
-import { IUserAuthRepository } from '../interfaces/user-auth.repository.interface';
-import { LoginDto } from '../dtos/login.dto';
-import { LoginResponseDto } from '../dtos/login-response.dto';
-import { TokenGeneratorFactory } from '../factories/token-generator.factory';
+import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
+import { IUserAuthRepository } from 'src/security/interfaces/user-auth.repository.interface';
+import { LoginDto } from 'src/security/dtos/login.dto';
+import { LoginResponseDto } from 'src/security/dtos/login-response.dto';
+import { TokenGeneratorFactory } from 'src/security/factories/token-generator.factory';
 
 @Injectable()
 export class LoginUseCase {

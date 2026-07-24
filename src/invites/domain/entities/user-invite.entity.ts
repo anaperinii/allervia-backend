@@ -1,7 +1,7 @@
 import { Role } from '@prisma/client';
-import { UserInviteExpiredException } from '../exceptions/user-invite-expired.exception';
-import { UserInviteAlreadyUsedException } from '../exceptions/user-invite-already-used.exception';
-import { UserInviteCancelledException } from '../exceptions/user-invite-cancelled.exception';
+import { UserInviteExpiredException } from 'src/invites/domain/exceptions/user-invite-expired.exception';
+import { UserInviteAlreadyUsedException } from 'src/invites/domain/exceptions/user-invite-already-used.exception';
+import { UserInviteCancelledException } from 'src/invites/domain/exceptions/user-invite-cancelled.exception';
 
 interface UserInviteProps {
   id: string;

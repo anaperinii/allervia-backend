@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { IRoleRepository } from '../role.repository';
-import { ROLE_MESSAGES } from '../role.messages';
+import { IRoleRepository } from 'src/security/permissions/role.repository';
+import { ROLE_MESSAGES } from 'src/security/permissions/role.messages';
 
 @Injectable()
 export class FindRoleByIdUseCase {

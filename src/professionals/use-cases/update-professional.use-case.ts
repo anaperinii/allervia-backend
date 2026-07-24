@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ProfessionalRepository } from '../professional.repository';
-import { UpdateProfessionalDto } from '../dtos/update-professional.dto';
-import { PROFESSIONAL_MESSAGES } from '../professional.messages';
+import { ProfessionalRepository } from 'src/professionals/professional.repository';
+import { UpdateProfessionalDto } from 'src/professionals/dtos/update-professional.dto';
+import { PROFESSIONAL_MESSAGES } from 'src/professionals/professional.messages';
 
 @Injectable()
 export class UpdateProfessionalUseCase {

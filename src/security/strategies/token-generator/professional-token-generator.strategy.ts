@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { IJwtTokenService } from '../../interfaces/jwt-token.service.interface';
-import { ITokenGenerator } from '../../interfaces/token-generator.interface';
-import { LoginResponseDto } from '../../dtos/login-response.dto';
-import { UserForAuth } from '../../interfaces/user-auth.repository.interface';
+import { IJwtTokenService } from 'src/security/interfaces/jwt-token.service.interface';
+import { ITokenGenerator } from 'src/security/interfaces/token-generator.interface';
+import { LoginResponseDto } from 'src/security/dtos/login-response.dto';
+import { UserForAuth } from 'src/security/interfaces/user-auth.repository.interface';
 
 @Injectable()
 export class ProfessionalTokenGenerator implements ITokenGenerator {

@@ -1,8 +1,8 @@
 import { DoseStatus } from '@prisma/client';
-import { DoseAlreadyArchivedException } from '../exceptions/dose-already-archived.exception';
-import { UpdateDoseData } from '../interfaces/doses.interface';
+import { DoseAlreadyArchivedException } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/dose-already-archived.exception';
+import { UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { UpdateDoseStatusDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose-status.dto';
-import { InvalidDoseStatusException } from '../exceptions/invalid-dose-status.exception';
+import { InvalidDoseStatusException } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/invalid-dose-status.exception';
 
 export interface DoseProps {
   id: string;

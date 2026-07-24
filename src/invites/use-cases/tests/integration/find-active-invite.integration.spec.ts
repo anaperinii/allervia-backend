@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { FindActiveInviteUseCase } from "../../find-active-invite.use-case";
+import { FindActiveInviteUseCase } from "src/invites/use-cases/find-active-invite.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";

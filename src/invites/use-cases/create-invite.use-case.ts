@@ -1,14 +1,14 @@
 import { ConflictException, Injectable } from "@nestjs/common";
-import { InviteStrategyContext } from "../strategies/invites/invite-strategy.context";
-import { CreateInviteDto } from "../dtos/create-invite.dto";
+import { InviteStrategyContext } from "src/invites/strategies/invites/invite-strategy.context";
+import { CreateInviteDto } from "src/invites/dtos/create-invite.dto";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { ulid } from "ulid";
 import { ValidateUserEmailUseCase } from "src/account/use-cases/validate-user-email.use-case";
 import { FindUserByIdUseCase } from "src/account/use-cases/find-user-by-id.use-case";
-import { UserInvite } from "../domain/entities/user-invite.entity";
-import { InviteResponseDto } from "../dtos/invite-response.dto";
-import { IUserInviteRepository } from "../domain/interfaces/user-invite.repository.interface";
-import { INVITE_MESSAGES } from "../invite.messages";
+import { UserInvite } from "src/invites/domain/entities/user-invite.entity";
+import { InviteResponseDto } from "src/invites/dtos/invite-response.dto";
+import { IUserInviteRepository } from "src/invites/domain/interfaces/user-invite.repository.interface";
+import { INVITE_MESSAGES } from "src/invites/invite.messages";
 import { FindActiveInviteUseCase } from "./find-active-invite.use-case";
 
 

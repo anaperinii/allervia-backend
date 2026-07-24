@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { IImmunotherapyRepository } from "../domain/interfaces/immunotherapy.repository.interface";
-import { ImmunotherapyResponseDto } from "../dtos/immunotherapy-response.dto";
+import { IImmunotherapyRepository } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface";
+import { ImmunotherapyResponseDto } from "src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto";
 import { Immunotherapy } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity";
 
 @Injectable()

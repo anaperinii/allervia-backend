@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { IUserRepository } from '../user.repository';
-import { UserResponseDto } from '../dtos/user-response.dto';
+import { IUserRepository } from 'src/account/user.repository';
+import { UserResponseDto } from 'src/account/dtos/user-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { UpdateUserDto } from '../dtos/update-user.dto';
+import { UpdateUserDto } from 'src/account/dtos/update-user.dto';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
-import { USER_MESSAGES } from '../user.messages';
+import { USER_MESSAGES } from 'src/account/user.messages';
 
 @Injectable()
 export class UpdateUserUseCase {

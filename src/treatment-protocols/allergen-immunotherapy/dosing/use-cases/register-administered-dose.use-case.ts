@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IDoseRepository } from '../domain/interfaces/dose.repository.interface';
-import { UpdateDoseDto } from '../dtos/update-dose.dto';
+import { IDoseRepository } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface';
+import { UpdateDoseDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Dose } from '@prisma/client';
 import { IBuildUpPhase } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface';
