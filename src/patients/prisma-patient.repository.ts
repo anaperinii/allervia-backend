@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { PatientRepository } from './patient.repository';
 import { CreatePatientData, UpdatePatientData } from 'src/patients/patients.interface';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 import { Patient } from '@prisma/client';
 
 @Injectable()
@@ -11,11 +11,10 @@ export class PrismaPatientRepository extends PatientRepository {
     super();
   }
 
-  async create(patient: CreatePatientData, tx?: ITransactionContext): Promise<Patient> {
+  async create(patient: CreatePatientData, tx?: Prisma.TransactionClient): Promise<Patient> {
+    const prismaClient = tx ?? this.prisma;
 
-    const prismaClient = this.prisma.getClient(tx);
-
-    const created = await prismaClient.patient.create({
+    return prismaClient.patient.create({
       data: {
         fullName: patient.fullName,
         birthDate: patient.birthDate,
@@ -25,18 +24,13 @@ export class PrismaPatientRepository extends PatientRepository {
         isActive: patient.isActive,
         isArchived: patient.isArchived,
         createdById: patient.createdById,
-        updatedById: patient.updatedById
+        updatedById: patient.updatedById,
       },
     });
-
-    return created;
   }
 
-  async update(patientId: string, patient: Partial<UpdatePatientData>, tx?: ITransactionContext): Promise<Patient> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const updated = await prismaClient.patient.update({
+  async update(patientId: string, patient: Partial<UpdatePatientData>): Promise<Patient> {
+    return this.prisma.patient.update({
       where: { id: patientId },
       data: {
         fullName: patient.fullName,
@@ -51,51 +45,26 @@ export class PrismaPatientRepository extends PatientRepository {
         archivedAt: patient.archivedAt,
       },
     });
-
-    return updated;
   }
 
-  async findById(id: string, organizationId: string, tx?: ITransactionContext): Promise<Patient | null> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const patient = await prismaClient.patient.findFirst({
-      where: {
-        id,
-        organizationId: organizationId,
-      },
+  async findById(id: string, organizationId: string): Promise<Patient | null> {
+    return this.prisma.patient.findFirst({
+      where: { id, organizationId },
     });
-
-    return patient;
   }
 
-  async findByOrganization(organizationId: string, tx?: ITransactionContext): Promise<Patient[]> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const patients = await prismaClient.patient.findMany({
-      where: {
-        organizationId: organizationId,
-        isArchived: false,
-      },
+  async findByOrganization(organizationId: string): Promise<Patient[]> {
+    return this.prisma.patient.findMany({
+      where: { organizationId, isArchived: false },
       orderBy: { fullName: 'asc' },
     });
-
-    return patients;
   }
 
-  async exists(id: string, organizationId: string, tx?: ITransactionContext): Promise<boolean> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const count = await prismaClient.patient.count({
-      where: {
-        id,
-        organizationId: organizationId,
-      },
+  async exists(id: string, organizationId: string): Promise<boolean> {
+    const count = await this.prisma.patient.count({
+      where: { id, organizationId },
     });
 
     return count > 0;
   }
 }
-

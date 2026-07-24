@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Role, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/database/prisma.service';
-import { ITransactionContext } from 'src/database/transaction.interface';
 import { IRoleRepository } from './role.repository';
 
 @Injectable()
@@ -12,9 +11,9 @@ export class PrismaRoleRepository extends IRoleRepository {
 
   async grant(
     data: { professionalId: string; role: Role; grantedById: string },
-    tx?: ITransactionContext,
+    tx?: Prisma.TransactionClient,
   ) {
-    const client = this.prismaService.getClient(tx);
+    const client = tx ?? this.prismaService;
 
     return client.professionalRole.create({
       data: {
@@ -25,19 +24,12 @@ export class PrismaRoleRepository extends IRoleRepository {
     });
   }
 
-  async findById(id: string, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
-
-    return client.professionalRole.findUnique({ where: { id } });
+  async findById(id: string) {
+    return this.prismaService.professionalRole.findUnique({ where: { id } });
   }
 
-  async findActiveByProfessional(
-    professionalId: string,
-    tx?: ITransactionContext,
-  ) {
-    const client = this.prismaService.getClient(tx);
-
-    return client.professionalRole.findMany({
+  async findActiveByProfessional(professionalId: string) {
+    return this.prismaService.professionalRole.findMany({
       where: { professionalId, revokedAt: null },
     });
   }
@@ -45,19 +37,17 @@ export class PrismaRoleRepository extends IRoleRepository {
   async findActiveByProfessionalAndRole(
     professionalId: string,
     role: Role,
-    tx?: ITransactionContext,
+    tx?: Prisma.TransactionClient,
   ) {
-    const client = this.prismaService.getClient(tx);
+    const client = tx ?? this.prismaService;
 
     return client.professionalRole.findFirst({
       where: { professionalId, role, revokedAt: null },
     });
   }
 
-  async revoke(id: string, revokedById: string, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
-
-    return client.professionalRole.update({
+  async revoke(id: string, revokedById: string) {
+    return this.prismaService.professionalRole.update({
       where: { id },
       data: { revokedAt: new Date(), revokedById },
     });

@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import { IRoleRepository } from '../../role.repository';
 import { ROLE_MESSAGES } from '../../role.messages';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 
 interface GrantRoleParams {
   professionalId: string;
@@ -23,7 +23,7 @@ export class GrantRoleUseCase {
     private configService: ConfigService,
   ) {}
 
-  async execute(params: GrantRoleParams, tx?: ITransactionContext) {
+  async execute(params: GrantRoleParams, tx?: Prisma.TransactionClient) {
     if (params.bootstrapKey !== undefined) {
       const secretKey = this.configService.get<string>(
         'SUPER_ADMIN_REGISTRATION_KEY',

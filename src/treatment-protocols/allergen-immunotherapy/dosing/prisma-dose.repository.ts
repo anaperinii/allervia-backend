@@ -3,7 +3,7 @@ import { PrismaService } from 'src/database/prisma.service';
 import { Dose } from './domain/entities/dose.entity';
 import { IDoseRepository } from './domain/interfaces/dose.repository.interface';
 import { CreateDoseData, UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaDoseRepository extends IDoseRepository {
@@ -11,8 +11,8 @@ export class PrismaDoseRepository extends IDoseRepository {
     super();
   }
 
-  async create(dose: CreateDoseData, tx?: ITransactionContext): Promise<Dose> {
-    const prismaClient = this.prismaService.getClient(tx);
+  async create(dose: CreateDoseData, tx?: Prisma.TransactionClient): Promise<Dose> {
+    const prismaClient = tx ?? this.prismaService;
     
     const created = await prismaClient.dose.create({
       data: {

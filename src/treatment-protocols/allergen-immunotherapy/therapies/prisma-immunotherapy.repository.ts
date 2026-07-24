@@ -3,7 +3,14 @@ import { PrismaService } from 'src/database/prisma.service';
 import { Immunotherapy } from './domain/entities/immunotherapy.entity';
 import { IImmunotherapyRepository } from './domain/interfaces/immunotherapy.repository.interface';
 import { CreateImmunotherapyData, UpdateImmunotherapyData } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.interfaces';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
+
+const IMMUNO_INCLUDE = {
+  patient: true,
+  responsiblePhysician: true,
+  createdBy: { select: { id: true } },
+  updatedBy: { select: { id: true } },
+};
 
 @Injectable()
 export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
@@ -11,9 +18,8 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     super();
   }
 
-  async create(immunotherapy: CreateImmunotherapyData, tx?: ITransactionContext): Promise<Immunotherapy> {
-
-    const prismaClient = this.prisma.getClient(tx);
+  async create(immunotherapy: CreateImmunotherapyData, tx?: Prisma.TransactionClient): Promise<Immunotherapy> {
+    const prismaClient = tx ?? this.prisma;
 
     const created = await prismaClient.immunotherapy.create({
       data: {
@@ -28,18 +34,15 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
         isArchived: immunotherapy.isArchived,
         status: immunotherapy.status,
         createdById: immunotherapy.createdById,
-        updatedById: immunotherapy.updatedById
+        updatedById: immunotherapy.updatedById,
       },
     });
 
     return new Immunotherapy(created);
   }
 
-  async update(immunoId: string, immunotherapy: Partial<UpdateImmunotherapyData>, tx?: ITransactionContext): Promise<Immunotherapy> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const updated = await prismaClient.immunotherapy.update({
+  async update(immunoId: string, immunotherapy: Partial<UpdateImmunotherapyData>): Promise<Immunotherapy> {
+    const updated = await this.prisma.immunotherapy.update({
       where: { id: immunoId },
       data: {
         administrationRoute: immunotherapy.administrationRoute,
@@ -60,106 +63,47 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     return new Immunotherapy(updated);
   }
 
-  async findAll(organizationId: string, tx?: ITransactionContext): Promise<Immunotherapy[]> {
-    
-    const prismaClient = this.prisma.getClient(tx);
-
-    const immunotherapies = await prismaClient.immunotherapy.findMany({
-      where: {
-        patient: {
-          organizationId: organizationId
-        }
-      },
-      include: {
-        patient: true,
-        responsiblePhysician: true,
-        createdBy : {
-          select: { id: true }
-        },
-        updatedBy: {
-          select: { id: true }
-        }
-      }
+  async findAll(organizationId: string): Promise<Immunotherapy[]> {
+    const immunotherapies = await this.prisma.immunotherapy.findMany({
+      where: { patient: { organizationId } },
+      include: IMMUNO_INCLUDE,
     });
 
-    return immunotherapies.map(t => new Immunotherapy(t)); 
+    return immunotherapies.map((t) => new Immunotherapy(t));
   }
 
-  async findById(id: string, organizationId: string, tx?: ITransactionContext): Promise<Immunotherapy | null> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const therapy = await prismaClient.immunotherapy.findFirst({
-      where: {
-        id,
-        patient: { organizationId: organizationId },
-      },
+  async findById(id: string, organizationId: string): Promise<Immunotherapy | null> {
+    const therapy = await this.prisma.immunotherapy.findFirst({
+      where: { id, patient: { organizationId } },
     });
 
     return therapy ? new Immunotherapy(therapy) : null;
   }
 
-  async findByPatient(patientId: string, organizationId: string, tx?: ITransactionContext): Promise<Immunotherapy[]> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const therapies = await prismaClient.immunotherapy.findMany({
-      where: {
-        patientId,
-        patient: { organizationId: organizationId },
-      },
+  async findByPatient(patientId: string, organizationId: string): Promise<Immunotherapy[]> {
+    const therapies = await this.prisma.immunotherapy.findMany({
+      where: { patientId, patient: { organizationId } },
       orderBy: { createdAt: 'desc' },
-      include: {
-        patient: true,
-        responsiblePhysician: true,
-        createdBy : {
-          select: { id: true }
-        },
-        updatedBy: {
-          select: { id: true }
-        }
-      }
+      include: IMMUNO_INCLUDE,
     });
 
-    return therapies.map(t => new Immunotherapy(t));
+    return therapies.map((t) => new Immunotherapy(t));
   }
 
-  async findByType(type: string, organizationId: string, tx?: ITransactionContext): Promise<Immunotherapy[]> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const therapies = await prismaClient.immunotherapy.findMany({
-      where: {
-        immunoType: type,
-        patient: { organizationId: organizationId },
-      },
-      include: {
-        patient: true,
-        responsiblePhysician: true,
-        createdBy : {
-          select: { id: true }
-        },
-        updatedBy: {
-          select: { id: true }
-        }
-      }
+  async findByType(type: string, organizationId: string): Promise<Immunotherapy[]> {
+    const therapies = await this.prisma.immunotherapy.findMany({
+      where: { immunoType: type, patient: { organizationId } },
+      include: IMMUNO_INCLUDE,
     });
 
-    return therapies.map(t => new Immunotherapy(t));
+    return therapies.map((t) => new Immunotherapy(t));
   }
 
-  async exists(id: string, organizationId: string, tx?: ITransactionContext): Promise<boolean> {
-
-    const prismaClient = this.prisma.getClient(tx);
-
-    const count = await prismaClient.immunotherapy.count({
-      where: {
-        id,
-        patient: { organizationId: organizationId },
-      },
+  async exists(id: string, organizationId: string): Promise<boolean> {
+    const count = await this.prisma.immunotherapy.count({
+      where: { id, patient: { organizationId } },
     });
 
     return count > 0;
   }
 }
-

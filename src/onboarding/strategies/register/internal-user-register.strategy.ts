@@ -27,7 +27,7 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
     invite: UserInvite,
     dto: ProfileInternalUserDto,
   ): Promise<RegisterUser> {
-    return this.prisma.transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const hashedPassword = await this.hashingService.hash(dto.password);
 
       const user = await this.userRepository.create(

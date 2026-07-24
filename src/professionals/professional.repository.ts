@@ -1,5 +1,4 @@
-import { Professional } from '@prisma/client';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Professional, Prisma } from '@prisma/client';
 import {
   CreateProfessionalData,
   UpdateProfessionalData,
@@ -8,21 +7,15 @@ import {
 export abstract class ProfessionalRepository {
   abstract create(
     data: CreateProfessionalData,
-    tx?: ITransactionContext,
+    tx?: Prisma.TransactionClient,
   ): Promise<Professional>;
 
-  abstract findById(
-    id: string,
-    tx?: ITransactionContext,
-  ): Promise<Professional | null>;
+  abstract findById(id: string): Promise<Professional | null>;
 
   abstract findByUserId(
     userId: string,
-    tx?: ITransactionContext,
+    tx?: Prisma.TransactionClient,
   ): Promise<Professional | null>;
 
-  abstract update(
-    data: UpdateProfessionalData,
-    tx?: ITransactionContext,
-  ): Promise<Professional>;
+  abstract update(data: UpdateProfessionalData): Promise<Professional>;
 }

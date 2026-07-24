@@ -5,7 +5,7 @@ import { Immunotherapy } from "src/treatment-protocols/allergen-immunotherapy/th
 import { RegisterStartingDoseUseCase } from "./register-starting-dose.use-case";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { RegisterNextScheduledBuildUpUseCase } from "./register-scheduled-build-up.use-case";
-import { ITransactionContext } from "src/database/transaction.interface";
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BuildUpPhaseService extends IBuildUpPhase {
@@ -15,7 +15,7 @@ export class BuildUpPhaseService extends IBuildUpPhase {
         private readonly registerNextScheduledUseCase: RegisterNextScheduledBuildUpUseCase
     ) { super() }
 
-    async registerStartingBuildUpDose(registeredImmunotherapy: Immunotherapy, currentUser: AuthenticatedUserPayload, tx?: ITransactionContext): Promise<Dose> {
+    async registerStartingBuildUpDose(registeredImmunotherapy: Immunotherapy, currentUser: AuthenticatedUserPayload, tx?: Prisma.TransactionClient): Promise<Dose> {
         return await this.registerStartingDoseUseCase.execute(registeredImmunotherapy, currentUser, tx);
     }
 

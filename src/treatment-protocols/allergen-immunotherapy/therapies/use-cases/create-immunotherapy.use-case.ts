@@ -23,7 +23,7 @@ export class CreateImmunotherapyUseCase {
     currentUser: AuthenticatedUserPayload,
   ): Promise<{ patient: PatientResponseDto; immunotherapy: ImmunotherapyResponseDto }> {
     
-    return await this.prisma.transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx) => {
       
       const patientDto = await this.createPatientUseCase.execute(
         {

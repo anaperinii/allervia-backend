@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 import { ProfessionalRepository } from './professional.repository';
 import {
   CreateProfessionalData,
@@ -13,30 +13,23 @@ export class PrismaProfessionalRepository extends ProfessionalRepository {
     super();
   }
 
-  async create(data: CreateProfessionalData, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
+  async create(data: CreateProfessionalData, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prismaService;
 
     return client.professional.create({ data });
   }
 
-  async findById(id: string, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
-
-    return client.professional.findUnique({ where: { id } });
+  async findById(id: string) {
+    return this.prismaService.professional.findUnique({ where: { id } });
   }
 
-  async findByUserId(userId: string, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
+  async findByUserId(userId: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prismaService;
 
     return client.professional.findUnique({ where: { userId } });
   }
 
-  async update(
-    { id, ...data }: UpdateProfessionalData,
-    tx?: ITransactionContext,
-  ) {
-    const client = this.prismaService.getClient(tx);
-
-    return client.professional.update({ where: { id }, data });
+  async update({ id, ...data }: UpdateProfessionalData) {
+    return this.prismaService.professional.update({ where: { id }, data });
   }
 }

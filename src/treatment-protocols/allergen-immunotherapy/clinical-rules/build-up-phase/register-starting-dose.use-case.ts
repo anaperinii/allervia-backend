@@ -5,7 +5,7 @@ import { Dose } from "src/treatment-protocols/allergen-immunotherapy/dosing/doma
 import { Immunotherapy } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { BUILD_UP_INTERVAL, STARTING_DOSE_CONCENTRATION, STARTING_DOSE_VOLUME } from "./build-up-phase.variables";
-import { ITransactionContext } from "src/database/transaction.interface";
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RegisterStartingDoseUseCase  {
@@ -14,7 +14,7 @@ export class RegisterStartingDoseUseCase  {
         private readonly createDoseUseCase: CreateDoseUseCase
     ) {}
 
-    async execute(registeredImmunotherapy: Immunotherapy, currentUser: AuthenticatedUserPayload, tx?: ITransactionContext): Promise<Dose> {
+    async execute(registeredImmunotherapy: Immunotherapy, currentUser: AuthenticatedUserPayload, tx?: Prisma.TransactionClient): Promise<Dose> {
         const dto = {
             concentration: STARTING_DOSE_CONCENTRATION,
             volume: STARTING_DOSE_VOLUME,

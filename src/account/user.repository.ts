@@ -1,30 +1,18 @@
 import { UserCreationData, UserUpdateData } from './account.interface';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 import { User } from '@prisma/client';
 
 export abstract class IUserRepository {
   abstract create(
     userCreationData: UserCreationData,
-    tx?: ITransactionContext,
+    tx?: Prisma.TransactionClient,
   ): Promise<User>;
 
-  abstract update(
-    userUpdateData: Partial<UserUpdateData>,
-    tx?: ITransactionContext,
-  ): Promise<User>;
+  abstract update(userUpdateData: Partial<UserUpdateData>): Promise<User>;
 
-  abstract findUserByEmail(
-    email: string,
-    tx?: ITransactionContext,
-  ): Promise<User | null>;
+  abstract findUserByEmail(email: string): Promise<User | null>;
 
-  abstract findUserById(
-    userId: string,
-    tx?: ITransactionContext,
-  ): Promise<User | null>;
+  abstract findUserById(userId: string): Promise<User | null>;
 
-  abstract existsByEmail(
-    email: string,
-    tx?: ITransactionContext,
-  ): Promise<boolean>;
+  abstract existsByEmail(email: string): Promise<boolean>;
 }

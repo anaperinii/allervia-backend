@@ -3,7 +3,7 @@ import { PatientRepository } from '../patient.repository';
 import { CreatePatientDto } from '../dtos/create-patient.dto';
 import { PatientResponseDto } from '../dtos/patient-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CreatePatientUseCase {
@@ -14,7 +14,7 @@ export class CreatePatientUseCase {
   async execute(
     dto: CreatePatientDto,
     currentUser: AuthenticatedUserPayload,
-    tx?: ITransactionContext
+    tx?: Prisma.TransactionClient
   ) {
    
     const savedPatient = await this.patientRepository.create(

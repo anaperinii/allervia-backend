@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PatientRepository } from '../patient.repository';
 import { PATIENT_MESSAGES } from '../patient.messages';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class FindPatientUseCase {
@@ -9,9 +9,9 @@ export class FindPatientUseCase {
     private patientRepository: PatientRepository
   ) {}
 
-  async execute(id: string, organizationId: string, tx?: ITransactionContext) {
+  async execute(id: string, organizationId: string) {
 
-    const patient = await this.patientRepository.findById(id, organizationId, tx);
+    const patient = await this.patientRepository.findById(id, organizationId);
 
     if (!patient) {
       throw new NotFoundException(PATIENT_MESSAGES.notFound(id));
