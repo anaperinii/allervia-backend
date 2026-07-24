@@ -155,7 +155,10 @@ model User {
   isArchived Boolean @default(false)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+
+  updatedAt   DateTime @default(now()) @updatedAt
+  updatedById String?
+  updatedBy   User?     @relation("UserUpdatedBy", fields: [updatedById], references: [id])
 
   professional     Professional? @relation("ProfessionalAccount")
   patient          Patient?      @relation("PatientAccount")
@@ -174,6 +177,7 @@ model User {
   invitesCreated InternalUserInvite[] @relation("InviteCreatedBy")
 
   auditLogs AuditLog[]
+  users     User[]     @relation("UserUpdatedBy")
 
   @@index([type, isActive, isArchived])
 }
