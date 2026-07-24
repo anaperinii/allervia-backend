@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { UpdatePatientStatusUseCase } from "../../update-patient-status.use-case";
-import { PrismaService } from "src/database/prisma.service";
+import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { PatientRepository } from "src/patients/patient.repository";

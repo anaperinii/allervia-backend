@@ -4,7 +4,7 @@ import { CreateScheduledDoseData } from "src/treatment-protocols/allergen-immuno
 import { Dose } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { BUILD_UP_INTERVAL, NextDoseCalculation, STARTING_DOSE_VOLUME } from "./build-up-phase.variables";
-import { addDate } from "src/shared/utils";
+import { addDate } from "src/utils/date.utils";
 import { CountDosesByConcentration } from "src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/count-doses-by-concentration.use-case";
 import { Immunotherapy } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity";
 

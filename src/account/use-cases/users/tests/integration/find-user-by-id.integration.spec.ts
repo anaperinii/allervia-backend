@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { FindUserByIdUseCase } from "../../find-user-by-id.use-case";
-import { PrismaService } from "src/database/prisma.service";
+import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { PrismaUserRepository } from "src/account/prisma-user.repository";

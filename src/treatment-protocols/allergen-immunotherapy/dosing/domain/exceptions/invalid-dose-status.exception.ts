@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { DomainException } from 'src/shared/domain.exception';
+import { DomainException } from 'src/infra/exceptions/domain.exception';
 
 export class InvalidDoseStatusException extends DomainException {
   constructor(message: string) {

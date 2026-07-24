@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/database/prisma.service';
+import { PrismaService } from 'src/infra/database/prisma.service';
 import { Dose } from './domain/entities/dose.entity';
 import { IDoseRepository } from './domain/interfaces/dose.repository.interface';
 import { CreateDoseData, UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';

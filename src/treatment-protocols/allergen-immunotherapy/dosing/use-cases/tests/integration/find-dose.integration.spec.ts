@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { PrismaService } from "src/database/prisma.service";
+import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface";

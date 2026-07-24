@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/database/prisma.service';
+import { PrismaService } from 'src/infra/database/prisma.service';
 import {
   IUserAuthRepository,
   UserForAuth,
@@ -29,9 +29,7 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
     }
 
     const organizationId =
-      user.professional?.organizationId ??
-      user.patient?.organizationId ??
-      null;
+      user.professional?.organizationId ?? user.patient?.organizationId ?? null;
 
     return {
       id: user.id,

@@ -4,7 +4,7 @@ import { CreateDoseUseCase } from "src/treatment-protocols/allergen-immunotherap
 import { CreateScheduledDoseData } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface";
 import { FindImmunotherapyUseCase } from "src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
-import { addDate } from "src/shared/utils";
+import { addDate } from "src/utils/date.utils";
 import { MAINTENANCE_INTERVALS } from "./maintenance-phase.variables";
 import { Dose } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity";
 import { Immunotherapy } from "src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity";

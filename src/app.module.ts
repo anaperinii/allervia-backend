@@ -1,16 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './security/auth.module';
-import { PrismaModule } from './database/prisma.module';
+import { PrismaModule } from './infra/database/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './security/guards/jwt-auth.guard';
 import { PatientsModule } from './patients/patients.module';
 import { RolesGuard } from './security/guards/roles.guard';
 import { OrganizationModule } from './organization/organization.module';
-import { OnboardingModule } from './onboarding/onboarding.module';
+import { InvitesModule } from './invites/invites.module';
 import { AccountModule } from './account/account.module';
 import { TreatmentProtocolsModule } from './treatment-protocols/treatment-protocols.module';
 import { ProfessionalsModule } from './professionals/professionals.module';
+import { PermissionsModule } from './security/permissions/permissions.module';
 
 @Module({
   imports: [
@@ -20,10 +21,11 @@ import { ProfessionalsModule } from './professionals/professionals.module';
     AuthModule,
     PatientsModule,
     OrganizationModule,
-    OnboardingModule,
+    InvitesModule,
     AccountModule,
     TreatmentProtocolsModule,
     ProfessionalsModule,
+    PermissionsModule,
   ],
   controllers: [],
   providers: [

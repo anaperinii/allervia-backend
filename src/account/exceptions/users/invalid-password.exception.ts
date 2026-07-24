@@ -1,4 +1,4 @@
-import { DomainException } from "src/shared/domain.exception";
+import { DomainException } from "src/infra/exceptions/domain.exception";
 
 export class InvalidPasswordException extends DomainException {
   constructor(message: string = 'Invalid password provided.') {

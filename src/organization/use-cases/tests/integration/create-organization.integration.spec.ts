@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { CreateOrganizationUseCase } from "../../create-organization.use-case";
-import { PrismaService } from "src/database/prisma.service";
+import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { CreateOrganizationDto } from "src/organization/dtos/create-organization.dto";
