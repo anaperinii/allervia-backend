@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role } from '@prisma/client';
 
 export interface CreateInviteData {
   email: string;

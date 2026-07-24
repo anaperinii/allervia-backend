@@ -1,4 +1,4 @@
-import { Organization } from "@prisma/client";
+import { Organization } from '@prisma/client';
 
 export abstract class OrganizationRepository {
   abstract create(organization: Organization): Promise<Organization>;
@@ -9,4 +9,3 @@ export abstract class OrganizationRepository {
   abstract findByName(name: string): Promise<Organization | null>;
   abstract findByTaxId(taxId: string): Promise<Organization | null>;
 }
-

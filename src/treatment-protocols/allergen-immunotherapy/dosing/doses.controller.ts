@@ -22,10 +22,7 @@ export class DosesController {
 
   @Get(':id')
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
-  async findOne(
-    @Param('id') id: string,
-    @ActiveOrganization() orgId: string,
-  ) {
+  async findOne(@Param('id') id: string, @ActiveOrganization() orgId: string) {
     return this.findDoseUseCase.execute(id, orgId);
   }
 
@@ -51,6 +48,3 @@ export class DosesController {
     return this.updateDoseStatusUseCase.execute(id, dto, currentUser);
   }
 }
-
-
-

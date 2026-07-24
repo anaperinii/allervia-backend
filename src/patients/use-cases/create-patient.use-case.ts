@@ -1,22 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PatientRepository } from 'src/patients/patient.repository';
 import { CreatePatientDto } from 'src/patients/dtos/create-patient.dto';
-import { PatientResponseDto } from 'src/patients/dtos/patient-response.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CreatePatientUseCase {
-  constructor(
-    private patientRepository: PatientRepository
-  ) {}
+  constructor(private patientRepository: PatientRepository) {}
 
   async execute(
     dto: CreatePatientDto,
     currentUser: AuthenticatedUserPayload,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ) {
-   
     const savedPatient = await this.patientRepository.create(
       {
         fullName: dto.fullName,
@@ -35,5 +31,3 @@ export class CreatePatientUseCase {
     return savedPatient;
   }
 }
-
-

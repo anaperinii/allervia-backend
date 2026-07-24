@@ -1,4 +1,12 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsString, Min, Max, Matches } from '@nestjs/class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
+  Max,
+  Matches,
+} from '@nestjs/class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePatientDto {
@@ -21,7 +29,8 @@ export class CreatePatientDto {
   @ApiProperty({ description: 'Número de Telefone' })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{10,11}$/, { message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.' })
+  @Matches(/^\d{10,11}$/, {
+    message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.',
+  })
   phoneNumber: string;
 }
-

@@ -6,6 +6,7 @@ export interface UserCreationData {
   type: UserType;
   isActive?: boolean;
   isArchived?: boolean;
+  createdById?: string | null;
 }
 
 export interface UserUpdateData {

@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { AdministrationRoute, TherapyStatus } from "@prisma/client";
+import { ApiProperty } from '@nestjs/swagger';
+import { AdministrationRoute, TherapyStatus } from '@prisma/client';
 
 export class ImmunotherapyResponseDto {
   @ApiProperty({ description: 'ID da imunoterapia' })
@@ -56,6 +56,3 @@ export class ImmunotherapyResponseDto {
   @ApiProperty({ description: 'Data em que foi arquivada' })
   archivedAt: Date | null;
 }
-
-
-

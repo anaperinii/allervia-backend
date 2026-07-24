@@ -20,4 +20,3 @@ import { OrganizationController } from './organization.controller';
   controllers: [OrganizationController],
 })
 export class OrganizationModule {}
-

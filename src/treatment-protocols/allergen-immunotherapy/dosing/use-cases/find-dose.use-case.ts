@@ -5,9 +5,7 @@ import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/doma
 
 @Injectable()
 export class FindDoseUseCase {
-  constructor(
-    private readonly doseRepository: IDoseRepository
-  ) {}
+  constructor(private readonly doseRepository: IDoseRepository) {}
 
   async execute(id: string, orgId: string): Promise<Dose> {
     const dose = await this.doseRepository.findById(id, orgId);
@@ -19,5 +17,3 @@ export class FindDoseUseCase {
     return dose;
   }
 }
-
-

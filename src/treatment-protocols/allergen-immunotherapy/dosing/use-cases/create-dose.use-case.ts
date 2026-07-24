@@ -7,16 +7,13 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CreateDoseUseCase {
-  constructor(
-    private readonly doseRepository: IDoseRepository
-  ) {}
+  constructor(private readonly doseRepository: IDoseRepository) {}
 
   async execute(
     data: CreateScheduledDoseData,
     currentUser: AuthenticatedUserPayload,
     tx?: Prisma.TransactionClient,
   ): Promise<Dose> {
-
     const dose = Dose.createNew({
       concentration: data.concentration,
       volume: data.volume,
@@ -24,7 +21,7 @@ export class CreateDoseUseCase {
       nextIntervalInDays: data.nextIntervalInDays,
       immunotherapyId: data.immunotherapyId,
       createdById: currentUser.id,
-      updatedById: currentUser.id
+      updatedById: currentUser.id,
     });
 
     const savedDose = await this.doseRepository.create(dose, tx);
@@ -32,4 +29,3 @@ export class CreateDoseUseCase {
     return savedDose;
   }
 }
-

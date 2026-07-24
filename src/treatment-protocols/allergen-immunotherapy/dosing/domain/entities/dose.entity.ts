@@ -117,7 +117,10 @@ export class Dose {
     const newStatus = props.status;
 
     // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
-    if (String(this.status).startsWith('ADMINISTERED') && newStatus !== 'ENTERED_IN_ERROR') {
+    if (
+      String(this.status).startsWith('ADMINISTERED') &&
+      newStatus !== 'ENTERED_IN_ERROR'
+    ) {
       throw new InvalidDoseStatusException(
         'Doses administradas podem ser alteradas apenas para registro errôneo',
       );
@@ -136,14 +139,19 @@ export class Dose {
     }
 
     // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
-    if (String(this.status).startsWith('ADMINISTERED') && newStatus === 'ENTERED_IN_ERROR') {
+    if (
+      String(this.status).startsWith('ADMINISTERED') &&
+      newStatus === 'ENTERED_IN_ERROR'
+    ) {
       this.status = newStatus;
       this.archive();
       return;
     }
 
     if (props.status === this.status) {
-      throw new InvalidDoseStatusException(`Esta dose já possui o status ${props.status}`);
+      throw new InvalidDoseStatusException(
+        `Esta dose já possui o status ${props.status}`,
+      );
     }
 
     this.status = newStatus;

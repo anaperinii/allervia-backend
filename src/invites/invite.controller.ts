@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   HttpCode,
-  HttpStatus
+  HttpStatus,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
@@ -25,34 +25,31 @@ export class InviteController {
   constructor(
     private createInviteUseCase: CreateInviteUseCase,
     private cancelInviteUseCase: CancelInviteUseCase,
-    private listInvitesUseCase: ListInvitesUseCase
+    private listInvitesUseCase: ListInvitesUseCase,
   ) {}
-
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async createInvite(
     @Body() dto: CreateInviteDto,
-    @CurrentUser() currentUser: AuthenticatedUserPayload
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
     return this.createInviteUseCase.execute(dto, currentUser);
   }
 
-  
   @Get('list')
   async listInvites(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
-    @Query() query: ListInvitesQueryDto
+    @Query() query: ListInvitesQueryDto,
   ) {
     return this.listInvitesUseCase.execute(currentUser, query);
   }
 
-  
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async cancelInvite(
     @Param('id') id: string,
-    @CurrentUser() currentUser: AuthenticatedUserPayload
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
     await this.cancelInviteUseCase.execute(id, currentUser);
   }

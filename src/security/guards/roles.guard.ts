@@ -11,7 +11,6 @@ import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { IS_PUBLIC_KEY } from 'src/security/decorators/public.decorator';
 import { RoleValidationFactory } from 'src/security/factories/role-validation.factory';
 
-
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
@@ -19,7 +18,9 @@ export class RolesGuard implements CanActivate {
     private roleValidationFactory: RoleValidationFactory,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
@@ -34,8 +35,10 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const activeUser: AuthenticatedUserPayload = request.user;
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user?: AuthenticatedUserPayload }>();
+    const activeUser = request.user;
 
     if (!activeUser) {
       return false;
@@ -43,7 +46,7 @@ export class RolesGuard implements CanActivate {
 
     if (activeUser.type === 'PATIENT') {
       throw new ForbiddenException(
-        'Pacientes não podem acessar recursos restritos por role'
+        'Pacientes não podem acessar recursos restritos por role',
       );
     }
 
@@ -53,7 +56,7 @@ export class RolesGuard implements CanActivate {
 
     if (!hasPermission) {
       throw new ForbiddenException(
-        `Permissão negada. Roles necessárias: ${requiredRoles.join(', ')}`
+        `Permissão negada. Roles necessárias: ${requiredRoles.join(', ')}`,
       );
     }
 

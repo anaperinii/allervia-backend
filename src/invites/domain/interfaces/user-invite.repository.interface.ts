@@ -1,6 +1,10 @@
 import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { CreateInviteData, FindInvitesFilters, UpdateInviteData } from './invite.interface';
+import {
+  CreateInviteData,
+  FindInvitesFilters,
+  UpdateInviteData,
+} from './invite.interface';
 import { Prisma } from '@prisma/client';
 
 export abstract class IUserInviteRepository {

@@ -52,7 +52,6 @@ import { ProfessionalsModule } from 'src/professionals/professionals.module';
       provide: IUserInviteRepository,
       useClass: PrismaUserInviteRepository,
     },
-
   ],
   controllers: [InviteController, RegistrationController],
   exports: [IUserInviteRepository],

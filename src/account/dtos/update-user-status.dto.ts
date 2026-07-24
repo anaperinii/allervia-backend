@@ -1,7 +1,7 @@
-import { IsBoolean, IsNotEmpty } from "@nestjs/class-validator";
+import { IsBoolean, IsNotEmpty } from '@nestjs/class-validator';
 
 export class UpdateUserStatusDto {
-    @IsBoolean()
-    @IsNotEmpty()
-    isActive: boolean;
+  @IsBoolean()
+  @IsNotEmpty()
+  isActive: boolean;
 }

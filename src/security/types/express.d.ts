@@ -1,8 +1,4 @@
-
-import {
-  AuthenticatedUserPayload,
-  MembershipPayload,
-} from 'src/security/types/auth.types';
+import { MembershipPayload } from 'src/security/types/auth.types';
 
 /**
  * Este ficheiro usa o "declaration merging" do TypeScript para adicionar as nossas

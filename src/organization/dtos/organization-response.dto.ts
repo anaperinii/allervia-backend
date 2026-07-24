@@ -6,4 +6,3 @@ export class OrganizationResponseDto {
   createdAt: Date;
   updatedAt: Date;
 }
-

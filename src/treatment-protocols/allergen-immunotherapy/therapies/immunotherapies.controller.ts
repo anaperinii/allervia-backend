@@ -18,8 +18,6 @@ import { UpdateImmunotherapyStatusDto } from 'src/treatment-protocols/allergen-i
 import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
 import { PatientResponseDto } from 'src/patients/dtos/patient-response.dto';
 import { ListAllImmunotherapiesUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
-import { UpdateDoseDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose.dto';
-
 
 @ApiTags('immunotherapies')
 @Controller('immunotherapies')
@@ -33,7 +31,7 @@ export class ImmunotherapiesController {
     private updateImmunotherapyStatusUseCase: UpdateImmunotherapyStatusUseCase,
     private createDoseUseCase: CreateDoseUseCase,
     private listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
-    private listAllImmunotherapies: ListAllImmunotherapiesUseCase
+    private listAllImmunotherapies: ListAllImmunotherapiesUseCase,
   ) {}
 
   @Post('register')
@@ -41,7 +39,10 @@ export class ImmunotherapiesController {
   async createImmunotherapy(
     @Body() dto: CreateImmunotherapyDto,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ): Promise<{ patient: PatientResponseDto; immunotherapy: ImmunotherapyResponseDto }> {
+  ): Promise<{
+    patient: PatientResponseDto;
+    immunotherapy: ImmunotherapyResponseDto;
+  }> {
     return this.createImmunotherapyUseCase.execute(dto, currentUser);
   }
 
@@ -86,7 +87,7 @@ export class ImmunotherapiesController {
   async updateImmunotherapy(
     @Param('id') immunoId: string,
     @Body() dto: UpdateImmunotherapyDto,
-    @ActiveOrganization() orgId: string
+    @ActiveOrganization() orgId: string,
   ): Promise<ImmunotherapyResponseDto> {
     return this.updateImmunotherapyUseCase.execute(immunoId, dto, orgId);
   }
@@ -100,7 +101,12 @@ export class ImmunotherapiesController {
     @ActiveOrganization() orgId: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto> {
-    return this.updateImmunotherapyStatusUseCase.execute(immunoId, dto, orgId, currentUser);
+    return this.updateImmunotherapyStatusUseCase.execute(
+      immunoId,
+      dto,
+      orgId,
+      currentUser,
+    );
   }
 
   @Get(':id/doses')
@@ -112,4 +118,3 @@ export class ImmunotherapiesController {
     return this.listDosesByTherapyUseCase.execute(immunoId, orgId);
   }
 }
-

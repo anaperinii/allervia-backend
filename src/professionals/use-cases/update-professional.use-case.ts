@@ -7,10 +7,7 @@ import { PROFESSIONAL_MESSAGES } from 'src/professionals/professional.messages';
 export class UpdateProfessionalUseCase {
   constructor(private professionalRepository: ProfessionalRepository) {}
 
-  async execute(
-    id: string,
-    dto: UpdateProfessionalDto
-  ) {
+  async execute(id: string, dto: UpdateProfessionalDto) {
     const professional = await this.professionalRepository.findById(id);
 
     if (!professional) {

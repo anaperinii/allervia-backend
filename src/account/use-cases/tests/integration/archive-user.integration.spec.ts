@@ -1,75 +1,84 @@
-import { Test, TestingModule } from "@nestjs/testing"
-import { ArchiveUserUseCase } from "src/account/use-cases/archive-user.use-case";
-import { PrismaService } from "src/infra/database/prisma.service";
-import { TestFactories } from "test/factories";
-import { TestDatabaseManager } from "test/database/test-database.manager";
-import { PrismaUserRepository } from "src/account/prisma-user.repository";
-import { ulid } from "ulid";
-import { IUserRepository } from "src/account/user.repository";
-import { UserNotFoundException } from "src/account/exceptions/user-not-found.exception";
+import { Test, TestingModule } from '@nestjs/testing';
+import { ArchiveUserUseCase } from 'src/account/use-cases/archive-user.use-case';
+import { PrismaService } from 'src/infra/database/prisma.service';
+import { TestFactories } from 'test/factories';
+import { TestDatabaseManager } from 'test/database/test-database.manager';
+import { PrismaUserRepository } from 'src/account/prisma-user.repository';
+import { ulid } from 'ulid';
+import { IUserRepository } from 'src/account/user.repository';
+import { UserNotFoundException } from 'src/account/exceptions/user-not-found.exception';
 
 describe('ArchiveUserUseCase - Integration', () => {
-    let module: TestingModule;
-    let archiveUserUseCase: ArchiveUserUseCase;
-    let prisma: PrismaService;
-    let factories: TestFactories;
+  let module: TestingModule;
+  let archiveUserUseCase: ArchiveUserUseCase;
+  let prisma: PrismaService;
+  let factories: TestFactories;
 
-    beforeAll(async () => {
+  beforeAll(async () => {
+    await TestDatabaseManager.connect();
 
-        await TestDatabaseManager.connect();
+    module = await Test.createTestingModule({
+      providers: [
+        ArchiveUserUseCase,
+        {
+          provide: PrismaService,
+          useValue: TestDatabaseManager.getInstance(),
+        },
+        {
+          provide: IUserRepository,
+          useClass: PrismaUserRepository,
+        },
+      ],
+    }).compile();
 
-        module = await Test.createTestingModule({
-            providers: [
-                ArchiveUserUseCase,
-                {
-                    provide: PrismaService,
-                    useValue: TestDatabaseManager.getInstance()
-                },
-                {
-                    provide: IUserRepository,
-                    useClass: PrismaUserRepository
-                }
-            ]
-        }).compile();
+    archiveUserUseCase = module.get(ArchiveUserUseCase);
+    prisma = module.get(PrismaService);
+    factories = new TestFactories(prisma);
+  });
 
-        archiveUserUseCase = module.get(ArchiveUserUseCase);
-        prisma = module.get(PrismaService);
-        factories = new TestFactories(prisma);
-    });
+  beforeEach(async () => {
+    await TestDatabaseManager.cleanAll();
+  });
 
-    beforeEach(async () => {
-        await TestDatabaseManager.cleanAll();
-    });
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
+    await TestDatabaseManager.disconnect();
+  });
 
-    afterAll(async () => {
-        if(module) {
-            await module.close();
-        }
-        await TestDatabaseManager.disconnect();
-    });
+  it('should archive user correctly', async () => {
+    const authenticatedUser =
+      await factories.users.createAuthenticatedPhysicianProfessional();
+    const targetUser = await factories.users.create({});
 
-    it('should archive user correctly', async () => {
-        const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({});
+    const result = await archiveUserUseCase.execute(
+      targetUser.id,
+      authenticatedUser,
+    );
 
-        const result = await archiveUserUseCase.execute(targetUser.id, authenticatedUser);
+    expect(result).toBeDefined();
+    expect(result.isArchived).toBe(true);
+  });
 
-        expect(result).toBeDefined();
-        expect(result.isArchived).toBe(true);
-    });
+  it('should throw a not found exception when archiving a non-existent user', async () => {
+    const authenticatedUser =
+      await factories.users.createAuthenticatedPhysicianProfessional();
 
-    it('should throw a not found exception when archiving a non-existent user', async () => {
-        const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
+    await expect(
+      archiveUserUseCase.execute(ulid(), authenticatedUser),
+    ).rejects.toThrow(UserNotFoundException);
+  });
 
-        await expect(archiveUserUseCase.execute(ulid(), authenticatedUser)).rejects.toThrow(UserNotFoundException);
-    });
+  it('should throw a not found exception when archiving user from another organization', async () => {
+    const _authenticatedUser =
+      await factories.users.createAuthenticatedPhysicianProfessional();
+    const authenticatedUserAnotherOrg =
+      await factories.users.createAuthenticatedPhysicianProfessional();
+    const targetUser = await factories.users.create({});
 
-    it('should throw a not found exception when archiving user from another organization', async () => {
-        const authenticatedUser = await factories.users.createAuthenticatedPhysicianProfessional();
-        const authenticatedUserAnotherOrg = await factories.users.createAuthenticatedPhysicianProfessional();
-        const targetUser = await factories.users.create({});
-
-        await expect(archiveUserUseCase.execute(targetUser.id, authenticatedUserAnotherOrg)).rejects.toThrow(UserNotFoundException);
-    });
-})
-
+    await expect(
+      archiveUserUseCase.execute(targetUser.id, authenticatedUserAnotherOrg),
+    ).rejects.toThrow(UserNotFoundException);
+  });
+});

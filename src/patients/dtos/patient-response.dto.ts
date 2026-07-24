@@ -15,5 +15,3 @@ export class PatientResponseDto {
   archivedById: string | null;
   archivedAt: Date | null;
 }
-
-

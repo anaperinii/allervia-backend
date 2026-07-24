@@ -8,4 +8,3 @@ export class UpdateDoseStatusDto {
   @IsNotEmpty()
   status: DoseStatus;
 }
-

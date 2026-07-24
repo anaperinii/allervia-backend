@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { Immunotherapy } from './domain/entities/immunotherapy.entity';
 import { IImmunotherapyRepository } from './domain/interfaces/immunotherapy.repository.interface';
-import { CreateImmunotherapyData, UpdateImmunotherapyData } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.interfaces';
+import {
+  CreateImmunotherapyData,
+  UpdateImmunotherapyData,
+} from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.interfaces';
 import { Prisma } from '@prisma/client';
 
 const IMMUNO_INCLUDE = {
@@ -18,7 +21,10 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     super();
   }
 
-  async create(immunotherapy: CreateImmunotherapyData, tx?: Prisma.TransactionClient): Promise<Immunotherapy> {
+  async create(
+    immunotherapy: CreateImmunotherapyData,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Immunotherapy> {
     const prismaClient = tx ?? this.prisma;
 
     const created = await prismaClient.immunotherapy.create({
@@ -41,14 +47,21 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     return new Immunotherapy(created);
   }
 
-  async update(immunoId: string, immunotherapy: Partial<UpdateImmunotherapyData>): Promise<Immunotherapy> {
+  async update(
+    immunoId: string,
+    immunotherapy: Partial<UpdateImmunotherapyData>,
+  ): Promise<Immunotherapy> {
     const updated = await this.prisma.immunotherapy.update({
       where: { id: immunoId },
       data: {
         administrationRoute: immunotherapy.administrationRoute,
         extract: immunotherapy.extract,
-        inductionStartDate: immunotherapy.inductionStartDate ? new Date(immunotherapy.inductionStartDate) : undefined,
-        maintenanceStartDate: immunotherapy.maintenanceStartDate ? new Date(immunotherapy.maintenanceStartDate) : undefined,
+        inductionStartDate: immunotherapy.inductionStartDate
+          ? new Date(immunotherapy.inductionStartDate)
+          : undefined,
+        maintenanceStartDate: immunotherapy.maintenanceStartDate
+          ? new Date(immunotherapy.maintenanceStartDate)
+          : undefined,
         targetConcentration: immunotherapy.targetConcentration,
         targetVolume: immunotherapy.targetVolume,
         responsiblePhysicianId: immunotherapy.responsiblePhysicianId,
@@ -72,7 +85,10 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     return immunotherapies.map((t) => new Immunotherapy(t));
   }
 
-  async findById(id: string, organizationId: string): Promise<Immunotherapy | null> {
+  async findById(
+    id: string,
+    organizationId: string,
+  ): Promise<Immunotherapy | null> {
     const therapy = await this.prisma.immunotherapy.findFirst({
       where: { id, patient: { organizationId } },
     });
@@ -80,7 +96,10 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     return therapy ? new Immunotherapy(therapy) : null;
   }
 
-  async findByPatient(patientId: string, organizationId: string): Promise<Immunotherapy[]> {
+  async findByPatient(
+    patientId: string,
+    organizationId: string,
+  ): Promise<Immunotherapy[]> {
     const therapies = await this.prisma.immunotherapy.findMany({
       where: { patientId, patient: { organizationId } },
       orderBy: { createdAt: 'desc' },
@@ -90,7 +109,10 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     return therapies.map((t) => new Immunotherapy(t));
   }
 
-  async findByType(type: string, organizationId: string): Promise<Immunotherapy[]> {
+  async findByType(
+    type: string,
+    organizationId: string,
+  ): Promise<Immunotherapy[]> {
     const therapies = await this.prisma.immunotherapy.findMany({
       where: { immunoType: type, patient: { organizationId } },
       include: IMMUNO_INCLUDE,
