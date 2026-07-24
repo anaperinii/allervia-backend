@@ -1,12 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { FindUserByIdUseCase } from "../../find-user-by-id.use-case";
+import { FindUserByIdUseCase } from "../../users/find-user-by-id.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { PrismaUserRepository } from "src/account/prisma-user.repository";
 import { ulid } from "ulid";
 import { IUserRepository } from "src/account/user.repository";
-import { UserNotFoundException } from "src/account/exceptions/users/user-not-found.exception";
+import { UserNotFoundException } from "src/account/exceptions/user-not-found.exception";
 
 describe('FindUserByIdUseCase - Integration', () => {
     let module: TestingModule;

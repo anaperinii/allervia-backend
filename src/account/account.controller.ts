@@ -4,7 +4,7 @@ import { Roles } from 'src/security/decorators/roles.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { FindUserByIdUseCase } from './use-cases/users/find-user-by-id.use-case';
 import { UpdateUserStatusUseCase } from './use-cases/users/update-user-status.use-case';
-import { UpdateUserStatusDto } from './dtos/users/update-user-status.dto';
+import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
 import { UpdateUserAdminDto } from './dtos/users/update-user-admin.dto';
 import { UpdateUserBackofficeDto } from './dtos/users/update-user-backoffice.dto';
 import { UpdateUserPersonalDto } from './dtos/users/update-user-personal.dto';

@@ -3,7 +3,7 @@ import { InviteStrategyContext } from "../strategies/invites/invite-strategy.con
 import { CreateInviteDto } from "../dtos/create-invite.dto";
 import { AuthenticatedUserPayload } from "src/security/types/auth.types";
 import { ulid } from "ulid";
-import { ValidateUserEmailUseCase } from "src/account/use-cases/users/validate-user-email.use-case";
+import { ValidateUserEmailUseCase } from "src/account/use-cases/validate-user-email.use-case";
 import { FindUserByIdUseCase } from "src/account/use-cases/users/find-user-by-id.use-case";
 import { UserInvite } from "../domain/entities/user-invite.entity";
 import { InviteResponseDto } from "../dtos/invite-response.dto";

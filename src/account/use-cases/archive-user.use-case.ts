@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { IUserRepository } from 'src/account/user.repository';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
-import { USER_MESSAGES } from '../../user.messages';
+import { USER_MESSAGES } from '../user.messages';
 
 @Injectable()
 export class ArchiveUserUseCase {
