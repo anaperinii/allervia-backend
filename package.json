@@ -20,7 +20,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "deps:circular": "madge --circular --extensions ts --ts-config tsconfig.json src",
+    "deps:orphans": "madge --orphans --extensions ts --ts-config tsconfig.json src",
+    "deps:graph": "madge --image docs/deps.svg --extensions ts --ts-config tsconfig.json src",
+    "deps:json": "madge --json --extensions ts --ts-config tsconfig.json src > docs/deps.json"
   },
   "dependencies": {
     "@nestjs/class-validator": "^0.13.4",
@@ -65,6 +69,7 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
     "jest": "^30.2.0",
+    "madge": "^8.0.0",
     "prettier": "^3.4.2",
     "prisma": "^7.2.0",
     "source-map-support": "^0.5.21",
