@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { UpdateUserUseCase } from "../../users/update-user.use-case";
+import { UpdateUserUseCase } from "../../update-user.use-case";
 import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
@@ -9,7 +9,7 @@ import { IPasswordHashingService } from "src/security/interfaces/password-hashin
 import { BcryptPasswordHashingService } from "src/security/bcrypt-password-hashing.service";
 import { UserNotFoundException } from "src/account/exceptions/user-not-found.exception";
 import { IUserRepository } from "src/account/user.repository";
-import { UpdateUserPersonalDto } from "src/account/dtos/users/update-user-personal.dto";
+import { UpdateUserPersonalDto } from "src/account/dtos/update-user-personal.dto";
 
 describe('UpdateUserPersonalUseCase - Integration', () => {
     let module: TestingModule;
