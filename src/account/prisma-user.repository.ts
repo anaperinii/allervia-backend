@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/database/prisma.service';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { PrismaService } from 'src/infra/database/prisma.service';
+import { Prisma } from '@prisma/client';
 import { UserCreationData, UserUpdateData } from 'src/account/account.interface';
 import { IUserRepository } from 'src/account/user.repository';
 
@@ -10,16 +10,14 @@ export class PrismaUserRepository extends IUserRepository {
     super();
   }
 
-  async create(user: UserCreationData, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
+  async create(user: UserCreationData, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prismaService;
 
     return client.user.create({ data: user });
   }
 
-  async update(user: Partial<UserUpdateData>, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
-
-    return client.user.update({
+  async update(user: Partial<UserUpdateData>) {
+    return this.prismaService.user.update({
       where: { id: user.id },
       data: {
         email: user.email,
@@ -30,22 +28,16 @@ export class PrismaUserRepository extends IUserRepository {
     });
   }
 
-  async findUserByEmail(email: string, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
-
-    return client.user.findFirst({ where: { email } });
+  async findUserByEmail(email: string) {
+    return this.prismaService.user.findFirst({ where: { email } });
   }
 
-  async findUserById(id: string, tx?: ITransactionContext) {
-    const client = this.prismaService.getClient(tx);
-
-    return client.user.findFirst({ where: { id } });
+  async findUserById(id: string) {
+    return this.prismaService.user.findFirst({ where: { id } });
   }
 
-  async existsByEmail(email: string, tx?: ITransactionContext): Promise<boolean> {
-    const client = this.prismaService.getClient(tx);
-
-    const count = await client.user.count({ where: { email } });
+  async existsByEmail(email: string): Promise<boolean> {
+    const count = await this.prismaService.user.count({ where: { email } });
 
     return count > 0;
   }

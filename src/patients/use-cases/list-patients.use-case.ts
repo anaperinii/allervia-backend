@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PatientRepository } from '../patient.repository';
 import { PatientResponseDto } from '../dtos/patient-response.dto';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ListPatientsUseCase {
@@ -9,8 +9,8 @@ export class ListPatientsUseCase {
     private patientRepository: PatientRepository,
   ) {}
 
-  async execute(organizationId: string, tx?: ITransactionContext) {
-    const patients = await this.patientRepository.findByOrganization(organizationId, tx);
+  async execute(organizationId: string) {
+    const patients = await this.patientRepository.findByOrganization(organizationId);
     return patients;
   }
 }

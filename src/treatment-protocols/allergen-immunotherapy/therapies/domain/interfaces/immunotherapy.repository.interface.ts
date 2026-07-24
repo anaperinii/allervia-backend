@@ -1,4 +1,4 @@
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 import { Immunotherapy } from '../entities/immunotherapy.entity';
 import {
   CreateImmunotherapyData,
@@ -8,41 +8,30 @@ import {
 export abstract class IImmunotherapyRepository {
   abstract create(
     immunotherapy: CreateImmunotherapyData,
-    tx?: ITransactionContext,
+    tx?: Prisma.TransactionClient,
   ): Promise<Immunotherapy>;
 
   abstract update(
     immunoId: string,
     immunotherapy: Partial<UpdateImmunotherapyData>,
-    tx?: ITransactionContext,
   ): Promise<Immunotherapy>;
 
   abstract findById(
     id: string,
     organizationId: string,
-    tx?: ITransactionContext,
   ): Promise<Immunotherapy | null>;
 
-  abstract findAll(
-    organizationId: string,
-    tx?: ITransactionContext,
-  ): Promise<Immunotherapy[]>;
+  abstract findAll(organizationId: string): Promise<Immunotherapy[]>;
 
   abstract findByPatient(
     patientId: string,
     organizationId: string,
-    tx?: ITransactionContext,
   ): Promise<Immunotherapy[]>;
 
   abstract findByType(
     type: string,
     organizationId: string,
-    tx?: ITransactionContext,
   ): Promise<Immunotherapy[]>;
 
-  abstract exists(
-    id: string,
-    organizationId: string,
-    tx?: ITransactionContext,
-  ): Promise<boolean>;
+  abstract exists(id: string, organizationId: string): Promise<boolean>;
 }

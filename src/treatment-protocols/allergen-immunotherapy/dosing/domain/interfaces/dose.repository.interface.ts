@@ -1,9 +1,9 @@
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 import { Dose } from '../entities/dose.entity';
 import { CreateDoseData, UpdateDoseData } from './doses.interface';
 
 export abstract class IDoseRepository {
-  abstract create(dose: CreateDoseData, tx?: ITransactionContext): Promise<Dose>;
+  abstract create(dose: CreateDoseData, tx?: Prisma.TransactionClient): Promise<Dose>;
 
   abstract update(doseId: string, dose: Partial<UpdateDoseData>): Promise<Dose>;
 

@@ -1,60 +1,41 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import { ITransactionContext } from 'src/database/transaction.interface';
-import { ITransactionManager } from 'src/database/transaction-manager.interface';
+
+const TABLES = [
+    'AuditLog',
+    'DoseObservation',
+    'Dose',
+    'Immunotherapy',
+    'ProfessionalRole',
+    'InternalUserInvite',
+    'Patient',
+    'Professional',
+    'User',
+    'Organization',
+];
 
 @Injectable()
-export class TestPrismaService 
-    extends PrismaClient 
-    implements ITransactionManager 
-{
+export class TestPrismaService extends PrismaClient {
     constructor() {
-        const pool = new Pool({ 
-            connectionString: process.env.DATABASE_URL 
+        const pool = new Pool({
+            connectionString: process.env.DATABASE_URL
         });
         const adapter = new PrismaPg(pool);
-        
-        super({ 
-            adapter, 
-            log: process.env.DEBUG_TESTS === 'true' 
-                ? ['query', 'info', 'warn', 'error'] 
+
+        super({
+            adapter,
+            log: process.env.DEBUG_TESTS === 'true'
+                ? ['query', 'info', 'warn', 'error']
                 : ['error']
         });
     }
 
-    // ✅ Método transaction customizado
-    async transaction<T>(
-        callback: (tx: ITransactionContext) => Promise<T>
-    ): Promise<T> {
-        return this.$transaction(async (prismaTransaction) => {
-            return callback(prismaTransaction as ITransactionContext);
-        });
-    }
-
-    getClient(tx?: ITransactionContext): Prisma.TransactionClient | this {
-        return (tx as Prisma.TransactionClient) || this;
-    }
-
-    // ✅ Método cleanAll
     async cleanAll(): Promise<void> {
-        const tables = [
-            'AuditLog',
-            'Dose',
-            'Immunotherapy',
-            'InternalUserInvite',
-            'Membership',
-            'Patient',
-            'UserRole',
-            'Role',
-            'User',
-            'Organization'
-        ];
-
         console.log('🧹 Limpando banco de testes...');
 
-        for (const table of tables) {
+        for (const table of TABLES) {
             try {
                 await this.$executeRawUnsafe(
                     `TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`
@@ -69,7 +50,6 @@ export class TestPrismaService
         console.log('✅ Banco limpo com sucesso');
     }
 
-    // ✅ Outros métodos úteis
     async tableExists(tableName: string): Promise<boolean> {
         const result = await this.$queryRaw<Array<{ exists: boolean }>>`
             SELECT EXISTS (
@@ -96,27 +76,14 @@ export class TestPrismaService
     async showStats(): Promise<void> {
         console.log('\n📊 Estatísticas do Banco de Testes:');
         console.log('─────────────────────────────────────');
-        
-        const tables = [
-            'AuditLog',
-            'Dose',
-            'Immunotherapy',
-            'InternalUserInvite',
-            'Membership',
-            'Patient',
-            'UserRole',
-            'Role',
-            'User',
-            'Organization'
-        ];
 
-        for (const table of tables) {
+        for (const table of TABLES) {
             if (await this.tableExists(table)) {
                 const count = await this.countRecords(table);
                 console.log(`  ${table.padEnd(20)} → ${count} registro(s)`);
             }
         }
-        
+
         console.log('─────────────────────────────────────\n');
     }
 }

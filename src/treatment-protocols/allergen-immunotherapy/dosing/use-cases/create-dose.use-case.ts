@@ -3,7 +3,7 @@ import { IDoseRepository } from '../domain/interfaces/dose.repository.interface'
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity';
 import { CreateScheduledDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
-import { ITransactionContext } from 'src/database/transaction.interface';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CreateDoseUseCase {
@@ -14,7 +14,7 @@ export class CreateDoseUseCase {
   async execute(
     data: CreateScheduledDoseData,
     currentUser: AuthenticatedUserPayload,
-    tx?: ITransactionContext,
+    tx?: Prisma.TransactionClient,
   ): Promise<Dose> {
 
     const dose = Dose.createNew({

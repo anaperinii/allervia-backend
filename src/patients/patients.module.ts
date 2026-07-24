@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from 'src/database/prisma.module';
+import { PrismaModule } from 'src/infra/database/prisma.module';
 import { CreatePatientUseCase } from './use-cases/create-patient.use-case';
 import { FindPatientUseCase } from './use-cases/find-patient.use-case';
 import { ListPatientsUseCase } from './use-cases/list-patients.use-case';

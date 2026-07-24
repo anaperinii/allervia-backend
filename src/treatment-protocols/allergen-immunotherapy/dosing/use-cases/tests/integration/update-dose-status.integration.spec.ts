@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { PrismaService } from "src/database/prisma.service";
+import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { IDoseRepository } from "src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface";
@@ -23,7 +23,7 @@ import { RegisterNextScheduledMaintenanceUseCase } from "src/treatment-protocols
 import { BUILD_UP_INTERVAL, STARTING_DOSE_CONCENTRATION, STARTING_DOSE_VOLUME } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.variables";
 import { MAINTENANCE_INTERVALS } from "src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.variables";
 import { DoseStatus } from "@prisma/client";
-import { addDate } from "src/shared/utils";
+import { addDate } from "src/utils/date.utils";
 import { RegisterAdministeredDoseUseCase } from "../../register-administered-dose.use-case";
 
 describe('registerAdministeredDoseUseCase - Integration', () => {

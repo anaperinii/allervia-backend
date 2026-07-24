@@ -27,7 +27,7 @@ import { IImmunotherapyRepository } from './allergen-immunotherapy/therapies/dom
 import { PrismaImmunotherapyRepository } from './allergen-immunotherapy/therapies/prisma-immunotherapy.repository';
 import { ImmunotherapiesController } from './allergen-immunotherapy/therapies/immunotherapies.controller';
 import { PatientsModule } from 'src/patients/patients.module';
-import { PrismaModule } from 'src/database/prisma.module';
+import { PrismaModule } from 'src/infra/database/prisma.module';
 
 @Module({
     providers: [
