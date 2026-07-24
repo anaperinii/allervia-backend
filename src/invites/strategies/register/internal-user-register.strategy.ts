@@ -7,7 +7,7 @@ import { ProfessionalRepository } from 'src/professionals/professional.repositor
 import { GrantRoleUseCase } from 'src/security/permissions/use-cases/grant-role.use-case';
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
 import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
-import { ProfileInternalUserDto } from 'src/account/dtos/users/profile-internal-user.dto';
+import { ProfileInternalUserDto } from 'src/account/dtos/profile-internal-user.dto';
 import { RegisterUser } from '../../domain/interfaces/register.interface';
 import { RegisterStrategy } from './register.strategy';
 

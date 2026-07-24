@@ -4,7 +4,7 @@ import { PrismaService } from "src/infra/database/prisma.service";
 import { TestFactories } from "test/factories";
 import { TestDatabaseManager } from "test/database/test-database.manager";
 import { FindUserByIdUseCase } from "src/account/use-cases/users/find-user-by-id.use-case";
-import { ValidateUserEmailUseCase } from "src/account/use-cases/users/validate-user-email.use-case";
+import { ValidateUserEmailUseCase } from "src/account/use-cases/validate-user-email.use-case";
 import { FindActiveInviteUseCase } from "../../find-active-invite.use-case";
 import { IUserRepository } from "src/account/user.repository";
 import { PrismaUserRepository } from "src/account/prisma-user.repository";
