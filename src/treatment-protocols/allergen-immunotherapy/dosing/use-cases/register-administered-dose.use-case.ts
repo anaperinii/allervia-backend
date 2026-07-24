@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IDoseRepository } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface';
+import { UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { UpdateDoseDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
 import { Dose } from '@prisma/client';
@@ -35,8 +36,14 @@ export class RegisterAdministeredDoseUseCase {
     )) as Immunotherapy;
 
     // Preparar dados de atualização
-    const updateData: any = { ...dto };
-    updateData.updatedById = currentUser.id;
+    const updateData: Partial<UpdateDoseData> = {
+      concentration: dto.concentration,
+      volume: dto.volume,
+      administeredAt: dto.administeredAt ?? null,
+      scheduledAt: dto.scheduledAt ?? null,
+      nextIntervalInDays: dto.nextIntervalInDays,
+      updatedById: currentUser.id,
+    };
 
     // Se houver administeredAt, atualizar status e administeredById
     if (dto.administeredAt) {

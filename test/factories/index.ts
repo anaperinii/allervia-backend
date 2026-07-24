@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from '@prisma/client';
 import { DoseFactory } from './dose.factory';
 import { ImmunotherapyFactory } from './immunotherapy.factory';
 import { InternalUserInviteFactory } from './internal-user-invite.factory';

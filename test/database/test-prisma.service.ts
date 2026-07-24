@@ -41,9 +41,10 @@ export class TestPrismaService extends PrismaClient {
         await this.$executeRawUnsafe(
           `TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`,
         );
-      } catch (error: any) {
-        if (!error.message.includes('does not exist')) {
-          console.warn(`⚠️  Aviso ao limpar ${table}:`, error.message);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes('does not exist')) {
+          console.warn(`⚠️  Aviso ao limpar ${table}:`, message);
         }
       }
     }

@@ -11,11 +11,11 @@ export class NestJwtTokenService extends IJwtTokenService {
     super();
   }
 
-  async generateToken(payload: TokenPayload): Promise<string> {
-    return this.jwtService.sign(payload);
+  generateToken(payload: TokenPayload): Promise<string> {
+    return Promise.resolve(this.jwtService.sign(payload));
   }
 
-  async validateToken(token: string): Promise<TokenPayload> {
-    return this.jwtService.verify(token);
+  validateToken(token: string): Promise<TokenPayload> {
+    return Promise.resolve(this.jwtService.verify<TokenPayload>(token));
   }
 }

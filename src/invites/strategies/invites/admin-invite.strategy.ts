@@ -5,10 +5,10 @@ import { InviteCreationStrategy } from './invite-creation-strategy';
 
 @Injectable()
 export class AdminInviteStrategy implements InviteCreationStrategy {
-  async validateAndGetOrganizationId(
+  validateAndGetOrganizationId(
     dtoInvite: CreateInviteDto,
     currentUser: AuthenticatedUserPayload,
   ): Promise<string> {
-    return currentUser.activeOrgId;
+    return Promise.resolve(currentUser.activeOrgId);
   }
 }

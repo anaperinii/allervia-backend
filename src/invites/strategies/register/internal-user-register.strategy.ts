@@ -35,6 +35,8 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
           email: invite.email.toLowerCase(),
           password: hashedPassword,
           type: 'PROFESSIONAL',
+          // Quem registrou o convite é o criador deste usuário.
+          createdById: invite.createdById,
         },
         tx,
       );

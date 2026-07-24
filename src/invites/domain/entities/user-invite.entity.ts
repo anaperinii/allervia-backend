@@ -45,19 +45,19 @@ export class UserInvite {
   updatedAt: Date;
 
   constructor(props: UserInviteProps) {
-    ((this.id = props.id),
-      (this.email = props.email),
-      (this.fullName = props.fullName),
-      (this.role = props.role),
-      (this.organizationId = props.organizationId),
-      (this.professionalId = props.professionalId),
-      (this.createdById = props.createdById),
-      (this.token = props.token),
-      (this.expiresAt = props.expiresAt),
-      (this.isActive = props.isActive),
-      (this.usedAt = props.usedAt),
-      (this.createdAt = props.createdAt),
-      (this.updatedAt = props.updatedAt));
+    this.id = props.id;
+    this.email = props.email;
+    this.fullName = props.fullName;
+    this.role = props.role;
+    this.organizationId = props.organizationId;
+    this.professionalId = props.professionalId;
+    this.createdById = props.createdById;
+    this.token = props.token;
+    this.expiresAt = props.expiresAt;
+    this.isActive = props.isActive;
+    this.usedAt = props.usedAt;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
   }
 
   static createNew(props: CreateUserInviteProps) {
