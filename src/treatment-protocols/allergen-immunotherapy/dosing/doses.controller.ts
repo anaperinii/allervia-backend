@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
-import { ActiveOrganization } from 'src/security/decorators/active-organization.decorator';
+import { OrganizationId } from 'src/security/decorators/organization-id.decorator';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
-import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { FindDoseUseCase } from './use-cases/find-dose.use-case';
 import { ListDosesByTherapyUseCase } from './use-cases/list-doses-by-therapy.use-case';
 import { RegisterAdministeredDoseUseCase } from './use-cases/register-administered-dose.use-case';
@@ -22,7 +22,7 @@ export class DosesController {
 
   @Get(':id')
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
-  async findOne(@Param('id') id: string, @ActiveOrganization() orgId: string) {
+  async findOne(@Param('id') id: string, @OrganizationId() orgId: string) {
     return this.findDoseUseCase.execute(id, orgId);
   }
 

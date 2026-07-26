@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IUserRepository } from 'src/account/user.repository';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
 @Injectable()
 export class ValidateUserEmailUseCase {

@@ -20,7 +20,7 @@ export class ProfessionalTokenGenerator implements ITokenGenerator {
       sub: user.id,
       email: user.email,
       type: 'PROFESSIONAL',
-      activeOrgId: user.organizationId,
+      organizationId: user.organizationId,
       professionalId: user.professionalId,
       roles: user.roles,
       tokenVersion: user.tokenVersion,
@@ -32,7 +32,7 @@ export class ProfessionalTokenGenerator implements ITokenGenerator {
       access_token,
       user: {
         type: 'PROFESSIONAL',
-        activeOrgId: user.organizationId,
+        organizationId: user.organizationId,
       },
     };
   }

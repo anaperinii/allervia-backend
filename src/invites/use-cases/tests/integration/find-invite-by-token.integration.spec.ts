@@ -52,7 +52,7 @@ describe('FindInviteByTokenUseCase - Integration', () => {
     const invite = await factories.internalUserInvite.create({
       token: 'test-token-123',
       expiresAt: new Date('2026-01-01'),
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
     });
 

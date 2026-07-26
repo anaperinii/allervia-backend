@@ -50,19 +50,19 @@ describe('ListPatientsUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient1 = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const patient2 = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const result = await listPatientsUseCase.execute(
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeDefined();
@@ -76,7 +76,7 @@ describe('ListPatientsUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const result = await listPatientsUseCase.execute(
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeDefined();
@@ -90,23 +90,23 @@ describe('ListPatientsUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     await factories.patients.create({
-      organizationId: authenticatedUserAnotherOrg.activeOrgId,
+      organizationId: authenticatedUserAnotherOrg.organizationId,
       createdById: authenticatedUserAnotherOrg.id,
       updatedById: authenticatedUserAnotherOrg.id,
     });
 
     const result = await listPatientsUseCase.execute(
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
-    expect(result[0].organizationId).toBe(authenticatedUser.activeOrgId);
+    expect(result[0].organizationId).toBe(authenticatedUser.organizationId);
   });
 });

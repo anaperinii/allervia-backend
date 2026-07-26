@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
-import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-case';
 import { UpdateUserStatusUseCase } from './use-cases/update-user-status.use-case';
 import { UpdateUserStatusDto } from './dtos/update-user-status.dto';

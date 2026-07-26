@@ -3,7 +3,7 @@ import { CreateDoseUseCase } from 'src/treatment-protocols/allergen-immunotherap
 import { CreateScheduledDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity';
 import { Immunotherapy } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import {
   BUILD_UP_INTERVAL,
   STARTING_DOSE_CONCENTRATION,

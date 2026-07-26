@@ -18,7 +18,7 @@ export class PatientTokenGenerator implements ITokenGenerator {
       sub: user.id,
       email: user.email,
       type: 'PATIENT',
-      activeOrgId: user.organizationId,
+      organizationId: user.organizationId,
       professionalId: null,
       roles: [],
       tokenVersion: user.tokenVersion,
@@ -30,7 +30,7 @@ export class PatientTokenGenerator implements ITokenGenerator {
       access_token,
       user: {
         type: 'PATIENT',
-        activeOrgId: user.organizationId,
+        organizationId: user.organizationId,
       },
     };
   }

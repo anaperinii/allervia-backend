@@ -102,7 +102,9 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
     expect(result).toBeDefined();
     expect(result.patient).toBeDefined();
     expect(result.immunotherapy).toBeDefined();
-    expect(result.patient.organizationId).toBe(authenticatedUser.activeOrgId);
+    expect(result.patient.organizationId).toBe(
+      authenticatedUser.organizationId,
+    );
     expect(result.immunotherapy.patientId).toBe(result.patient.id);
 
     const patientInDb = await prisma.patient.findUnique({

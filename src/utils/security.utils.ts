@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'crypto';
 
-export class SecurityUtil { 
+export class SecurityUtil {
   static generateSecureToken(bytes = 32): string {
     return randomBytes(bytes).toString('hex');
   }

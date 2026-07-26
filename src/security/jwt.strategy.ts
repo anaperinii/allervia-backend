@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { IUserAuthRepository } from 'src/security/interfaces/user-auth.repository.interface';
 import { AUTH_MESSAGES } from 'src/security/auth.messages';
 
@@ -11,7 +11,7 @@ interface JwtValidatedPayload {
   email: string;
   type: AuthenticatedUserPayload['type'];
   roles?: string[];
-  activeOrgId: string;
+  organizationId: string;
   professionalId?: string | null;
   tokenVersion?: number;
 }
@@ -52,7 +52,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       type: payload.type,
       roles: payload.roles ?? [],
-      activeOrgId: payload.activeOrgId,
+      organizationId: payload.organizationId,
       professionalId: payload.professionalId ?? null,
     };
   }

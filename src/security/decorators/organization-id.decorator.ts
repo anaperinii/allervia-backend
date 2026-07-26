@@ -5,10 +5,10 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { AUTH_MESSAGES } from 'src/security/auth.messages';
 
-export const ActiveOrganization = createParamDecorator(
+export const OrganizationId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string => {
     const request = ctx.switchToHttp().getRequest<Request>();
     const user = request.user as AuthenticatedUserPayload;
@@ -17,10 +17,10 @@ export const ActiveOrganization = createParamDecorator(
       throw new BadRequestException(AUTH_MESSAGES.userNotAuthenticated);
     }
 
-    if (!user.activeOrgId) {
-      throw new ForbiddenException(AUTH_MESSAGES.activeOrganizationNotSet);
+    if (!user.organizationId) {
+      throw new ForbiddenException(AUTH_MESSAGES.organizationNotSet);
     }
 
-    return user.activeOrgId;
+    return user.organizationId;
   },
 );

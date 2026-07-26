@@ -50,7 +50,7 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -66,7 +66,9 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
 
     console.log(immunotherapy.createdById);
 
-    const result = await listAllUseCase.execute(authenticatedUser.activeOrgId);
+    const result = await listAllUseCase.execute(
+      authenticatedUser.organizationId,
+    );
 
     expect(result).toBeDefined();
     expect(result.length).toBeGreaterThan(0);
@@ -81,7 +83,7 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -94,7 +96,7 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
     });
 
     const result = await listAllUseCase.execute(
-      authenticatedUserAnotherOrg.activeOrgId,
+      authenticatedUserAnotherOrg.organizationId,
     );
 
     expect(result).toEqual([]);

@@ -80,7 +80,7 @@ describe('CreateInviteUseCase - Integration', () => {
     expect(result.email).toBe(dto.email);
     expect(result.fullName).toBe(dto.fullName);
     expect(result.role).toBe(dto.userRole);
-    expect(result.organizationId).toBe(authenticatedUser.activeOrgId);
+    expect(result.organizationId).toBe(authenticatedUser.organizationId);
   });
 
   it('should throw conflict exception when active invite already exists', async () => {

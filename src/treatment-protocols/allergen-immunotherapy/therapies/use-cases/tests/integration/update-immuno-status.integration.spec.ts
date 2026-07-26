@@ -54,7 +54,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -69,7 +69,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
     const result = await immunoUpdateStatusUseCase.execute(
       immunotherapy.id,
       { status: 'SUSPENDED' },
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
       authenticatedUser,
     );
 
@@ -83,7 +83,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -99,7 +99,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
     const result = await immunoUpdateStatusUseCase.execute(
       immunotherapy.id,
       { status: 'IN_PROGRESS' },
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
       authenticatedUser,
     );
 
@@ -113,7 +113,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -129,7 +129,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
       immunoUpdateStatusUseCase.execute(
         immunotherapy.id,
         { status: 'IN_PROGRESS' },
-        authenticatedUser.activeOrgId,
+        authenticatedUser.organizationId,
         authenticatedUser,
       ),
     ).rejects.toThrow(BadRequestException);
@@ -143,7 +143,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
       immunoUpdateStatusUseCase.execute(
         ulid(),
         { status: 'IN_PROGRESS' },
-        authenticatedUser.activeOrgId,
+        authenticatedUser.organizationId,
         authenticatedUser,
       ),
     ).rejects.toThrow(NotFoundException);

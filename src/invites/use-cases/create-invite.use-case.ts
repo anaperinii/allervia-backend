@@ -1,7 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InviteStrategyContext } from 'src/invites/strategies/invites/invite-strategy.context';
 import { CreateInviteDto } from 'src/invites/dtos/create-invite.dto';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { ulid } from 'ulid';
 import { ValidateUserEmailUseCase } from 'src/account/use-cases/validate-user-email.use-case';
 import { FindUserByIdUseCase } from 'src/account/use-cases/find-user-by-id.use-case';
