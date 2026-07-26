@@ -7,7 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { ROLES_KEY } from 'src/security/decorators/roles.decorator';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { IS_PUBLIC_KEY } from 'src/security/decorators/public.decorator';
 import { RoleValidationFactory } from 'src/security/factories/role-validation.factory';
 

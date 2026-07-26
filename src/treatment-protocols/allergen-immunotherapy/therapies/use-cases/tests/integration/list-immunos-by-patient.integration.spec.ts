@@ -50,7 +50,7 @@ describe('ListImmunotherapiesByPatientUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patients = await factories.patients.createMany(3, {
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -68,11 +68,11 @@ describe('ListImmunotherapiesByPatientUseCase - Integration', () => {
 
     const patientOneImmunos = await listAllByPatient.execute(
       patients[0].id,
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
     const patientTwoImmunos = await listAllByPatient.execute(
       patients[1].id,
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(patientOneImmunos).toHaveLength(2);

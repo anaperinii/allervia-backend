@@ -4,6 +4,7 @@ import { IUserAuthRepository } from 'src/security/interfaces/user-auth.repositor
 import { LoginDto } from 'src/security/dtos/login.dto';
 import { LoginResponseDto } from 'src/security/dtos/login-response.dto';
 import { TokenGeneratorFactory } from 'src/security/factories/token-generator.factory';
+import { AUTH_MESSAGES } from 'src/security/auth.messages';
 
 @Injectable()
 export class LoginUseCase {
@@ -17,7 +18,7 @@ export class LoginUseCase {
     const user = await this.userAuthRepository.findByEmailForAuth(dto.email);
 
     if (!user) {
-      throw new UnauthorizedException('Credenciais inválidas');
+      throw new UnauthorizedException(AUTH_MESSAGES.invalidCredentials);
     }
 
     const isValid = await this.passwordHashing.compare(
@@ -26,7 +27,7 @@ export class LoginUseCase {
     );
 
     if (!isValid) {
-      throw new UnauthorizedException('Credenciais inválidas');
+      throw new UnauthorizedException(AUTH_MESSAGES.invalidCredentials);
     }
 
     const tokenGenerator = this.tokenGeneratorFactory.create(user.type);

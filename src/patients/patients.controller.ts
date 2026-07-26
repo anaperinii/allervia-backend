@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
-import { ActiveOrganization } from 'src/security/decorators/active-organization.decorator';
+import { OrganizationId } from 'src/security/decorators/organization-id.decorator';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
-import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { UpdatePatientStatusDto } from './dtos/update-patient-status.dto';
 import { UpdatePatientDto } from './dtos/update-patient.dto';
 import { CreatePatientUseCase } from './use-cases/create-patient.use-case';
@@ -24,13 +24,13 @@ export class PatientsController {
 
   @Get()
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
-  async findAll(@ActiveOrganization() orgId: string) {
+  async findAll(@OrganizationId() orgId: string) {
     return this.listPatientsUseCase.execute(orgId);
   }
 
   @Get(':id')
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
-  async findOne(@Param('id') id: string, @ActiveOrganization() orgId: string) {
+  async findOne(@Param('id') id: string, @OrganizationId() orgId: string) {
     return this.findPatientUseCase.execute(id, orgId);
   }
 
@@ -40,7 +40,7 @@ export class PatientsController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdatePatientDto,
-    @ActiveOrganization() orgId: string,
+    @OrganizationId() orgId: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
     return this.updatePatientUseCase.execute(id, dto, currentUser);

@@ -58,7 +58,11 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
     };
 
     await expect(
-      immunoUpdateUseCase.execute(ulid(), dto, authenticatedUser.activeOrgId),
+      immunoUpdateUseCase.execute(
+        ulid(),
+        dto,
+        authenticatedUser.organizationId,
+      ),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -67,7 +71,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -87,7 +91,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
     const updatedImmunotherapy = await immunoUpdateUseCase.execute(
       immunotherapy.id,
       dto,
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(updatedImmunotherapy).toBeDefined();
@@ -104,7 +108,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -125,7 +129,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
       immunoUpdateUseCase.execute(
         immunotherapy.id,
         dto,
-        authenticatedUserAnotherOrg.activeOrgId,
+        authenticatedUserAnotherOrg.organizationId,
       ),
     ).rejects.toThrow(NotFoundException);
   });

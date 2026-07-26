@@ -1,5 +1,5 @@
 import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import {
   CreateInviteData,
   FindInvitesFilters,

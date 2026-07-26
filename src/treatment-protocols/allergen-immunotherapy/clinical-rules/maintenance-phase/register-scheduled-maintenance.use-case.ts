@@ -3,7 +3,7 @@ import { CountDosesByIntervalUseCase } from 'src/treatment-protocols/allergen-im
 import { CreateDoseUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/create-dose.use-case';
 import { CreateScheduledDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { FindImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { addDate } from 'src/utils/date.utils';
 import { MAINTENANCE_INTERVALS } from './maintenance-phase.variables';
 import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity';
@@ -60,7 +60,7 @@ export class RegisterNextScheduledMaintenanceUseCase {
     const dosesInCurrentInterval = await this.countDosesByInterval.execute(
       registeredDose.nextIntervalInDays,
       registeredDose.immunotherapyId,
-      currentUser.activeOrgId,
+      currentUser.organizationId,
     );
 
     if (dosesInCurrentInterval < 4) {

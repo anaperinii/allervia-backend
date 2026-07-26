@@ -53,7 +53,7 @@ describe('UpdatePatientUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -81,7 +81,7 @@ describe('UpdatePatientUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -120,7 +120,7 @@ describe('UpdatePatientUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });

@@ -52,14 +52,14 @@ describe('FindPatientUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const result = await findPatientUseCase.execute(
       patient.id,
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeDefined();
@@ -72,7 +72,7 @@ describe('FindPatientUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     await expect(
-      findPatientUseCase.execute(ulid(), authenticatedUser.activeOrgId),
+      findPatientUseCase.execute(ulid(), authenticatedUser.organizationId),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -83,7 +83,7 @@ describe('FindPatientUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -91,7 +91,7 @@ describe('FindPatientUseCase - Integration', () => {
     await expect(
       findPatientUseCase.execute(
         patient.id,
-        authenticatedUserAnotherOrg.activeOrgId,
+        authenticatedUserAnotherOrg.organizationId,
       ),
     ).rejects.toThrow(NotFoundException);
   });

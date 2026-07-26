@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InviteCreationStrategy } from './invite-creation-strategy';
 import { InviteStrategyFactory } from './invite-strategy.factory';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CreateInviteDto } from 'src/invites/dtos/create-invite.dto';
 
 @Injectable()

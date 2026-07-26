@@ -15,4 +15,6 @@ export abstract class IUserRepository {
   abstract findUserById(userId: string): Promise<User | null>;
 
   abstract existsByEmail(email: string): Promise<boolean>;
+
+  abstract changePassword(userId: string, passwordHash: string): Promise<void>;
 }

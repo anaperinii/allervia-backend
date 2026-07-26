@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
-import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CreateInviteDto } from './dtos/create-invite.dto';
 import { ListInvitesQueryDto } from './dtos/list-invites-query.dto';
 import { CancelInviteUseCase } from './use-cases/cancel-invite.use-case';

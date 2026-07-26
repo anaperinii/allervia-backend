@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { PrismaModule } from 'src/infra/database/prisma.module';
+import { EmailModule } from 'src/infra/email/email.module';
 import { AuthController } from './auth.controller';
 import { LoginUseCase } from './use-cases/login.use-case';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -16,10 +17,14 @@ import { RoleValidationFactory } from './factories/role-validation.factory';
 import { IUserAuthRepository } from './interfaces/user-auth.repository.interface';
 import { PrismaUserAuthRepository } from './prisma-user-auth.repository';
 import { TokenGeneratorFactory } from './factories/token-generator.factory';
+import { PasswordResetRequestUseCase } from './use-cases/password-reset-request.use-case';
+import { PasswordResetVerifyUseCase } from './use-cases/password-reset-verify.use-case';
+import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.use-case';
 
 @Module({
   imports: [
     PrismaModule,
+    EmailModule,
     PassportModule,
     ConfigModule,
     JwtModule.registerAsync({
@@ -35,6 +40,9 @@ import { TokenGeneratorFactory } from './factories/token-generator.factory';
   ],
   providers: [
     LoginUseCase,
+    PasswordResetRequestUseCase,
+    PasswordResetVerifyUseCase,
+    PasswordResetConfirmUseCase,
     {
       provide: IPasswordHashingService,
       useClass: BcryptPasswordHashingService,
