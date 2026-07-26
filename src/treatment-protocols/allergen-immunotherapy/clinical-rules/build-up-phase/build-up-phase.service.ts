@@ -3,7 +3,7 @@ import { IBuildUpPhase } from './build-up-phase.interface';
 import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity';
 import { Immunotherapy } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity';
 import { RegisterStartingDoseUseCase } from './register-starting-dose.use-case';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { RegisterNextScheduledBuildUpUseCase } from './register-scheduled-build-up.use-case';
 import { Prisma } from '@prisma/client';
 

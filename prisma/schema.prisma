@@ -30,6 +30,11 @@ enum Profession {
   RECEPTIONIST
 }
 
+enum VerificationPurpose {
+  PASSWORD_RESET
+  EMAIL_CHANGE
+}
+
 enum TherapyStatus {
   IN_PROGRESS
   SUSPENDED
@@ -154,6 +159,8 @@ model User {
   isActive   Boolean @default(true)
   isArchived Boolean @default(false)
 
+  tokenVersion Int @default(0)
+
   createdAt   DateTime @default(now())
   createdById String?
   createdBy   User?    @relation("UserCreatedBy", fields: [createdById], references: [id])
@@ -178,11 +185,28 @@ model User {
   dosesArchived  Dose[]               @relation("DoseArchivedBy")
   invitesCreated InternalUserInvite[] @relation("InviteCreatedBy")
 
-  auditLogs    AuditLog[]
-  usersCreated User[]     @relation("UserCreatedBy")
-  usersUpdated User[]     @relation("UserUpdatedBy")
+  auditLogs          AuditLog[]
+  usersCreated       User[]              @relation("UserCreatedBy")
+  usersUpdated       User[]              @relation("UserUpdatedBy")
+  verificationTokens VerificationToken[] @relation("UserVerificationToken")
 
   @@index([type, isActive, isArchived])
+}
+
+model VerificationToken {
+  id        String              @id @default(ulid())
+  userId    String
+  user      User                @relation("UserVerificationToken", fields: [userId], references: [id])
+  purpose   VerificationPurpose
+  tokenHash String?
+  newEmail  String?
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+
+  @@index([userId, purpose])
 }
 
 model Immunotherapy {

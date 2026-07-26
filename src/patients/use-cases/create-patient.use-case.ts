@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PatientRepository } from 'src/patients/patient.repository';
 import { CreatePatientDto } from 'src/patients/dtos/create-patient.dto';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class CreatePatientUseCase {
         birthDate: dto.birthDate,
         weightInKg: dto.weightInKg,
         phoneNumber: dto.phoneNumber,
-        organizationId: currentUser.activeOrgId,
+        organizationId: currentUser.organizationId,
         createdById: currentUser.id,
         updatedById: currentUser.id,
         isActive: true,

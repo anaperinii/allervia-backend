@@ -52,7 +52,7 @@ describe('FindDoseUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -78,7 +78,7 @@ describe('FindDoseUseCase - Integration', () => {
 
     const result = await findDoseUseCase.execute(
       dose.id,
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeDefined();
@@ -91,7 +91,7 @@ describe('FindDoseUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     await expect(
-      findDoseUseCase.execute(ulid(), authenticatedUser.activeOrgId),
+      findDoseUseCase.execute(ulid(), authenticatedUser.organizationId),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -103,7 +103,7 @@ describe('FindDoseUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -126,7 +126,10 @@ describe('FindDoseUseCase - Integration', () => {
     });
 
     await expect(
-      findDoseUseCase.execute(dose.id, authenticatedUserAnotherOrg.activeOrgId),
+      findDoseUseCase.execute(
+        dose.id,
+        authenticatedUserAnotherOrg.organizationId,
+      ),
     ).rejects.toThrow(NotFoundException);
   });
 });

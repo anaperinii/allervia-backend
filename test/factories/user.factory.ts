@@ -1,7 +1,7 @@
 import { Prisma, User } from '@prisma/client';
 import { BaseFactory } from './base.factory';
 import { faker } from '@faker-js/faker';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
 export class UserFactory extends BaseFactory<User> {
   // Fornece campos sem default e não opcionais no schema (User = credencial/status)
@@ -51,7 +51,7 @@ export class UserFactory extends BaseFactory<User> {
       id: user.id,
       email: user.email,
       type: 'PROFESSIONAL',
-      activeOrgId: organization.id,
+      organizationId: organization.id,
       professionalId: professional.id,
       roles,
     };

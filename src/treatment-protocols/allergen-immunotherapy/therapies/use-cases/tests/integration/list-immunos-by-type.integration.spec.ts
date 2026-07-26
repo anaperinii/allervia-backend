@@ -50,7 +50,7 @@ describe('ListImmunotherapiesByTypeUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patients = await factories.patients.createMany(4, {
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -68,11 +68,11 @@ describe('ListImmunotherapiesByTypeUseCase - Integration', () => {
 
     const resultAcaros = await listAllByType.execute(
       'Ácaros',
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
     const resultPolen = await listAllByType.execute(
       'Pólen',
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(resultAcaros).toHaveLength(2);

@@ -1,13 +1,24 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { Roles } from 'src/security/decorators/roles.decorator';
-import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-case';
 import { UpdateUserStatusUseCase } from './use-cases/update-user-status.use-case';
 import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
 import { UpdateUserBackofficeDto } from './dtos/update-user-backoffice.dto';
 import { UpdateUserPersonalDto } from './dtos/update-user-personal.dto';
 import { UpdateUserUseCase } from './use-cases/update-user.use-case';
+import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
+import { ChangePasswordDto } from './dtos/change-password.dto';
 
 @Controller('account')
 export class AccountController {
@@ -15,7 +26,19 @@ export class AccountController {
     private findUserByIdUseCase: FindUserByIdUseCase,
     private updateUserStatusUseCase: UpdateUserStatusUseCase,
     private updateUserPersonalUseCase: UpdateUserUseCase,
+    private changePasswordUseCase: ChangePasswordUseCase,
   ) {}
+
+  @Post('me/password')
+  @HttpCode(HttpStatus.OK)
+  @Roles('ADMINISTRATOR', 'PHYSICIAN', 'NURSE', 'RECEPTIONIST')
+  async changePassword(
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.changePasswordUseCase.execute(currentUser.id, dto);
+    return { message: 'Senha alterada com sucesso.' };
+  }
 
   @Get('me')
   @Roles('PHYSICIAN', 'NURSE', 'NURSING_TECHNICIAN', 'ADMIN', 'SYSTEM_ADMIN')

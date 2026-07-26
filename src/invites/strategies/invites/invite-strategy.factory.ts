@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { InviteCreationStrategy } from './invite-creation-strategy';
 import { AdminInviteStrategy } from './admin-invite.strategy';
 

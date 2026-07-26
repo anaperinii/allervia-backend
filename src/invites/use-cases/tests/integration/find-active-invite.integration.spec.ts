@@ -50,7 +50,7 @@ describe('FindActiveInviteUseCase - Integration', () => {
 
     const invite = await factories.internalUserInvite.create({
       email: 'test@example.com',
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       isActive: true,
       expiresAt: new Date('2026-01-01'),
       createdById: authenticatedUser.id,
@@ -58,7 +58,7 @@ describe('FindActiveInviteUseCase - Integration', () => {
 
     const result = await findActiveInviteUseCase.execute(
       invite.email,
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeDefined();
@@ -71,7 +71,7 @@ describe('FindActiveInviteUseCase - Integration', () => {
 
     const result = await findActiveInviteUseCase.execute(
       'nonexistent@example.com',
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeNull();
@@ -82,7 +82,7 @@ describe('FindActiveInviteUseCase - Integration', () => {
 
     await factories.internalUserInvite.create({
       email: 'test@example.com',
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       isActive: false,
       expiresAt: new Date('2026-01-01'),
       createdById: authenticatedUser.id,
@@ -90,7 +90,7 @@ describe('FindActiveInviteUseCase - Integration', () => {
 
     const result = await findActiveInviteUseCase.execute(
       'test@example.com',
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeNull();

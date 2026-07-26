@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CreateInviteDto } from 'src/invites/dtos/create-invite.dto';
 import { InviteCreationStrategy } from './invite-creation-strategy';
 
@@ -9,6 +9,6 @@ export class AdminInviteStrategy implements InviteCreationStrategy {
     dtoInvite: CreateInviteDto,
     currentUser: AuthenticatedUserPayload,
   ): Promise<string> {
-    return Promise.resolve(currentUser.activeOrgId);
+    return Promise.resolve(currentUser.organizationId);
   }
 }

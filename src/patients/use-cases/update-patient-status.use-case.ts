@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PatientRepository } from 'src/patients/patient.repository';
 import { PATIENT_MESSAGES } from 'src/patients/patient.messages';
 import { UpdatePatientStatusDto } from 'src/patients/dtos/update-patient-status.dto';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
 @Injectable()
 export class UpdatePatientStatusUseCase {
@@ -15,7 +15,7 @@ export class UpdatePatientStatusUseCase {
   ) {
     const patient = await this.patientRepository.findById(
       id,
-      currentUser.activeOrgId,
+      currentUser.organizationId,
     );
 
     if (!patient) {

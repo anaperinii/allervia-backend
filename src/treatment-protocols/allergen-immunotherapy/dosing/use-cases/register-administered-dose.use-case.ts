@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IDoseRepository } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface';
 import { UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { UpdateDoseDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose.dto';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { Dose } from '@prisma/client';
 import { IBuildUpPhase } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface';
 import { IMaintenancePhase } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.interface';
@@ -27,12 +27,12 @@ export class RegisterAdministeredDoseUseCase {
   ): Promise<Dose> {
     const dose = await this.findDoseUseCase.execute(
       id,
-      currentUser.activeOrgId,
+      currentUser.organizationId,
     );
 
     const immunotherapy = (await this.findImmunotherapyUseCase.execute(
       dose.immunotherapyId,
-      currentUser.activeOrgId,
+      currentUser.organizationId,
     )) as Immunotherapy;
 
     // Preparar dados de atualização

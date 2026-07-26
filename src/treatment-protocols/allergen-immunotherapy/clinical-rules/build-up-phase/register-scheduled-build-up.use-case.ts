@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateDoseUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/create-dose.use-case';
 import { CreateScheduledDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { Dose } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/entities/dose.entity';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import {
   BUILD_UP_INTERVAL,
   NextDoseCalculation,
@@ -80,7 +80,7 @@ export class RegisterNextScheduledBuildUpUseCase {
       await this.countDoseByConcentration.execute(
         currentConcentration,
         registeredDose.immunotherapyId,
-        currentUser.activeOrgId,
+        currentUser.organizationId,
       );
 
     if (dosesInCurrentConcentration < 4) {

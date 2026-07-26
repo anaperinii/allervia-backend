@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { INVITE_MESSAGES } from 'src/invites/invite.messages';
 import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
 

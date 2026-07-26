@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IUserInviteRepository } from './domain/interfaces/user-invite.repository.interface';
 import { UserInvite } from './domain/entities/user-invite.entity';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import {
   FindInvitesFilters,
   UpdateInviteData,
@@ -47,7 +47,7 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
     currentUser: AuthenticatedUserPayload,
   ): Promise<UserInvite | null> {
     const invite = await this.prismaService.internalUserInvite.findUnique({
-      where: { id, organizationId: currentUser.activeOrgId },
+      where: { id, organizationId: currentUser.organizationId },
     });
 
     return invite ? new UserInvite(invite) : null;

@@ -10,7 +10,7 @@ import {
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/security/decorators/public.decorator';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
-import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CreateProfessionalRoleDto } from './dtos/create-role.dto';
 import { GrantRoleUseCase } from './use-cases/grant-role.use-case';
 import { RevokeRoleUseCase } from './use-cases/revoke-role.use-case';

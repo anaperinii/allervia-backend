@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { FindInviteByIdUseCase } from './find-invite-by-id.use-case';
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
 import { InviteResponseDto } from 'src/invites/dtos/invite-response.dto';

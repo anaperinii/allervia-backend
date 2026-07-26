@@ -60,13 +60,13 @@ describe('ListInvitesUseCase - Integration', () => {
     const authenticatedUser = await factories.users.createAuthenticatedAdmin();
 
     const invite1 = await factories.internalUserInvite.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       expiresAt: new Date('2026-01-01'),
       createdById: authenticatedUser.id,
     });
 
     const invite2 = await factories.internalUserInvite.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       expiresAt: new Date('2026-01-01'),
       createdById: authenticatedUser.id,
     });

@@ -3,7 +3,7 @@ import {
   ProfessionalRoleValidationStrategy,
   RoleValidationStrategy,
 } from 'src/security/strategies/role-validation.strategy';
-import { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
 @Injectable()
 export class RoleValidationFactory {

@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ActiveOrganization } from 'src/security/decorators/active-organization.decorator';
+import { OrganizationId } from 'src/security/decorators/organization-id.decorator';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
-import type { AuthenticatedUserPayload } from 'src/security/types/auth.types';
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { Roles } from 'src/security/decorators/roles.decorator';
 import { CreateDoseUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/create-dose.use-case';
 import { ListDosesByTherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/list-doses-by-therapy.use-case';
@@ -49,7 +49,7 @@ export class ImmunotherapiesController {
   @Get('list')
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
   async findAll(
-    @ActiveOrganization() orgId: string,
+    @OrganizationId() orgId: string,
   ): Promise<ImmunotherapyResponseDto[]> {
     return this.listAllImmunotherapies.execute(orgId);
   }
@@ -58,7 +58,7 @@ export class ImmunotherapiesController {
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
   async findAllForPatient(
     @Param('patientId') patientId: string,
-    @ActiveOrganization() orgId: string,
+    @OrganizationId() orgId: string,
   ): Promise<ImmunotherapyResponseDto[]> {
     return this.listImmunotherapiesForPatientUseCase.execute(patientId, orgId);
   }
@@ -67,7 +67,7 @@ export class ImmunotherapiesController {
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
   async findAllForType(
     @Param('type') type: string,
-    @ActiveOrganization() orgId: string,
+    @OrganizationId() orgId: string,
   ): Promise<ImmunotherapyResponseDto[]> {
     return this.listImmunotherapiesByTypeUseCase.execute(type, orgId);
   }
@@ -76,7 +76,7 @@ export class ImmunotherapiesController {
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
   async findOneImmunotherapy(
     @Param('id') immunoId: string,
-    @ActiveOrganization() orgId: string,
+    @OrganizationId() orgId: string,
   ): Promise<ImmunotherapyResponseDto> {
     return this.findImmunotherapyUseCase.execute(immunoId, orgId);
   }
@@ -87,7 +87,7 @@ export class ImmunotherapiesController {
   async updateImmunotherapy(
     @Param('id') immunoId: string,
     @Body() dto: UpdateImmunotherapyDto,
-    @ActiveOrganization() orgId: string,
+    @OrganizationId() orgId: string,
   ): Promise<ImmunotherapyResponseDto> {
     return this.updateImmunotherapyUseCase.execute(immunoId, dto, orgId);
   }
@@ -98,7 +98,7 @@ export class ImmunotherapiesController {
   async updateImmunotherapyStatus(
     @Param('id') immunoId: string,
     @Body() dto: UpdateImmunotherapyStatusDto,
-    @ActiveOrganization() orgId: string,
+    @OrganizationId() orgId: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto> {
     return this.updateImmunotherapyStatusUseCase.execute(
@@ -113,7 +113,7 @@ export class ImmunotherapiesController {
   @Roles('PHYSICIAN', 'NURSE', 'ADMIN', 'NURSING_TECHNICIAN')
   async findAllDosesForImmunotherapy(
     @Param('id') immunoId: string,
-    @ActiveOrganization() orgId: string,
+    @OrganizationId() orgId: string,
   ) {
     return this.listDosesByTherapyUseCase.execute(immunoId, orgId);
   }

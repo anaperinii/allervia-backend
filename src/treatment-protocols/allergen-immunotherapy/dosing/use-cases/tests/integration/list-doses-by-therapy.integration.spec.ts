@@ -50,7 +50,7 @@ describe('ListDosesByImmunotherapy - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -76,7 +76,7 @@ describe('ListDosesByImmunotherapy - Integration', () => {
 
     const result = await listDosesByTherapyUseCase.execute(
       immunotherapy.id,
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toBeDefined();
@@ -91,7 +91,7 @@ describe('ListDosesByImmunotherapy - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -106,7 +106,7 @@ describe('ListDosesByImmunotherapy - Integration', () => {
 
     const result = await listDosesByTherapyUseCase.execute(
       immunotherapy.id,
-      authenticatedUser.activeOrgId,
+      authenticatedUser.organizationId,
     );
 
     expect(result).toEqual([]);
@@ -120,7 +120,7 @@ describe('ListDosesByImmunotherapy - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     const patient = await factories.patients.create({
-      organizationId: authenticatedUser.activeOrgId,
+      organizationId: authenticatedUser.organizationId,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -144,7 +144,7 @@ describe('ListDosesByImmunotherapy - Integration', () => {
 
     const result = await listDosesByTherapyUseCase.execute(
       immunotherapy.id,
-      authenticatedUserAnotherOrg.activeOrgId,
+      authenticatedUserAnotherOrg.organizationId,
     );
 
     expect(result).toEqual([]);
