@@ -1,12 +1,4 @@
-export interface TokenPayload {
-  sub: string;
-  email: string;
-  type: string;
-  organizationId?: string;
-  activeOrgId?: string;
-  roles?: string[];
-  memberships?: Array<{ organizationId: string; organizationName: string }>;
-}
+import { TokenPayload } from 'src/security/types/jwt.types';
 
 export abstract class IJwtTokenService {
   abstract generateToken(payload: TokenPayload): Promise<string>;

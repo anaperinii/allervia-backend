@@ -32,7 +32,9 @@ export class PrismaUserRepository extends IUserRepository {
   }
 
   async findUserByEmail(email: string) {
-    return this.prismaService.user.findFirst({ where: { email } });
+    return this.prismaService.user.findFirst({
+      where: { email, isActive: true, isArchived: false },
+    });
   }
 
   async findUserById(id: string) {
@@ -43,5 +45,12 @@ export class PrismaUserRepository extends IUserRepository {
     const count = await this.prismaService.user.count({ where: { email } });
 
     return count > 0;
+  }
+
+  async changePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.prismaService.user.update({
+      where: { id: userId },
+      data: { password: passwordHash, tokenVersion: { increment: 1 } },
+    });
   }
 }

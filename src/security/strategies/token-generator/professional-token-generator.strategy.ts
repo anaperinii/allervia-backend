@@ -2,7 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { IJwtTokenService } from 'src/security/interfaces/jwt-token.service.interface';
 import { ITokenGenerator } from 'src/security/interfaces/token-generator.interface';
 import { LoginResponseDto } from 'src/security/dtos/login-response.dto';
-import { UserForAuth } from 'src/security/interfaces/user-auth.repository.interface';
+import { UserForAuth } from 'src/security/types/user-auth.repository.types';
+import { AUTH_MESSAGES } from 'src/security/auth.messages';
 
 @Injectable()
 export class ProfessionalTokenGenerator implements ITokenGenerator {
@@ -10,7 +11,9 @@ export class ProfessionalTokenGenerator implements ITokenGenerator {
 
   async generate(user: UserForAuth): Promise<LoginResponseDto> {
     if (!user.organizationId) {
-      throw new BadRequestException('Profissional sem organização vinculada');
+      throw new BadRequestException(
+        AUTH_MESSAGES.professionalWithoutOrganization,
+      );
     }
 
     const payload = {
@@ -20,6 +23,7 @@ export class ProfessionalTokenGenerator implements ITokenGenerator {
       activeOrgId: user.organizationId,
       professionalId: user.professionalId,
       roles: user.roles,
+      tokenVersion: user.tokenVersion,
     };
 
     const access_token = await this.jwtTokenService.generateToken(payload);
