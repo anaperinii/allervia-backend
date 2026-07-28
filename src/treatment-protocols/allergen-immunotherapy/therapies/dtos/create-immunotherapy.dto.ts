@@ -48,9 +48,4 @@ export class CreateImmunotherapyDto {
   @IsNotEmpty()
   @Min(0.01, { message: 'Volume meta deve ser maior que zero' })
   targetVolume: number;
-
-  @ApiProperty({ description: 'ID Médico Responsável' })
-  @IsNotEmpty()
-  @IsString()
-  responsiblePhysicianId: string;
 }

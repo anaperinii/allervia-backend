@@ -9,7 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
-import { Roles } from 'src/security/decorators/roles.decorator';
+import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-case';
 import { UpdateUserStatusUseCase } from './use-cases/update-user-status.use-case';
@@ -31,7 +31,6 @@ export class AccountController {
 
   @Post('me/password')
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMINISTRATOR', 'PHYSICIAN', 'NURSE', 'RECEPTIONIST')
   async changePassword(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Body() dto: ChangePasswordDto,
@@ -41,13 +40,12 @@ export class AccountController {
   }
 
   @Get('me')
-  @Roles('PHYSICIAN', 'NURSE', 'NURSING_TECHNICIAN', 'ADMIN', 'SYSTEM_ADMIN')
   async getPersonalUser(@CurrentUser() currentUser: AuthenticatedUserPayload) {
     return this.findUserByIdUseCase.execute(currentUser.id, currentUser);
   }
 
   @Patch('update/stats/:id')
-  @Roles('ADMIN', 'SYSTEM_ADMIN')
+  @CheckPolicies({ action: 'update', subject: 'User' })
   async updateUserStatus(
     @Param('id') id: string,
     @Body() dto: UpdateUserStatusDto,
@@ -57,7 +55,6 @@ export class AccountController {
   }
 
   @Patch('update/me')
-  @Roles('PHYSICIAN', 'NURSE', 'NURSING_TECHNICIAN')
   async updateUserPersonal(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Body() updateUserDto: UpdateUserPersonalDto,
@@ -70,7 +67,7 @@ export class AccountController {
   }
 
   @Patch('update/:id')
-  @Roles('ADMIN', 'SYSTEM_ADMIN')
+  @CheckPolicies({ action: 'update', subject: 'User' })
   async updateUserAsAdmin(
     @Param('id') userId: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,

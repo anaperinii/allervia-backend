@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { UpdatePatientStatusUseCase } from 'src/patients/use-cases/update-patient-status.use-case';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
@@ -20,6 +21,7 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         UpdatePatientStatusUseCase,
         {
           provide: PrismaService,
@@ -54,6 +56,7 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       isActive: false,
@@ -81,6 +84,7 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       isActive: true,
@@ -121,6 +125,7 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });

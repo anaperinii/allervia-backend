@@ -1,23 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { accessibleBy } from '@casl/prisma';
 import { IDoseRepository } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/dose.repository.interface';
 import { UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { UpdateDoseDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose.dto';
+import { DOSE_MESSAGES } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dose.messages';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { Dose } from '@prisma/client';
 import { IBuildUpPhase } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface';
 import { IMaintenancePhase } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.interface';
-import { FindDoseUseCase } from './find-dose.use-case';
 import { FindImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case';
 import { Immunotherapy } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/entities/immunotherapy.entity';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 
 @Injectable()
 export class RegisterAdministeredDoseUseCase {
   constructor(
-    private readonly findDoseUseCase: FindDoseUseCase,
     private readonly buildUpProtocol: IBuildUpPhase,
     private readonly maintenanceProtocol: IMaintenancePhase,
     private readonly doseRepository: IDoseRepository,
     private readonly findImmunotherapyUseCase: FindImmunotherapyUseCase,
+    private readonly abilityFactory: AbilityFactory,
   ) {}
 
   async execute(
@@ -25,10 +27,14 @@ export class RegisterAdministeredDoseUseCase {
     dto: UpdateDoseDto,
     currentUser: AuthenticatedUserPayload,
   ): Promise<Dose> {
-    const dose = await this.findDoseUseCase.execute(
-      id,
-      currentUser.organizationId,
-    );
+    const ability = this.abilityFactory.createForUser(currentUser);
+    const doseWhere = accessibleBy(ability, 'update').ofType('Dose');
+
+    const dose = await this.doseRepository.findByIdAccessible(id, doseWhere);
+
+    if (!dose) {
+      throw new NotFoundException(DOSE_MESSAGES.notFound(id));
+    }
 
     const immunotherapy = (await this.findImmunotherapyUseCase.execute(
       dose.immunotherapyId,

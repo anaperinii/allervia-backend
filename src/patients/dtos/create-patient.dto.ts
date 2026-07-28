@@ -33,4 +33,9 @@ export class CreatePatientDto {
     message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.',
   })
   phoneNumber: string;
+
+  @ApiProperty({ description: 'ID do Médico Responsável' })
+  @IsString()
+  @IsNotEmpty()
+  responsiblePhysicianId: string;
 }

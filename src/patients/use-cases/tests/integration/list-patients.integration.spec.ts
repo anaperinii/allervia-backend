@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { ListPatientsUseCase } from 'src/patients/use-cases/list-patients.use-case';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
@@ -17,6 +18,7 @@ describe('ListPatientsUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         ListPatientsUseCase,
         {
           provide: PrismaService,
@@ -51,19 +53,19 @@ describe('ListPatientsUseCase - Integration', () => {
 
     const patient1 = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const patient2 = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
-    const result = await listPatientsUseCase.execute(
-      authenticatedUser.organizationId,
-    );
+    const result = await listPatientsUseCase.execute(authenticatedUser);
 
     expect(result).toBeDefined();
     expect(result.length).toBe(2);
@@ -75,9 +77,7 @@ describe('ListPatientsUseCase - Integration', () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
 
-    const result = await listPatientsUseCase.execute(
-      authenticatedUser.organizationId,
-    );
+    const result = await listPatientsUseCase.execute(authenticatedUser);
 
     expect(result).toBeDefined();
     expect(result.length).toBe(0);
@@ -91,19 +91,19 @@ describe('ListPatientsUseCase - Integration', () => {
 
     await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     await factories.patients.create({
       organizationId: authenticatedUserAnotherOrg.organizationId,
+      responsiblePhysicianId: authenticatedUserAnotherOrg.professionalId!,
       createdById: authenticatedUserAnotherOrg.id,
       updatedById: authenticatedUserAnotherOrg.id,
     });
 
-    const result = await listPatientsUseCase.execute(
-      authenticatedUser.organizationId,
-    );
+    const result = await listPatientsUseCase.execute(authenticatedUser);
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);

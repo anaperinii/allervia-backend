@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './security/guards/jwt-auth.guard';
 import { PatientsModule } from './patients/patients.module';
-import { RolesGuard } from './security/guards/roles.guard';
+import { PoliciesGuard } from './security/guards/policies.guard';
 import { OrganizationModule } from './organization/organization.module';
 import { InvitesModule } from './invites/invites.module';
 import { AccountModule } from './account/account.module';
@@ -34,7 +34,7 @@ import { PermissionsModule } from './security/permissions/permissions.module';
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard,
+      useClass: PoliciesGuard,
     },
   ],
 })

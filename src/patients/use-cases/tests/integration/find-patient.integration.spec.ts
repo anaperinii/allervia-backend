@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { FindPatientUseCase } from 'src/patients/use-cases/find-patient.use-case';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
@@ -19,6 +20,7 @@ describe('FindPatientUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         FindPatientUseCase,
         {
           provide: PrismaService,
@@ -53,13 +55,14 @@ describe('FindPatientUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const result = await findPatientUseCase.execute(
       patient.id,
-      authenticatedUser.organizationId,
+      authenticatedUser,
     );
 
     expect(result).toBeDefined();
@@ -72,7 +75,7 @@ describe('FindPatientUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
 
     await expect(
-      findPatientUseCase.execute(ulid(), authenticatedUser.organizationId),
+      findPatientUseCase.execute(ulid(), authenticatedUser),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -84,15 +87,13 @@ describe('FindPatientUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     await expect(
-      findPatientUseCase.execute(
-        patient.id,
-        authenticatedUserAnotherOrg.organizationId,
-      ),
+      findPatientUseCase.execute(patient.id, authenticatedUserAnotherOrg),
     ).rejects.toThrow(NotFoundException);
   });
 });

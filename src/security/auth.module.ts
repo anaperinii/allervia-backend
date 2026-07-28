@@ -12,8 +12,6 @@ import { IPasswordHashingService } from './interfaces/password-hashing.service.i
 import { BcryptPasswordHashingService } from './bcrypt-password-hashing.service';
 import { IJwtTokenService } from './interfaces/jwt-token.service.interface';
 import { NestJwtTokenService } from './jwt-token.service';
-import { RolesGuard } from './guards/roles.guard';
-import { RoleValidationFactory } from './factories/role-validation.factory';
 import { IUserAuthRepository } from './interfaces/user-auth.repository.interface';
 import { PrismaUserAuthRepository } from './prisma-user-auth.repository';
 import { TokenGeneratorFactory } from './factories/token-generator.factory';
@@ -58,16 +56,8 @@ import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.
     TokenGeneratorFactory,
     JwtStrategy,
     JwtAuthGuard,
-    RolesGuard,
-    RoleValidationFactory,
   ],
   controllers: [AuthController],
-  exports: [
-    IJwtTokenService,
-    IPasswordHashingService,
-    JwtAuthGuard,
-    RolesGuard,
-    RoleValidationFactory,
-  ],
+  exports: [IJwtTokenService, IPasswordHashingService, JwtAuthGuard],
 })
 export class AuthModule {}

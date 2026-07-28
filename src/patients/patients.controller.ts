@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 import { OrganizationId } from 'src/security/decorators/organization-id.decorator';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
-import { Roles } from 'src/security/decorators/roles.decorator';
+import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { UpdatePatientStatusDto } from './dtos/update-patient-status.dto';
 import { UpdatePatientDto } from './dtos/update-patient.dto';
@@ -23,20 +23,23 @@ export class PatientsController {
   ) {}
 
   @Get()
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
-  async findAll(@OrganizationId() orgId: string) {
-    return this.listPatientsUseCase.execute(orgId);
+  @CheckPolicies({ action: 'read', subject: 'Patient' })
+  async findAll(@CurrentUser() currentUser: AuthenticatedUserPayload) {
+    return this.listPatientsUseCase.execute(currentUser);
   }
 
   @Get(':id')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
-  async findOne(@Param('id') id: string, @OrganizationId() orgId: string) {
-    return this.findPatientUseCase.execute(id, orgId);
+  @CheckPolicies({ action: 'read', subject: 'Patient' })
+  async findOne(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ) {
+    return this.findPatientUseCase.execute(id, currentUser);
   }
 
   @ApiBody({ type: UpdatePatientDto })
   @Patch('update/:id')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
+  @CheckPolicies({ action: 'update', subject: 'Patient' })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdatePatientDto,
@@ -48,7 +51,7 @@ export class PatientsController {
 
   @ApiBody({ type: UpdatePatientStatusDto })
   @Patch('update/status/:id')
-  @Roles('ADMIN')
+  @CheckPolicies({ action: 'archive', subject: 'Patient' })
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdatePatientStatusDto,

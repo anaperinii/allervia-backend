@@ -10,11 +10,14 @@ export abstract class IDoseRepository {
 
   abstract update(doseId: string, dose: Partial<UpdateDoseData>): Promise<Dose>;
 
-  abstract findById(id: string, orgId: string): Promise<Dose | null>;
+  abstract findByIdAccessible(
+    id: string,
+    where: Prisma.DoseWhereInput,
+  ): Promise<Dose | null>;
 
-  abstract findByImmunotherapy(
+  abstract findByImmunotherapyAccessible(
     immunotherapyId: string,
-    orgId: string,
+    where: Prisma.DoseWhereInput,
   ): Promise<Dose[]>;
 
   abstract exists(id: string): Promise<boolean>;

@@ -9,8 +9,7 @@ import {
 import { Prisma } from '@prisma/client';
 
 const IMMUNO_INCLUDE = {
-  patient: true,
-  responsiblePhysician: true,
+  patient: { include: { responsiblePhysician: true } },
   createdBy: { select: { id: true } },
   updatedBy: { select: { id: true } },
 };
@@ -36,7 +35,6 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
         targetConcentration: immunotherapy.targetConcentration,
         targetVolume: immunotherapy.targetVolume,
         patientId: immunotherapy.patientId,
-        responsiblePhysicianId: immunotherapy.responsiblePhysicianId,
         isArchived: immunotherapy.isArchived,
         status: immunotherapy.status,
         createdById: immunotherapy.createdById,
@@ -64,7 +62,6 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
           : undefined,
         targetConcentration: immunotherapy.targetConcentration,
         targetVolume: immunotherapy.targetVolume,
-        responsiblePhysicianId: immunotherapy.responsiblePhysicianId,
         isArchived: immunotherapy.isArchived,
         status: immunotherapy.status,
         updatedById: immunotherapy.updatedById,
@@ -76,9 +73,11 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     return new Immunotherapy(updated);
   }
 
-  async findAll(organizationId: string): Promise<Immunotherapy[]> {
+  async findAllAccessible(
+    where: Prisma.ImmunotherapyWhereInput,
+  ): Promise<Immunotherapy[]> {
     const immunotherapies = await this.prisma.immunotherapy.findMany({
-      where: { patient: { organizationId } },
+      where,
       include: IMMUNO_INCLUDE,
     });
 
@@ -96,12 +95,24 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     return therapy ? new Immunotherapy(therapy) : null;
   }
 
-  async findByPatient(
+  async findByIdAccessible(
+    id: string,
+    where: Prisma.ImmunotherapyWhereInput,
+  ): Promise<Immunotherapy | null> {
+    const therapy = await this.prisma.immunotherapy.findFirst({
+      where: { AND: [{ id }, where] },
+      include: IMMUNO_INCLUDE,
+    });
+
+    return therapy ? new Immunotherapy(therapy) : null;
+  }
+
+  async findByPatientAccessible(
     patientId: string,
-    organizationId: string,
+    where: Prisma.ImmunotherapyWhereInput,
   ): Promise<Immunotherapy[]> {
     const therapies = await this.prisma.immunotherapy.findMany({
-      where: { patientId, patient: { organizationId } },
+      where: { AND: [{ patientId }, where] },
       orderBy: { createdAt: 'desc' },
       include: IMMUNO_INCLUDE,
     });
@@ -109,12 +120,12 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     return therapies.map((t) => new Immunotherapy(t));
   }
 
-  async findByType(
+  async findByTypeAccessible(
     type: string,
-    organizationId: string,
+    where: Prisma.ImmunotherapyWhereInput,
   ): Promise<Immunotherapy[]> {
     const therapies = await this.prisma.immunotherapy.findMany({
-      where: { immunoType: type, patient: { organizationId } },
+      where: { AND: [{ immunoType: type }, where] },
       include: IMMUNO_INCLUDE,
     });
 
