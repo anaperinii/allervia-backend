@@ -1,14 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { accessibleBy } from '@casl/prisma';
 import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
-import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
 import { ImmunotherapyResponseDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto';
 import { IMMUNOTHERAPY_MESSAGES } from 'src/treatment-protocols/allergen-immunotherapy/therapies/immunotherapy.messages';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
 @Injectable()
-export class UpdateImmunotherapyUseCase {
+export class ReadImmunotherapyUseCase {
   constructor(
     private readonly immunotherapyRepository: IImmunotherapyRepository,
     private readonly abilityFactory: AbilityFactory,
@@ -16,11 +15,10 @@ export class UpdateImmunotherapyUseCase {
 
   async execute(
     id: string,
-    dto: UpdateImmunotherapyDto,
     currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto> {
     const ability = this.abilityFactory.createForUser(currentUser);
-    const where = accessibleBy(ability, 'update').ofType('Immunotherapy');
+    const where = accessibleBy(ability, 'read').ofType('Immunotherapy');
 
     const immunotherapy = await this.immunotherapyRepository.findByIdAccessible(
       id,
@@ -31,6 +29,6 @@ export class UpdateImmunotherapyUseCase {
       throw new NotFoundException(IMMUNOTHERAPY_MESSAGES.notFound(id));
     }
 
-    return this.immunotherapyRepository.update(immunotherapy.id, dto);
+    return immunotherapy;
   }
 }

@@ -20,6 +20,7 @@ export class CreatePatientUseCase {
         weightInKg: dto.weightInKg,
         phoneNumber: dto.phoneNumber,
         organizationId: currentUser.organizationId,
+        responsiblePhysicianId: dto.responsiblePhysicianId,
         createdById: currentUser.id,
         updatedById: currentUser.id,
         isActive: true,

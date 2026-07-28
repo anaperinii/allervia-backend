@@ -32,6 +32,7 @@ export class CreateImmunotherapyUseCase {
           birthDate: dto.patient.birthDate,
           weightInKg: dto.patient.weightInKg,
           phoneNumber: dto.patient.phoneNumber,
+          responsiblePhysicianId: dto.patient.responsiblePhysicianId,
         },
         currentUser,
         tx,
@@ -45,7 +46,6 @@ export class CreateImmunotherapyUseCase {
         targetConcentration: dto.targetConcentration,
         targetVolume: dto.targetVolume,
         patientId: patientDto.id,
-        responsiblePhysicianId: dto.responsiblePhysicianId,
         createdById: currentUser.id,
         updatedById: currentUser.id,
       });

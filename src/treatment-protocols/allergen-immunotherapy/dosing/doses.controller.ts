@@ -1,10 +1,9 @@
 import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
-import { OrganizationId } from 'src/security/decorators/organization-id.decorator';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
-import { Roles } from 'src/security/decorators/roles.decorator';
+import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
-import { FindDoseUseCase } from './use-cases/find-dose.use-case';
+import { ReadDoseUseCase } from './use-cases/read-dose.use-case';
 import { ListDosesByTherapyUseCase } from './use-cases/list-doses-by-therapy.use-case';
 import { RegisterAdministeredDoseUseCase } from './use-cases/register-administered-dose.use-case';
 import { UpdateDoseStatusUseCase } from './use-cases/update-dose-status.use-case';
@@ -14,21 +13,24 @@ import { UpdateDoseStatusDto } from './dtos/update-dose-status.dto';
 @Controller('doses')
 export class DosesController {
   constructor(
-    private readonly findDoseUseCase: FindDoseUseCase,
+    private readonly readDoseUseCase: ReadDoseUseCase,
     private readonly listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
     private readonly updateDoseUseCase: RegisterAdministeredDoseUseCase,
     private readonly updateDoseStatusUseCase: UpdateDoseStatusUseCase,
   ) {}
 
   @Get(':id')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
-  async findOne(@Param('id') id: string, @OrganizationId() orgId: string) {
-    return this.findDoseUseCase.execute(id, orgId);
+  @CheckPolicies({ action: 'read', subject: 'Dose' })
+  async findOne(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ) {
+    return this.readDoseUseCase.execute(id, currentUser);
   }
 
   @ApiBody({ type: UpdateDoseDto })
   @Patch(':id')
-  @Roles('PHYSICIAN', 'NURSE')
+  @CheckPolicies({ action: 'update', subject: 'Dose' })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateDoseDto,
@@ -39,7 +41,7 @@ export class DosesController {
 
   @ApiBody({ type: UpdateDoseStatusDto })
   @Patch('update/status/:id')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
+  @CheckPolicies({ action: 'update', subject: 'Dose' })
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateDoseStatusDto,

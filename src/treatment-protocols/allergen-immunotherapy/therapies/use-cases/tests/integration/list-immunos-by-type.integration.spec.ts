@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { ListImmunotherapiesByTypeUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-immunotherapies-by-type.use-case';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
@@ -17,6 +18,7 @@ describe('ListImmunotherapiesByTypeUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         ListImmunotherapiesByTypeUseCase,
         {
           provide: PrismaService,
@@ -51,6 +53,7 @@ describe('ListImmunotherapiesByTypeUseCase - Integration', () => {
 
     const patients = await factories.patients.createMany(4, {
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
@@ -59,7 +62,7 @@ describe('ListImmunotherapiesByTypeUseCase - Integration', () => {
       await factories.immunotherapies.create({
         immunoType: i % 2 === 0 ? 'Ácaros' : 'Pólen',
         inductionStartDate: new Date('2026-01-15'),
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patients[i].id,
@@ -68,12 +71,9 @@ describe('ListImmunotherapiesByTypeUseCase - Integration', () => {
 
     const resultAcaros = await listAllByType.execute(
       'Ácaros',
-      authenticatedUser.organizationId,
+      authenticatedUser,
     );
-    const resultPolen = await listAllByType.execute(
-      'Pólen',
-      authenticatedUser.organizationId,
-    );
+    const resultPolen = await listAllByType.execute('Pólen', authenticatedUser);
 
     expect(resultAcaros).toHaveLength(2);
     console.log(resultAcaros);

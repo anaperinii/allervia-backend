@@ -7,7 +7,6 @@ import { IEmailService } from 'src/infra/email/email.service';
 
 const RESET_TOKEN_TTL_MINUTES = 10;
 
-// Throttle de emissão em camadas (janela deslizante).
 const EMISSION_LIMITS = [
   { windowSeconds: 60, max: 1 },
   { windowSeconds: 15 * 60, max: 3 },

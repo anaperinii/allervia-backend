@@ -9,7 +9,7 @@ import { BuildUpPhaseService } from './allergen-immunotherapy/clinical-rules/bui
 import { CountDosesByConcentration } from './allergen-immunotherapy/dosing/use-cases/count-doses-by-concentration.use-case';
 import { CountDosesByIntervalUseCase } from './allergen-immunotherapy/dosing/use-cases/count-doses-by-interval.use-case';
 import { CreateDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/create-dose.use-case';
-import { FindDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/find-dose.use-case';
+import { ReadDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/read-dose.use-case';
 import { ListDosesByTherapyUseCase } from './allergen-immunotherapy/dosing/use-cases/list-doses-by-therapy.use-case';
 import { RegisterAdministeredDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/register-administered-dose.use-case';
 import { UpdateDoseStatusUseCase } from './allergen-immunotherapy/dosing/use-cases/update-dose-status.use-case';
@@ -18,6 +18,7 @@ import { PrismaDoseRepository } from './allergen-immunotherapy/dosing/prisma-dos
 import { DosesController } from './allergen-immunotherapy/dosing/doses.controller';
 import { CreateImmunotherapyUseCase } from './allergen-immunotherapy/therapies/use-cases/create-immunotherapy.use-case';
 import { FindImmunotherapyUseCase } from './allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case';
+import { ReadImmunotherapyUseCase } from './allergen-immunotherapy/therapies/use-cases/read-immunotherapy.use-case';
 import { ListAllImmunotherapiesUseCase } from './allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
 import { ListImmunotherapiesByTypeUseCase } from './allergen-immunotherapy/therapies/use-cases/list-immunotherapies-by-type.use-case';
 import { ListImmunotherapiesForPatientUseCase } from './allergen-immunotherapy/therapies/use-cases/list-immunotherapies-for-patient.use-case';
@@ -28,6 +29,7 @@ import { PrismaImmunotherapyRepository } from './allergen-immunotherapy/therapie
 import { ImmunotherapiesController } from './allergen-immunotherapy/therapies/immunotherapies.controller';
 import { PatientsModule } from 'src/patients/patients.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
+import { PermissionsModule } from 'src/security/permissions/permissions.module';
 
 @Module({
   providers: [
@@ -35,7 +37,7 @@ import { PrismaModule } from 'src/infra/database/prisma.module';
     RegisterNextScheduledBuildUpUseCase,
     RegisterNextScheduledMaintenanceUseCase,
     CreateDoseUseCase,
-    FindDoseUseCase,
+    ReadDoseUseCase,
     ListDosesByTherapyUseCase,
     RegisterAdministeredDoseUseCase,
     UpdateDoseStatusUseCase,
@@ -43,6 +45,7 @@ import { PrismaModule } from 'src/infra/database/prisma.module';
     CountDosesByIntervalUseCase,
     CreateImmunotherapyUseCase,
     FindImmunotherapyUseCase,
+    ReadImmunotherapyUseCase,
     ListImmunotherapiesForPatientUseCase,
     ListImmunotherapiesByTypeUseCase,
     UpdateImmunotherapyUseCase,
@@ -65,7 +68,7 @@ import { PrismaModule } from 'src/infra/database/prisma.module';
       useClass: PrismaImmunotherapyRepository,
     },
   ],
-  imports: [PatientsModule, PrismaModule],
+  imports: [PatientsModule, PrismaModule, PermissionsModule],
   exports: [
     IBuildUpPhase,
     IMaintenancePhase,

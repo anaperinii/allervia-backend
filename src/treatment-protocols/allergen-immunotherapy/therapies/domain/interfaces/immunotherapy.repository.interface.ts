@@ -21,16 +21,23 @@ export abstract class IImmunotherapyRepository {
     organizationId: string,
   ): Promise<Immunotherapy | null>;
 
-  abstract findAll(organizationId: string): Promise<Immunotherapy[]>;
+  abstract findByIdAccessible(
+    id: string,
+    where: Prisma.ImmunotherapyWhereInput,
+  ): Promise<Immunotherapy | null>;
 
-  abstract findByPatient(
-    patientId: string,
-    organizationId: string,
+  abstract findAllAccessible(
+    where: Prisma.ImmunotherapyWhereInput,
   ): Promise<Immunotherapy[]>;
 
-  abstract findByType(
+  abstract findByPatientAccessible(
+    patientId: string,
+    where: Prisma.ImmunotherapyWhereInput,
+  ): Promise<Immunotherapy[]>;
+
+  abstract findByTypeAccessible(
     type: string,
-    organizationId: string,
+    where: Prisma.ImmunotherapyWhereInput,
   ): Promise<Immunotherapy[]>;
 
   abstract exists(id: string, organizationId: string): Promise<boolean>;

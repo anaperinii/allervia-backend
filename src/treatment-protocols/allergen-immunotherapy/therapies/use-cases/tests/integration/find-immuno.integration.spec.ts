@@ -52,12 +52,13 @@ describe('FindImmunotherapyUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -90,12 +91,13 @@ describe('FindImmunotherapyUseCase - Integration', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
     const patient = await factories.patients.create({
       organizationId: authenticatedUserAnotherOrg.organizationId,
+      responsiblePhysicianId: authenticatedUserAnotherOrg.professionalId!,
       createdById: authenticatedUserAnotherOrg.id,
       updatedById: authenticatedUserAnotherOrg.id,
     });
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUserAnotherOrg.id,
+
       createdById: authenticatedUserAnotherOrg.id,
       updatedById: authenticatedUserAnotherOrg.id,
       patientId: patient.id,

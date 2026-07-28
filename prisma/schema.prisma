@@ -110,7 +110,7 @@ model Professional {
   professionalRoles        ProfessionalRole[]   @relation("RoleHolder")
   professionalRolesGranted ProfessionalRole[]   @relation("RoleGrantedById")
   professionalRolesRevoked ProfessionalRole[]   @relation("RoleRevokedById")
-  immunotherapiesPhysician Immunotherapy[]      @relation("ResponsiblePhysician")
+  patientsResponsible      Patient[]            @relation("ResponsiblePhysician")
   internalUserInvites      InternalUserInvite[]
 
   @@index([organizationId, profession])
@@ -123,6 +123,9 @@ model Patient {
   user           User?        @relation("PatientAccount", fields: [userId], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+
+  responsiblePhysicianId String
+  responsiblePhysician   Professional @relation("ResponsiblePhysician", fields: [responsiblePhysicianId], references: [id])
 
   fullName    String
   birthDate   DateTime
@@ -147,6 +150,7 @@ model Patient {
   immunotherapies Immunotherapy[]
 
   @@index([organizationId, isActive, isArchived])
+  @@index([responsiblePhysicianId])
   @@index([fullName])
 }
 
@@ -212,10 +216,8 @@ model VerificationToken {
 model Immunotherapy {
   id String @id @default(ulid())
 
-  patientId              String
-  patient                Patient      @relation(fields: [patientId], references: [id])
-  responsiblePhysicianId String
-  responsiblePhysician   Professional @relation("ResponsiblePhysician", fields: [responsiblePhysicianId], references: [id])
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
 
   immunoType           String
   administrationRoute  AdministrationRoute
@@ -243,7 +245,6 @@ model Immunotherapy {
   doses Dose[]
 
   @@index([patientId, status, isArchived])
-  @@index([responsiblePhysicianId, status, isArchived])
   @@index([administrationRoute])
 }
 

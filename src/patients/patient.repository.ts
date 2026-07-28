@@ -18,7 +18,12 @@ export abstract class PatientRepository {
     organizationId: string,
   ): Promise<Patient | null>;
 
-  abstract findByOrganization(organizationId: string): Promise<Patient[]>;
+  abstract findAccessible(where: Prisma.PatientWhereInput): Promise<Patient[]>;
+
+  abstract findByIdAccessible(
+    id: string,
+    where: Prisma.PatientWhereInput,
+  ): Promise<Patient | null>;
 
   abstract exists(id: string, organizationId: string): Promise<boolean>;
 }

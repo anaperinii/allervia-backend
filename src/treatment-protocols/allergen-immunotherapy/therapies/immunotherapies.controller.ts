@@ -1,14 +1,13 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { OrganizationId } from 'src/security/decorators/organization-id.decorator';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
-import { Roles } from 'src/security/decorators/roles.decorator';
+import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import { CreateDoseUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/create-dose.use-case';
 import { ListDosesByTherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/list-doses-by-therapy.use-case';
 import { CreateImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/create-immunotherapy.use-case';
 import { ImmunotherapyResponseDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto';
-import { FindImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case';
+import { ReadImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/read-immunotherapy.use-case';
 import { ListImmunotherapiesByTypeUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-immunotherapies-by-type.use-case';
 import { ListImmunotherapiesForPatientUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-immunotherapies-for-patient.use-case';
 import { UpdateImmunotherapyStatusUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/update-immunotherapy-status.use-case';
@@ -24,7 +23,7 @@ import { ListAllImmunotherapiesUseCase } from 'src/treatment-protocols/allergen-
 export class ImmunotherapiesController {
   constructor(
     private createImmunotherapyUseCase: CreateImmunotherapyUseCase,
-    private findImmunotherapyUseCase: FindImmunotherapyUseCase,
+    private readImmunotherapyUseCase: ReadImmunotherapyUseCase,
     private listImmunotherapiesForPatientUseCase: ListImmunotherapiesForPatientUseCase,
     private listImmunotherapiesByTypeUseCase: ListImmunotherapiesByTypeUseCase,
     private updateImmunotherapyUseCase: UpdateImmunotherapyUseCase,
@@ -35,7 +34,7 @@ export class ImmunotherapiesController {
   ) {}
 
   @Post('register')
-  @Roles('PHYSICIAN')
+  @CheckPolicies({ action: 'create', subject: 'Immunotherapy' })
   async createImmunotherapy(
     @Body() dto: CreateImmunotherapyDto,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
@@ -47,74 +46,75 @@ export class ImmunotherapiesController {
   }
 
   @Get('list')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
   async findAll(
-    @OrganizationId() orgId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto[]> {
-    return this.listAllImmunotherapies.execute(orgId);
+    return this.listAllImmunotherapies.execute(currentUser);
   }
 
   @Get('patients/:patientId')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
   async findAllForPatient(
     @Param('patientId') patientId: string,
-    @OrganizationId() orgId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto[]> {
-    return this.listImmunotherapiesForPatientUseCase.execute(patientId, orgId);
+    return this.listImmunotherapiesForPatientUseCase.execute(
+      patientId,
+      currentUser,
+    );
   }
 
   @Get('type/:type')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
   async findAllForType(
     @Param('type') type: string,
-    @OrganizationId() orgId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto[]> {
-    return this.listImmunotherapiesByTypeUseCase.execute(type, orgId);
+    return this.listImmunotherapiesByTypeUseCase.execute(type, currentUser);
   }
 
   @Get(':id')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
   async findOneImmunotherapy(
     @Param('id') immunoId: string,
-    @OrganizationId() orgId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto> {
-    return this.findImmunotherapyUseCase.execute(immunoId, orgId);
+    return this.readImmunotherapyUseCase.execute(immunoId, currentUser);
   }
 
   @ApiBody({ type: UpdateImmunotherapyDto })
   @Patch(':id')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
+  @CheckPolicies({ action: 'update', subject: 'Immunotherapy' })
   async updateImmunotherapy(
     @Param('id') immunoId: string,
     @Body() dto: UpdateImmunotherapyDto,
-    @OrganizationId() orgId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto> {
-    return this.updateImmunotherapyUseCase.execute(immunoId, dto, orgId);
+    return this.updateImmunotherapyUseCase.execute(immunoId, dto, currentUser);
   }
 
   @ApiBody({ type: UpdateImmunotherapyStatusDto })
   @Patch(':id/status')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN')
+  @CheckPolicies({ action: 'update', subject: 'Immunotherapy' })
   async updateImmunotherapyStatus(
     @Param('id') immunoId: string,
     @Body() dto: UpdateImmunotherapyStatusDto,
-    @OrganizationId() orgId: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ): Promise<ImmunotherapyResponseDto> {
     return this.updateImmunotherapyStatusUseCase.execute(
       immunoId,
       dto,
-      orgId,
       currentUser,
     );
   }
 
   @Get(':id/doses')
-  @Roles('PHYSICIAN', 'NURSE', 'ADMIN', 'NURSING_TECHNICIAN')
+  @CheckPolicies({ action: 'read', subject: 'Dose' })
   async findAllDosesForImmunotherapy(
     @Param('id') immunoId: string,
-    @OrganizationId() orgId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
-    return this.listDosesByTherapyUseCase.execute(immunoId, orgId);
+    return this.listDosesByTherapyUseCase.execute(immunoId, currentUser);
   }
 }

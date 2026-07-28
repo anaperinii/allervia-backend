@@ -1,4 +1,5 @@
 import { TestingModule, Test } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
 import { PrismaImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository';
 import { PrismaService } from 'src/infra/database/prisma.service';
@@ -21,6 +22,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         UpdateImmunotherapyStatusUseCase,
         {
           provide: PrismaService,
@@ -55,12 +57,13 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -69,7 +72,6 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
     const result = await immunoUpdateStatusUseCase.execute(
       immunotherapy.id,
       { status: 'SUSPENDED' },
-      authenticatedUser.organizationId,
       authenticatedUser,
     );
 
@@ -84,12 +86,13 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -99,7 +102,6 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
     const result = await immunoUpdateStatusUseCase.execute(
       immunotherapy.id,
       { status: 'IN_PROGRESS' },
-      authenticatedUser.organizationId,
       authenticatedUser,
     );
 
@@ -114,12 +116,13 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -129,7 +132,6 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
       immunoUpdateStatusUseCase.execute(
         immunotherapy.id,
         { status: 'IN_PROGRESS' },
-        authenticatedUser.organizationId,
         authenticatedUser,
       ),
     ).rejects.toThrow(BadRequestException);
@@ -143,7 +145,6 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
       immunoUpdateStatusUseCase.execute(
         ulid(),
         { status: 'IN_PROGRESS' },
-        authenticatedUser.organizationId,
         authenticatedUser,
       ),
     ).rejects.toThrow(NotFoundException);
