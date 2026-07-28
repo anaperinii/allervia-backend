@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { ListAllImmunotherapiesUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
@@ -17,6 +18,7 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         ListAllImmunotherapiesUseCase,
         {
           provide: PrismaService,
@@ -51,12 +53,13 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -66,9 +69,7 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
 
     console.log(immunotherapy.createdById);
 
-    const result = await listAllUseCase.execute(
-      authenticatedUser.organizationId,
-    );
+    const result = await listAllUseCase.execute(authenticatedUser);
 
     expect(result).toBeDefined();
     expect(result.length).toBeGreaterThan(0);
@@ -84,20 +85,19 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
     await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
     });
 
-    const result = await listAllUseCase.execute(
-      authenticatedUserAnotherOrg.organizationId,
-    );
+    const result = await listAllUseCase.execute(authenticatedUserAnotherOrg);
 
     expect(result).toEqual([]);
     expect(result).toHaveLength(0);

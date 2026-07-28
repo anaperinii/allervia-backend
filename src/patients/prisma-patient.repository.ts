@@ -27,6 +27,7 @@ export class PrismaPatientRepository extends PatientRepository {
         weightInKg: patient.weightInKg,
         phoneNumber: patient.phoneNumber,
         organizationId: patient.organizationId,
+        responsiblePhysicianId: patient.responsiblePhysicianId,
         isActive: patient.isActive,
         isArchived: patient.isArchived,
         createdById: patient.createdById,
@@ -62,10 +63,19 @@ export class PrismaPatientRepository extends PatientRepository {
     });
   }
 
-  async findByOrganization(organizationId: string): Promise<Patient[]> {
+  async findAccessible(where: Prisma.PatientWhereInput): Promise<Patient[]> {
     return this.prisma.patient.findMany({
-      where: { organizationId, isArchived: false },
+      where: { AND: [where, { isArchived: false }] },
       orderBy: { fullName: 'asc' },
+    });
+  }
+
+  async findByIdAccessible(
+    id: string,
+    where: Prisma.PatientWhereInput,
+  ): Promise<Patient | null> {
+    return this.prisma.patient.findFirst({
+      where: { AND: [{ id }, where] },
     });
   }
 

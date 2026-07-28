@@ -11,7 +11,6 @@ export interface ImmunotherapyProps {
   targetConcentration: number;
   targetVolume: number;
   patientId: string;
-  responsiblePhysicianId: string;
   createdById: string;
   isArchived: boolean;
   status: TherapyStatus;
@@ -30,7 +29,6 @@ export interface CreateImmunotherapyProps {
   targetConcentration: number;
   targetVolume: number;
   patientId: string;
-  responsiblePhysicianId: string;
   createdById: string;
   updatedById: string;
 }
@@ -45,7 +43,6 @@ export class Immunotherapy {
   targetConcentration: number;
   targetVolume: number;
   patientId: string;
-  responsiblePhysicianId: string;
   isArchived: boolean;
   status: TherapyStatus;
   createdAt: Date;
@@ -65,7 +62,6 @@ export class Immunotherapy {
     this.targetConcentration = props.targetConcentration;
     this.targetVolume = props.targetVolume;
     this.patientId = props.patientId;
-    this.responsiblePhysicianId = props.responsiblePhysicianId;
     this.createdById = props.createdById;
     this.isArchived = props.isArchived;
     this.status = props.status;
@@ -85,7 +81,6 @@ export class Immunotherapy {
       targetConcentration: props.targetConcentration,
       targetVolume: props.targetVolume,
       patientId: props.patientId,
-      responsiblePhysicianId: props.responsiblePhysicianId,
       status: TherapyStatus.IN_PROGRESS,
       createdById: props.createdById,
       updatedById: props.updatedById,

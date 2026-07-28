@@ -1,4 +1,3 @@
-// invite/presentation/controllers/invite.controller.ts
 import {
   Controller,
   Post,
@@ -11,7 +10,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
-import { Roles } from 'src/security/decorators/roles.decorator';
+import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CreateInviteDto } from './dtos/create-invite.dto';
 import { ListInvitesQueryDto } from './dtos/list-invites-query.dto';
@@ -20,7 +19,6 @@ import { CreateInviteUseCase } from './use-cases/create-invite.use-case';
 import { ListInvitesUseCase } from './use-cases/list-invites.use-case';
 
 @Controller('onboarding/invites')
-@Roles('ADMIN', 'SYSTEM_ADMIN')
 export class InviteController {
   constructor(
     private createInviteUseCase: CreateInviteUseCase,
@@ -30,6 +28,7 @@ export class InviteController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @CheckPolicies({ action: 'create', subject: 'InternalUserInvite' })
   async createInvite(
     @Body() dto: CreateInviteDto,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
@@ -38,6 +37,7 @@ export class InviteController {
   }
 
   @Get('list')
+  @CheckPolicies({ action: 'read', subject: 'InternalUserInvite' })
   async listInvites(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Query() query: ListInvitesQueryDto,
@@ -47,6 +47,7 @@ export class InviteController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @CheckPolicies({ action: 'update', subject: 'InternalUserInvite' })
   async cancelInvite(
     @Param('id') id: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,

@@ -35,7 +35,6 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
           email: invite.email.toLowerCase(),
           password: hashedPassword,
           type: 'PROFESSIONAL',
-          // Quem registrou o convite é o criador deste usuário.
           createdById: invite.createdById,
         },
         tx,
@@ -52,9 +51,6 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
         tx,
       );
 
-      // O concedente é quem criou o convite (o inviter). Resolvemos o
-      // Professional dele a partir do User que registrou o convite; se não
-      // houver (estado de bootstrap), cai para o próprio profissional criado.
       const inviter = await this.professionalRepository.findByUserId(
         invite.createdById,
         tx,

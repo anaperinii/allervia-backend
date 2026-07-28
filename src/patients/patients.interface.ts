@@ -4,6 +4,7 @@ export interface CreatePatientData {
   weightInKg: number;
   phoneNumber: string;
   organizationId: string;
+  responsiblePhysicianId: string;
   createdById: string;
   updatedById: string;
   isActive: boolean;

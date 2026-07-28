@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
@@ -10,7 +11,6 @@ import { IBuildUpPhase } from 'src/treatment-protocols/allergen-immunotherapy/cl
 import { BuildUpPhaseService } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.service';
 import { IMaintenancePhase } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.interface';
 import { MaintenancePhaseService } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.service';
-import { FindDoseUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/find-dose.use-case';
 import { FindImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case';
 import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
 import { PrismaImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository';
@@ -33,7 +33,6 @@ import { RegisterAdministeredDoseUseCase } from 'src/treatment-protocols/allerge
 describe('registerAdministeredDoseUseCase - Integration', () => {
   let module: TestingModule;
   let registerAdministeredDoseUseCase: RegisterAdministeredDoseUseCase;
-  let _findDoseUseCase: FindDoseUseCase;
   let _findImmunotherapyUseCase: FindImmunotherapyUseCase;
   let _buildUpProtocol: IBuildUpPhase;
   let _maintenanceProtocol: IMaintenancePhase;
@@ -45,8 +44,8 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         RegisterAdministeredDoseUseCase,
-        FindDoseUseCase,
         FindImmunotherapyUseCase,
         CreateDoseUseCase,
         CountDosesByConcentration,
@@ -82,7 +81,6 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
     );
     _buildUpProtocol = module.get(IBuildUpPhase);
     _maintenanceProtocol = module.get(IMaintenancePhase);
-    _findDoseUseCase = module.get(FindDoseUseCase);
     _findImmunotherapyUseCase = module.get(FindImmunotherapyUseCase);
     prisma = module.get(PrismaService);
     factories = new TestFactories(prisma);
@@ -106,6 +104,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -114,7 +113,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: 10,
         targetVolume: 0.5,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -185,6 +184,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -193,7 +193,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: 10,
         targetVolume: 0.5,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -274,6 +274,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -285,7 +286,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: targetConcentration,
         targetVolume: targetVolume,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -347,6 +348,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -358,7 +360,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: targetConcentration,
         targetVolume: targetVolume,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -428,6 +430,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -440,7 +443,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: targetConcentration,
         targetVolume: targetVolume,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -519,6 +522,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -531,7 +535,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: targetConcentration,
         targetVolume: targetVolume,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -613,6 +617,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -626,7 +631,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: targetConcentration,
         targetVolume: targetVolume,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -707,6 +712,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -715,7 +721,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: 10,
         targetVolume: 0.5,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -757,6 +763,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -765,7 +772,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: 10,
         targetVolume: 0.5,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,
@@ -824,6 +831,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
 
       const patient = await factories.patients.create({
         organizationId: authenticatedUser.organizationId,
+        responsiblePhysicianId: authenticatedUser.professionalId!,
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
       });
@@ -832,7 +840,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
         inductionStartDate: new Date('2026-01-15'),
         targetConcentration: 10,
         targetVolume: 0.5,
-        responsiblePhysicianId: authenticatedUser.id,
+
         createdById: authenticatedUser.id,
         updatedById: authenticatedUser.id,
         patientId: patient.id,

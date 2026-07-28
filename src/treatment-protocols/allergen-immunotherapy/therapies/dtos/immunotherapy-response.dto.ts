@@ -29,9 +29,6 @@ export class ImmunotherapyResponseDto {
   @ApiProperty({ description: 'ID do paciente' })
   patientId: string;
 
-  @ApiProperty({ description: 'ID do médico responsável' })
-  responsiblePhysicianId: string;
-
   @ApiProperty({ description: 'Indica se a imunoterapia está arquivada' })
   isArchived: boolean;
 

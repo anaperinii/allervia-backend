@@ -55,6 +55,7 @@ describe('CreatePatientUseCase - Integration', () => {
       birthDate: new Date('1990-01-15'),
       weightInKg: 75.5,
       phoneNumber: '11987654321',
+      responsiblePhysicianId: authenticatedUser.professionalId!,
     };
 
     const result = await createPatientUseCase.execute(dto, authenticatedUser);
@@ -75,6 +76,7 @@ describe('CreatePatientUseCase - Integration', () => {
       birthDate: new Date('1985-05-20'),
       weightInKg: 65.0,
       phoneNumber: '11912345678',
+      responsiblePhysicianId: authenticatedUser.professionalId!,
     };
 
     const result = await createPatientUseCase.execute(dto, authenticatedUser);

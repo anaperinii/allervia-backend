@@ -24,9 +24,6 @@ export class UpdateUserUseCase {
       throw new NotFoundException(USER_MESSAGES.notFound(id));
     }
 
-    // User cuida apenas de credencial (email/senha). Nome, telefone e
-    // especialidade pertencem ao Professional — atualizados no subsistema
-    // de Professional (ver ADR 006, "perfil via Professional").
     const data: { id: string; email?: string; password?: string } = { id };
 
     if (dto.email) {

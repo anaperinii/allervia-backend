@@ -10,6 +10,7 @@ import {
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/security/decorators/public.decorator';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
+import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CreateProfessionalRoleDto } from './dtos/create-role.dto';
 import { GrantRoleUseCase } from './use-cases/grant-role.use-case';
@@ -41,6 +42,7 @@ export class RolesController {
 
   @Post()
   @ApiBody({ type: CreateProfessionalRoleDto })
+  @CheckPolicies({ action: 'create', subject: 'ProfessionalRole' })
   async grant(
     @Body() dto: CreateProfessionalRoleDto,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
@@ -57,16 +59,19 @@ export class RolesController {
   }
 
   @Get('professional/:professionalId')
+  @CheckPolicies({ action: 'read', subject: 'ProfessionalRole' })
   async listByProfessional(@Param('professionalId') professionalId: string) {
     return this.listProfessionalRolesUseCase.execute(professionalId);
   }
 
   @Get(':id')
+  @CheckPolicies({ action: 'read', subject: 'ProfessionalRole' })
   async findOne(@Param('id') id: string) {
     return this.findRoleByIdUseCase.execute(id);
   }
 
   @Delete(':id')
+  @CheckPolicies({ action: 'update', subject: 'ProfessionalRole' })
   async revoke(
     @Param('id') id: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,

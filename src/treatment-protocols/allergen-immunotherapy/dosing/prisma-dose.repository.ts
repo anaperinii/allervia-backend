@@ -66,30 +66,23 @@ export class PrismaDoseRepository extends IDoseRepository {
     return new Dose(updated);
   }
 
-  async findById(id: string, orgId: string): Promise<Dose | null> {
-    const dose = await this.prismaService.dose.findUnique({
-      where: {
-        id,
-        immunotherapy: {
-          patient: {
-            organizationId: orgId,
-          },
-        },
-      },
+  async findByIdAccessible(
+    id: string,
+    where: Prisma.DoseWhereInput,
+  ): Promise<Dose | null> {
+    const dose = await this.prismaService.dose.findFirst({
+      where: { AND: [{ id }, where] },
     });
 
     return dose ? new Dose(dose) : null;
   }
 
-  async findByImmunotherapy(
+  async findByImmunotherapyAccessible(
     immunotherapyId: string,
-    orgId: string,
+    where: Prisma.DoseWhereInput,
   ): Promise<Dose[]> {
     const doses = await this.prismaService.dose.findMany({
-      where: {
-        immunotherapyId,
-        immunotherapy: { patient: { organizationId: orgId } },
-      },
+      where: { AND: [{ immunotherapyId }, where] },
       orderBy: { administeredAt: 'desc' },
     });
 

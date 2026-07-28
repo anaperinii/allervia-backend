@@ -1,4 +1,5 @@
 import { TestingModule, Test } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
 import { PrismaImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/prisma-immunotherapy.repository';
 import { PrismaService } from 'src/infra/database/prisma.service';
@@ -20,6 +21,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         UpdateImmunotherapyUseCase,
         {
           provide: PrismaService,
@@ -58,11 +60,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
     };
 
     await expect(
-      immunoUpdateUseCase.execute(
-        ulid(),
-        dto,
-        authenticatedUser.organizationId,
-      ),
+      immunoUpdateUseCase.execute(ulid(), dto, authenticatedUser),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -72,13 +70,14 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -91,7 +90,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
     const updatedImmunotherapy = await immunoUpdateUseCase.execute(
       immunotherapy.id,
       dto,
-      authenticatedUser.organizationId,
+      authenticatedUser,
     );
 
     expect(updatedImmunotherapy).toBeDefined();
@@ -109,13 +108,14 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -129,7 +129,7 @@ describe('UpdateImmunotherapyUseCase - Integration', () => {
       immunoUpdateUseCase.execute(
         immunotherapy.id,
         dto,
-        authenticatedUserAnotherOrg.organizationId,
+        authenticatedUserAnotherOrg,
       ),
     ).rejects.toThrow(NotFoundException);
   });

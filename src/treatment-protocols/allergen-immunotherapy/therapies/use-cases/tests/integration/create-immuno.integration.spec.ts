@@ -87,6 +87,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
         birthDate: new Date('1990-01-01'),
         weightInKg: 75,
         phoneNumber: '11999999999',
+        responsiblePhysicianId: authenticatedUser.professionalId!,
       },
       immunoType: 'Ácaros',
       administrationRoute: 'SUBCUTANEOUS',
@@ -94,7 +95,6 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
       inductionStartDate: new Date('2026-01-15'),
       targetConcentration: 10,
       targetVolume: 0.5,
-      responsiblePhysicianId: authenticatedUser.id,
     };
 
     const result = await immunoUseCase.execute(dto, authenticatedUser);
@@ -123,8 +123,8 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
     console.log(immunotherapyInDb);
 
     expect(immunotherapyInDb).not.toBeNull();
-    expect(immunotherapyInDb!.responsiblePhysicianId).toBe(
-      authenticatedUser.id,
+    expect(patientInDb!.responsiblePhysicianId).toBe(
+      authenticatedUser.professionalId,
     );
     expect(immunotherapyInDb!.createdById).toBe(authenticatedUser.id);
 
@@ -149,6 +149,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
         birthDate: new Date('2000-01-01'),
         weightInKg: 80,
         phoneNumber: '11999999999',
+        responsiblePhysicianId: authenticatedUser.professionalId!,
       },
       immunoType: 'Ácaros',
       administrationRoute: 'SUBCUTANEOUS',
@@ -156,7 +157,6 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
       inductionStartDate: new Date('2026-01-15'),
       targetConcentration: 10,
       targetVolume: 0.5,
-      responsiblePhysicianId: authenticatedUser.id,
     };
 
     jest
@@ -173,7 +173,7 @@ describe('CreateImmunotherapyUseCase - Integration', () => {
     );
 
     const immunoCount = await prisma.immunotherapy.count({
-      where: { responsiblePhysicianId: authenticatedUser.id },
+      where: { createdById: authenticatedUser.id },
     });
     expect(immunoCount).toBe(0);
 

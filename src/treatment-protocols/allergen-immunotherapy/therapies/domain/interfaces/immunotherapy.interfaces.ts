@@ -8,7 +8,6 @@ export interface CreateImmunotherapyData {
   targetConcentration: number;
   targetVolume: number;
   patientId: string;
-  responsiblePhysicianId: string;
   status: TherapyStatus;
   createdById: string;
   updatedById: string;
@@ -22,7 +21,6 @@ export interface UpdateImmunotherapyData {
   maintenanceStartDate: Date | null;
   targetConcentration: number;
   targetVolume: number;
-  responsiblePhysicianId: string;
   isArchived: boolean;
   status: TherapyStatus;
   updatedById: string;

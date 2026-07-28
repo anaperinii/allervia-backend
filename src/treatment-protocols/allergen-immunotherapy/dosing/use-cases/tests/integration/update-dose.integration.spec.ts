@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
@@ -21,6 +22,7 @@ describe('UpdateDoseUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        AbilityFactory,
         UpdateDoseStatusUseCase,
         {
           provide: PrismaService,
@@ -55,13 +57,14 @@ describe('UpdateDoseUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -96,13 +99,14 @@ describe('UpdateDoseUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -135,13 +139,14 @@ describe('UpdateDoseUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
@@ -173,13 +178,14 @@ describe('UpdateDoseUseCase - Integration', () => {
 
     const patient = await factories.patients.create({
       organizationId: authenticatedUser.organizationId,
+      responsiblePhysicianId: authenticatedUser.professionalId!,
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
     });
 
     const immunotherapy = await factories.immunotherapies.create({
       inductionStartDate: new Date('2026-01-15'),
-      responsiblePhysicianId: authenticatedUser.id,
+
       createdById: authenticatedUser.id,
       updatedById: authenticatedUser.id,
       patientId: patient.id,
