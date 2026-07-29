@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
+import { AuthenticatedOnly } from 'src/security/decorators/authenticated-only.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-case';
 import { UpdateUserStatusUseCase } from './use-cases/update-user-status.use-case';
@@ -31,6 +32,7 @@ export class AccountController {
 
   @Post('me/password')
   @HttpCode(HttpStatus.OK)
+  @AuthenticatedOnly()
   async changePassword(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Body() dto: ChangePasswordDto,
@@ -40,6 +42,7 @@ export class AccountController {
   }
 
   @Get('me')
+  @AuthenticatedOnly()
   async getPersonalUser(@CurrentUser() currentUser: AuthenticatedUserPayload) {
     return this.findUserByIdUseCase.execute(currentUser.id, currentUser);
   }
@@ -55,6 +58,7 @@ export class AccountController {
   }
 
   @Patch('update/me')
+  @AuthenticatedOnly()
   async updateUserPersonal(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Body() updateUserDto: UpdateUserPersonalDto,

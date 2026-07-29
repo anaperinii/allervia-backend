@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 import { Public } from 'src/security/decorators/public.decorator';
+import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
 import { CreateOrganizationUseCase } from './use-cases/create-organization.use-case';
 import { FindOrganizationUseCase } from './use-cases/find-organization.use-case';
@@ -23,6 +24,7 @@ export class OrganizationController {
   }
 
   @Get(':id')
+  @CheckPolicies({ action: 'read', subject: 'Organization' })
   async findOneOrganization(
     @Param('id') id: string,
   ): Promise<OrganizationResponseDto> {
