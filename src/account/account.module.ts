@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from 'src/infra/audit/audit.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { EmailModule } from 'src/infra/email/email.module';
 import { AuthModule } from 'src/security/auth.module';
@@ -20,7 +21,7 @@ import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
 
 @Module({
-  imports: [PrismaModule, EmailModule, AuthModule],
+  imports: [PrismaModule, EmailModule, AuditModule, AuthModule],
   providers: [
     FindUserByIdUseCase,
     UpdateUserStatusUseCase,

@@ -19,8 +19,10 @@ export class PrismaUserRepository extends IUserRepository {
     return client.user.create({ data: user });
   }
 
-  async update(user: Partial<UserUpdateData>) {
-    return this.prismaService.user.update({
+  async update(user: Partial<UserUpdateData>, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prismaService;
+
+    return client.user.update({
       where: { id: user.id },
       data: {
         email: user.email,
@@ -47,8 +49,14 @@ export class PrismaUserRepository extends IUserRepository {
     return count > 0;
   }
 
-  async changePassword(userId: string, passwordHash: string): Promise<void> {
-    await this.prismaService.user.update({
+  async changePassword(
+    userId: string,
+    passwordHash: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const client = tx ?? this.prismaService;
+
+    await client.user.update({
       where: { id: userId },
       data: { password: passwordHash, tokenVersion: { increment: 1 } },
     });

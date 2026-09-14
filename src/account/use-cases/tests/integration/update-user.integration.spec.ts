@@ -4,6 +4,8 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
 import { PrismaUserRepository } from 'src/account/prisma-user.repository';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { ulid } from 'ulid';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 import { BcryptPasswordHashingService } from 'src/security/bcrypt-password-hashing.service';
@@ -34,6 +36,10 @@ describe('UpdateUserPersonalUseCase - Integration', () => {
         {
           provide: IPasswordHashingService,
           useClass: BcryptPasswordHashingService,
+        },
+        {
+          provide: IAuditLogService,
+          useClass: PrismaAuditLogService,
         },
       ],
     }).compile();

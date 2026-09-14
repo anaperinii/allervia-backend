@@ -6,6 +6,10 @@ import {
 import { IUserRepository } from '../user.repository';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 import { IEmailService } from 'src/infra/email/email.service';
+import { PrismaService } from 'src/infra/database/prisma.service';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
+import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { USER_MESSAGES } from '../user.messages';
 
@@ -15,9 +19,15 @@ export class ChangePasswordUseCase {
     private readonly userRepository: IUserRepository,
     private readonly hashingService: IPasswordHashingService,
     private readonly emailService: IEmailService,
+    private readonly prisma: PrismaService,
+    private readonly auditLog: IAuditLogService,
   ) {}
 
-  async execute(userId: string, dto: ChangePasswordDto): Promise<void> {
+  async execute(
+    currentUser: AuthenticatedUserPayload,
+    dto: ChangePasswordDto,
+  ): Promise<void> {
+    const userId = currentUser.id;
     const user = await this.userRepository.findUserById(userId);
 
     if (!user) {
@@ -35,7 +45,21 @@ export class ChangePasswordUseCase {
 
     const passwordHash = await this.hashingService.hash(dto.newPassword);
 
-    await this.userRepository.changePassword(userId, passwordHash);
+    await this.prisma.$transaction(async (tx) => {
+      await this.userRepository.changePassword(userId, passwordHash, tx);
+
+      await this.auditLog.record(
+        {
+          userId,
+          organizationId: currentUser.organizationId,
+          entityType: AUDIT_ENTITY_TYPES.USER,
+          entityId: userId,
+          action: AUDIT_ACTIONS.PASSWORD_CHANGED,
+        },
+        tx,
+      );
+    });
+
     await this.emailService.sendPasswordChangedNotification(user.email);
   }
 }

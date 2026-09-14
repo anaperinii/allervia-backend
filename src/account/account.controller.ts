@@ -37,7 +37,7 @@ export class AccountController {
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Body() dto: ChangePasswordDto,
   ) {
-    await this.changePasswordUseCase.execute(currentUser.id, dto);
+    await this.changePasswordUseCase.execute(currentUser, dto);
     return { message: 'Senha alterada com sucesso.' };
   }
 

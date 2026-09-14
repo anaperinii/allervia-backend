@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { VerificationPurpose } from '@prisma/client';
+import { Prisma, VerificationPurpose } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IUserAuthRepository } from './interfaces/user-auth.repository.interface';
 import {
@@ -103,25 +103,60 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
     });
   }
 
+  async findOrganizationIdByUserId(
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string | null> {
+    const client = tx ?? this.prisma;
+
+    const user = await client.user.findUnique({
+      where: { id: userId },
+      select: {
+        professional: { select: { organizationId: true } },
+        patient: { select: { organizationId: true } },
+      },
+    });
+
+    return (
+      user?.professional?.organizationId ??
+      user?.patient?.organizationId ??
+      null
+    );
+  }
+
   async finalizePasswordReset(
     tokenId: string,
     userId: string,
     passwordHash: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      const consumed = await tx.verificationToken.updateMany({
-        where: { id: tokenId, consumedAt: null },
-        data: { consumedAt: new Date() },
-      });
+    if (tx) {
+      return this.applyPasswordReset(tx, tokenId, userId, passwordHash);
+    }
 
-      if (consumed.count === 0) {
-        throw new ConflictException(AUTH_MESSAGES.resetTokenAlreadyUsed);
-      }
+    await this.prisma.$transaction((trx) =>
+      this.applyPasswordReset(trx, tokenId, userId, passwordHash),
+    );
+  }
 
-      await tx.user.update({
-        where: { id: userId },
-        data: { password: passwordHash, tokenVersion: { increment: 1 } },
-      });
+  private async applyPasswordReset(
+    client: Prisma.TransactionClient,
+    tokenId: string,
+    userId: string,
+    passwordHash: string,
+  ): Promise<void> {
+    const consumed = await client.verificationToken.updateMany({
+      where: { id: tokenId, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+
+    if (consumed.count === 0) {
+      throw new ConflictException(AUTH_MESSAGES.resetTokenAlreadyUsed);
+    }
+
+    await client.user.update({
+      where: { id: userId },
+      data: { password: passwordHash, tokenVersion: { increment: 1 } },
     });
   }
 }

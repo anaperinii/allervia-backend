@@ -3,6 +3,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
+import { AuditModule } from 'src/infra/audit/audit.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { EmailModule } from 'src/infra/email/email.module';
 import { AuthController } from './auth.controller';
@@ -23,6 +24,7 @@ import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.
   imports: [
     PrismaModule,
     EmailModule,
+    AuditModule,
     PassportModule,
     ConfigModule,
     JwtModule.registerAsync({

@@ -8,7 +8,10 @@ export abstract class IUserRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<User>;
 
-  abstract update(userUpdateData: Partial<UserUpdateData>): Promise<User>;
+  abstract update(
+    userUpdateData: Partial<UserUpdateData>,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User>;
 
   abstract findUserByEmail(email: string): Promise<User | null>;
 
@@ -16,5 +19,9 @@ export abstract class IUserRepository {
 
   abstract existsByEmail(email: string): Promise<boolean>;
 
-  abstract changePassword(userId: string, passwordHash: string): Promise<void>;
+  abstract changePassword(
+    userId: string,
+    passwordHash: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void>;
 }

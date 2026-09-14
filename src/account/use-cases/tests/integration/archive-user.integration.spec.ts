@@ -4,6 +4,8 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
 import { PrismaUserRepository } from 'src/account/prisma-user.repository';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { ulid } from 'ulid';
 import { IUserRepository } from 'src/account/user.repository';
 import { UserNotFoundException } from 'src/account/exceptions/user-not-found.exception';
@@ -27,6 +29,10 @@ describe('ArchiveUserUseCase - Integration', () => {
         {
           provide: IUserRepository,
           useClass: PrismaUserRepository,
+        },
+        {
+          provide: IAuditLogService,
+          useClass: PrismaAuditLogService,
         },
       ],
     }).compile();
