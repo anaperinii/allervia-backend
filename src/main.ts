@@ -18,8 +18,8 @@ async function bootstrap() {
   app.useGlobalFilters(new DomainExceptionFilter());
 
   const config = new DocumentBuilder()
-    .setTitle('ImuneCare Server')
-    .setDescription('The ImuneCare API Specification')
+    .setTitle('Allervia Server')
+    .setDescription('The Allervia API Specification')
     .setVersion('1.0')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
