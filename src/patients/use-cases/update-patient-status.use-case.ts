@@ -37,7 +37,7 @@ export class UpdatePatientStatusUseCase {
     return this.prisma.$transaction(async (tx) => {
       const updated = await this.patientRepository.update(
         patient.id,
-        patient,
+        { isActive: dto.status },
         tx,
       );
 
