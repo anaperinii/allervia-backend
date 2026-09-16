@@ -15,8 +15,13 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
     super();
   }
 
-  async create(invite: UserInvite): Promise<UserInvite> {
-    const created = await this.prismaService.internalUserInvite.create({
+  async create(
+    invite: UserInvite,
+    tx?: Prisma.TransactionClient,
+  ): Promise<UserInvite> {
+    const prismaClient = tx ?? this.prismaService;
+
+    const created = await prismaClient.internalUserInvite.create({
       data: invite,
     });
 

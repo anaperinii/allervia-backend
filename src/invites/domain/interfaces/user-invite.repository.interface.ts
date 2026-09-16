@@ -8,7 +8,10 @@ import {
 import { Prisma } from '@prisma/client';
 
 export abstract class IUserInviteRepository {
-  abstract create(invite: CreateInviteData): Promise<UserInvite>;
+  abstract create(
+    invite: CreateInviteData,
+    tx?: Prisma.TransactionClient,
+  ): Promise<UserInvite>;
 
   abstract update(
     invite: Partial<UpdateInviteData>,

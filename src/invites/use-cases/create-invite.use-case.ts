@@ -9,6 +9,11 @@ import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
 import { InviteResponseDto } from 'src/invites/dtos/invite-response.dto';
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
 import { INVITE_MESSAGES } from 'src/invites/invite.messages';
+import { AUDITED_INVITE_FIELDS } from 'src/invites/invite.audit-fields';
+import { PrismaService } from 'src/infra/database/prisma.service';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
+import { snapshotFields } from 'src/infra/audit/diff-fields';
 import { FindActiveInviteUseCase } from './find-active-invite.use-case';
 
 @Injectable()
@@ -19,6 +24,8 @@ export class CreateInviteUseCase {
     private validateUserEmail: ValidateUserEmailUseCase,
     private inviteRepository: IUserInviteRepository,
     private findActiveInviteUseCase: FindActiveInviteUseCase,
+    private prisma: PrismaService,
+    private auditLog: IAuditLogService,
   ) {}
 
   async execute(
@@ -70,7 +77,27 @@ export class CreateInviteUseCase {
       expiresAt,
     });
 
-    const created = await this.inviteRepository.create(invite);
+    const created = await this.prisma.$transaction(async (tx) => {
+      const persisted = await this.inviteRepository.create(invite, tx);
+
+      await this.auditLog.record(
+        {
+          userId: currentUser.id,
+          organizationId,
+          entityType: AUDIT_ENTITY_TYPES.INTERNAL_USER_INVITE,
+          entityId: persisted.id,
+          action: AUDIT_ACTIONS.INVITE_CREATED,
+          newValues: snapshotFields(
+            persisted as unknown as Record<string, unknown>,
+            AUDITED_INVITE_FIELDS,
+          ),
+          changedFields: [...AUDITED_INVITE_FIELDS],
+        },
+        tx,
+      );
+
+      return persisted;
+    });
 
     const inviteData = {
       ...created,

@@ -42,8 +42,14 @@ export class PrismaDoseRepository extends IDoseRepository {
     return new Dose(created);
   }
 
-  async update(doseId: string, dose: Partial<UpdateDoseData>): Promise<Dose> {
-    const updated = await this.prismaService.dose.update({
+  async update(
+    doseId: string,
+    dose: Partial<UpdateDoseData>,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Dose> {
+    const client = tx ?? this.prismaService;
+
+    const updated = await client.dose.update({
       where: { id: doseId },
       data: {
         concentration: dose.concentration,

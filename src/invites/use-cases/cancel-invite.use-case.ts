@@ -3,12 +3,19 @@ import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.
 import { FindInviteByIdUseCase } from './find-invite-by-id.use-case';
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
 import { InviteResponseDto } from 'src/invites/dtos/invite-response.dto';
+import { AUDITED_INVITE_FIELDS } from 'src/invites/invite.audit-fields';
+import { PrismaService } from 'src/infra/database/prisma.service';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
+import { diffFields, snapshotFields } from 'src/infra/audit/diff-fields';
 
 @Injectable()
 export class CancelInviteUseCase {
   constructor(
     private findInviteByIdUseCase: FindInviteByIdUseCase,
     private inviteRepository: IUserInviteRepository,
+    private prisma: PrismaService,
+    private auditLog: IAuditLogService,
   ) {}
 
   async execute(
@@ -20,10 +27,33 @@ export class CancelInviteUseCase {
       currentUser,
     );
 
+    const before = snapshotFields(
+      invite as unknown as Record<string, unknown>,
+      AUDITED_INVITE_FIELDS,
+    );
+
     invite.deactive();
 
-    await this.inviteRepository.update(invite);
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await this.inviteRepository.update(invite, tx);
 
-    return invite;
+      await this.auditLog.record(
+        {
+          userId: currentUser.id,
+          organizationId: invite.organizationId,
+          entityType: AUDIT_ENTITY_TYPES.INTERNAL_USER_INVITE,
+          entityId: invite.id,
+          action: AUDIT_ACTIONS.INVITE_CANCELLED,
+          ...diffFields(
+            before,
+            updated as unknown as Record<string, unknown>,
+            AUDITED_INVITE_FIELDS,
+          ),
+        },
+        tx,
+      );
+
+      return updated;
+    });
   }
 }

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from 'src/infra/audit/audit.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { AccountModule } from 'src/account/account.module';
 import { PermissionsModule } from 'src/security/permissions/permissions.module';
@@ -25,6 +26,7 @@ import { ProfessionalsModule } from 'src/professionals/professionals.module';
 @Module({
   imports: [
     PrismaModule,
+    AuditModule,
     AccountModule,
     PermissionsModule,
     AuthModule,

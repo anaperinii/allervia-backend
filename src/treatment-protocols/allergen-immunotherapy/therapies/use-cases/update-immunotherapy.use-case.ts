@@ -4,6 +4,11 @@ import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immun
 import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
 import { ImmunotherapyResponseDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto';
 import { IMMUNOTHERAPY_MESSAGES } from 'src/treatment-protocols/allergen-immunotherapy/therapies/immunotherapy.messages';
+import { AUDITED_IMMUNOTHERAPY_FIELDS } from 'src/treatment-protocols/allergen-immunotherapy/therapies/immunotherapy.audit-fields';
+import { PrismaService } from 'src/infra/database/prisma.service';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
+import { diffFields, snapshotFields } from 'src/infra/audit/diff-fields';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
@@ -12,6 +17,8 @@ export class UpdateImmunotherapyUseCase {
   constructor(
     private readonly immunotherapyRepository: IImmunotherapyRepository,
     private readonly abilityFactory: AbilityFactory,
+    private readonly prisma: PrismaService,
+    private readonly auditLog: IAuditLogService,
   ) {}
 
   async execute(
@@ -31,6 +38,39 @@ export class UpdateImmunotherapyUseCase {
       throw new NotFoundException(IMMUNOTHERAPY_MESSAGES.notFound(id));
     }
 
-    return this.immunotherapyRepository.update(immunotherapy.id, dto);
+    const before = snapshotFields(
+      immunotherapy as unknown as Record<string, unknown>,
+      AUDITED_IMMUNOTHERAPY_FIELDS,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await this.immunotherapyRepository.update(
+        immunotherapy.id,
+        dto,
+        tx,
+      );
+
+      const diff = diffFields(
+        before,
+        updated as unknown as Record<string, unknown>,
+        AUDITED_IMMUNOTHERAPY_FIELDS,
+      );
+
+      if (diff.changedFields.length > 0) {
+        await this.auditLog.record(
+          {
+            userId: currentUser.id,
+            organizationId: currentUser.organizationId,
+            entityType: AUDIT_ENTITY_TYPES.IMMUNOTHERAPY,
+            entityId: immunotherapy.id,
+            action: AUDIT_ACTIONS.IMMUNOTHERAPY_UPDATED,
+            ...diff,
+          },
+          tx,
+        );
+      }
+
+      return updated;
+    });
   }
 }

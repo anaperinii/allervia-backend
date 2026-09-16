@@ -11,6 +11,21 @@ export function isSensitiveField(field: string): boolean {
   return SENSITIVE_FIELD_PATTERN.test(field);
 }
 
+export function snapshotFields(
+  source: Record<string, unknown> | null | undefined,
+  allowlist: readonly string[],
+): Record<string, unknown> {
+  const snapshot: Record<string, unknown> = {};
+
+  for (const field of allowlist) {
+    if (isSensitiveField(field)) continue;
+
+    snapshot[field] = source?.[field];
+  }
+
+  return snapshot;
+}
+
 export function diffFields(
   oldData: Record<string, unknown> | null | undefined,
   newData: Record<string, unknown> | null | undefined,

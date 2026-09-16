@@ -48,8 +48,11 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
   async update(
     immunoId: string,
     immunotherapy: Partial<UpdateImmunotherapyData>,
+    tx?: Prisma.TransactionClient,
   ): Promise<Immunotherapy> {
-    const updated = await this.prisma.immunotherapy.update({
+    const client = tx ?? this.prisma;
+
+    const updated = await client.immunotherapy.update({
       where: { id: immunoId },
       data: {
         administrationRoute: immunotherapy.administrationRoute,

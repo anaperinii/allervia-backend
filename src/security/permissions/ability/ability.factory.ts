@@ -46,6 +46,7 @@ export class AbilityFactory {
         can('manage', 'InternalUserInvite', inOrg);
         can('manage', 'ProfessionalRole', roleInOrg);
         can('read', 'Organization', { id: orgId });
+        can('read', 'AuditLog', inOrg);
         break;
 
       case Role.PHYSICIAN:
