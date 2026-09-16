@@ -1,5 +1,5 @@
 import { subject } from '@casl/ability';
-import { Patient } from '@prisma/client';
+import { AuditLog, Patient } from '@prisma/client';
 import { AbilityFactory, AbilityUser } from './ability.factory';
 
 describe('AbilityFactory', () => {
@@ -20,6 +20,9 @@ describe('AbilityFactory', () => {
   // teste tipado (sem `any`). `immuno` usa forma aninhada (posse via paciente).
   const patient = (data: Partial<Patient>) =>
     subject('Patient', data as Patient);
+
+  const auditLog = (data: Partial<AuditLog>) =>
+    subject('AuditLog', data as AuditLog);
 
   describe('ADMINISTRATOR', () => {
     const ability = factory.createForUser(
@@ -48,6 +51,25 @@ describe('AbilityFactory', () => {
 
     it('pode gerenciar usuários (nível de tipo, para a rota)', () => {
       expect(ability.can('update', 'User')).toBe(true);
+    });
+
+    it('lê a trilha de auditoria da própria organização', () => {
+      expect(ability.can('read', auditLog({ organizationId: ORG }))).toBe(true);
+    });
+
+    it('não lê a trilha de auditoria de outra organização', () => {
+      expect(ability.can('read', auditLog({ organizationId: OTHER_ORG }))).toBe(
+        false,
+      );
+    });
+
+    it('NÃO altera nem apaga a trilha (append-only)', () => {
+      expect(ability.can('update', auditLog({ organizationId: ORG }))).toBe(
+        false,
+      );
+      expect(ability.can('manage', auditLog({ organizationId: ORG }))).toBe(
+        false,
+      );
     });
   });
 

@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from './audit-log.service';
-import { AuditEntry } from './audit.types';
+import { AuditEntry, AuditLogQuery } from './audit.types';
+
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 200;
 
 @Injectable()
 export class PrismaAuditLogService extends IAuditLogService {
@@ -25,6 +28,32 @@ export class PrismaAuditLogService extends IAuditLogService {
         changedFields: entry.changedFields ?? [],
         sessionId: entry.sessionId,
       },
+    });
+  }
+
+  async findMany(query: AuditLogQuery, where: Prisma.AuditLogWhereInput) {
+    const limit = Math.min(query.limit ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+
+    return this.prismaService.auditLog.findMany({
+      where: {
+        AND: [
+          where,
+          {
+            entityType: query.entityType,
+            entityId: query.entityId,
+            userId: query.userId,
+            action: query.action,
+            timestamp:
+              query.from || query.to
+                ? { gte: query.from, lte: query.to }
+                : undefined,
+          },
+        ],
+      },
+      orderBy: { timestamp: 'desc' },
+      take: limit,
+      skip: query.cursor ? 1 : 0,
+      cursor: query.cursor ? { id: query.cursor } : undefined,
     });
   }
 }

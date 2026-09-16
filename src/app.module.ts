@@ -11,6 +11,7 @@ import { AccountModule } from './account/account.module';
 import { TreatmentProtocolsModule } from './treatment-protocols/treatment-protocols.module';
 import { ProfessionalsModule } from './professionals/professionals.module';
 import { PermissionsModule } from './security/permissions/permissions.module';
+import { AuditTrailModule } from './audit/audit-trail.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PermissionsModule } from './security/permissions/permissions.module';
     TreatmentProtocolsModule,
     ProfessionalsModule,
     PermissionsModule,
+    AuditTrailModule,
   ],
   controllers: [],
   providers: [

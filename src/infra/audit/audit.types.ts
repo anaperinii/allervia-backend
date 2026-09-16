@@ -39,6 +39,17 @@ export const AUDIT_ENTITY_TYPES = {
 export type AuditEntityType =
   (typeof AUDIT_ENTITY_TYPES)[keyof typeof AUDIT_ENTITY_TYPES];
 
+export interface AuditLogQuery {
+  entityType?: AuditEntityType;
+  entityId?: string;
+  userId?: string;
+  action?: AuditAction;
+  from?: Date;
+  to?: Date;
+  limit?: number;
+  cursor?: string;
+}
+
 export interface AuditEntry {
   userId: string;
   organizationId: string;
