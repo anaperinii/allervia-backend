@@ -1,4 +1,4 @@
-import { VerificationPurpose } from '@prisma/client';
+import { Prisma, VerificationPurpose } from '@prisma/client';
 import {
   ActiveVerificationToken,
   CreateVerificationTokenParams,
@@ -25,9 +25,15 @@ export abstract class IUserAuthRepository {
     since: Date,
   ): Promise<number>;
 
+  abstract findOrganizationIdByUserId(
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string | null>;
+
   abstract finalizePasswordReset(
     tokenId: string,
     userId: string,
     passwordHash: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<void>;
 }

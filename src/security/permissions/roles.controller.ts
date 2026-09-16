@@ -55,6 +55,8 @@ export class RolesController {
       professionalId: dto.professionalId,
       role: dto.name,
       grantedById: currentUser.professionalId,
+      actorUserId: currentUser.id,
+      organizationId: currentUser.organizationId,
     });
   }
 
@@ -76,6 +78,14 @@ export class RolesController {
     @Param('id') id: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
-    return this.revokeRoleUseCase.execute(id, currentUser.id);
+    if (!currentUser.professionalId) {
+      throw new ForbiddenException('Apenas profissionais podem revogar roles');
+    }
+
+    return this.revokeRoleUseCase.execute(id, {
+      userId: currentUser.id,
+      professionalId: currentUser.professionalId,
+      organizationId: currentUser.organizationId,
+    });
   }
 }

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from 'src/infra/audit/audit.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
+import { ProfessionalsModule } from 'src/professionals/professionals.module';
 import { RolesController } from './roles.controller';
 import { IRoleRepository } from './role.repository';
 import { PrismaRoleRepository } from './prisma-role.repository';
@@ -10,7 +12,7 @@ import { ListProfessionalRolesUseCase } from './use-cases/list-professional-role
 import { AbilityFactory } from './ability/ability.factory';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuditModule, ProfessionalsModule],
   providers: [
     GrantRoleUseCase,
     RevokeRoleUseCase,
