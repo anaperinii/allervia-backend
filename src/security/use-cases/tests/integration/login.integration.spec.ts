@@ -74,12 +74,12 @@ describe('LoginUseCase - Integration', () => {
   it('should login user correctly with valid credentials', async () => {
     const hashedPassword = await bcrypt.hash('password123', 10);
 
-    const _organization = await factories.organizations.create();
-
-    const user = await factories.users.create({
-      email: 'test@example.com',
-      password: hashedPassword,
-    });
+    const user = await factories.users.createAuthenticatedPhysicianProfessional(
+      {
+        email: 'test@example.com',
+        password: hashedPassword,
+      },
+    );
 
     const dto: LoginDto = {
       email: user.email,

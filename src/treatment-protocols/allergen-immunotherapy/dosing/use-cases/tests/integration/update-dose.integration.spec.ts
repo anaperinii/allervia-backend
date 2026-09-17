@@ -1,3 +1,5 @@
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { PrismaService } from 'src/infra/database/prisma.service';
@@ -22,6 +24,7 @@ describe('UpdateDoseUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        { provide: IAuditLogService, useClass: PrismaAuditLogService },
         AbilityFactory,
         UpdateDoseStatusUseCase,
         {

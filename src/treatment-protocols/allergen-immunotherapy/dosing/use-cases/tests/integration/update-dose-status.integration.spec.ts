@@ -27,7 +27,6 @@ import {
 } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.variables';
 import { MAINTENANCE_INTERVALS } from 'src/treatment-protocols/allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.variables';
 import { DoseStatus } from '@prisma/client';
-import { addDate } from 'src/utils/date.utils';
 import { RegisterAdministeredDoseUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/register-administered-dose.use-case';
 
 describe('registerAdministeredDoseUseCase - Integration', () => {
@@ -169,10 +168,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
       expect(nextDose!.concentration).toBe(STARTING_DOSE_CONCENTRATION); // Mesma concentração
       expect(nextDose!.volume).toBe(STARTING_DOSE_VOLUME * 4); // Volume dobrado novamente
       expect(nextDose!.nextIntervalInDays).toBe(BUILD_UP_INTERVAL);
-      const expectedScheduledDate = addDate(
-        administeredDate,
-        BUILD_UP_INTERVAL,
-      );
+      const expectedScheduledDate = new Date('2026-01-29');
       expect(new Date(nextDose!.scheduledAt).toDateString()).toBe(
         expectedScheduledDate.toDateString(),
       );
@@ -415,10 +411,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
       expect(nextDose!.concentration).toBe(targetConcentration);
       expect(nextDose!.volume).toBe(targetVolume);
       expect(nextDose!.nextIntervalInDays).toBe(MAINTENANCE_INTERVALS[0].days); // 14 dias
-      const expectedScheduledDate = addDate(
-        administeredDate,
-        MAINTENANCE_INTERVALS[0].days,
-      );
+      const expectedScheduledDate = new Date('2026-04-05');
       expect(new Date(nextDose!.scheduledAt).toDateString()).toBe(
         expectedScheduledDate.toDateString(),
       );
@@ -510,7 +503,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
       expect(nextDose).toBeDefined();
       expect(nextDose!.status).toBe(DoseStatus.SCHEDULED);
       expect(nextDose!.nextIntervalInDays).toBe(currentInterval); // Mantém 14 dias
-      const expectedScheduledDate = addDate(administeredDate, currentInterval);
+      const expectedScheduledDate = new Date('2026-04-23');
       expect(new Date(nextDose!.scheduledAt).toDateString()).toBe(
         expectedScheduledDate.toDateString(),
       );
@@ -602,10 +595,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
       expect(nextDose).toBeDefined();
       expect(nextDose!.status).toBe(DoseStatus.SCHEDULED);
       expect(nextDose!.nextIntervalInDays).toBe(MAINTENANCE_INTERVALS[1].days); // 21 dias (próximo intervalo)
-      const expectedScheduledDate = addDate(
-        administeredDate,
-        MAINTENANCE_INTERVALS[1].days,
-      );
+      const expectedScheduledDate = new Date('2026-05-02');
       expect(new Date(nextDose!.scheduledAt).toDateString()).toBe(
         expectedScheduledDate.toDateString(),
       );
@@ -698,7 +688,7 @@ describe('registerAdministeredDoseUseCase - Integration', () => {
       expect(nextDose).toBeDefined();
       expect(nextDose!.status).toBe(DoseStatus.SCHEDULED);
       expect(nextDose!.nextIntervalInDays).toBe(lastInterval); // Mantém 28 dias (último intervalo)
-      const expectedScheduledDate = addDate(administeredDate, lastInterval);
+      const expectedScheduledDate = new Date('2026-06-18');
       expect(new Date(nextDose!.scheduledAt).toDateString()).toBe(
         expectedScheduledDate.toDateString(),
       );

@@ -9,9 +9,9 @@ import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service'
 import { ulid } from 'ulid';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 import { BcryptPasswordHashingService } from 'src/security/bcrypt-password-hashing.service';
-import { UserNotFoundException } from 'src/account/exceptions/user-not-found.exception';
+import { NotFoundException } from '@nestjs/common';
 import { IUserRepository } from 'src/account/user.repository';
-import { UpdateUserPersonalDto } from 'src/account/dtos/update-user-personal.dto';
+import { UpdateUserDto } from 'src/account/dtos/update-user.dto';
 
 describe('UpdateUserPersonalUseCase - Integration', () => {
   let module: TestingModule;
@@ -60,17 +60,13 @@ describe('UpdateUserPersonalUseCase - Integration', () => {
     await TestDatabaseManager.disconnect();
   });
 
-  it('should update user personal data correctly', async () => {
+  it('should persist updated email and audit the change', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
 
-    const dto: UpdateUserPersonalDto = {
-      fullName: 'Nome Atualizado',
-      specialty: 'Cardiologia',
-      phoneNumber: '11987654321',
+    const dto: UpdateUserDto = {
+      email: 'updated@example.com',
     };
-
-    console.log(authenticatedUser);
 
     const result = await updateUserPersonalUseCase.execute(
       authenticatedUser.id,
@@ -80,14 +76,26 @@ describe('UpdateUserPersonalUseCase - Integration', () => {
 
     expect(result).toBeDefined();
 
-    console.log(result);
+    expect(result.email).toBe(dto.email);
+    expect(
+      (
+        await prisma.user.findUniqueOrThrow({
+          where: { id: authenticatedUser.id },
+        })
+      ).email,
+    ).toBe(dto.email);
+    expect(
+      await prisma.auditLog.count({
+        where: { entityId: authenticatedUser.id },
+      }),
+    ).toBe(1);
   });
 
   it('should update password correctly', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
 
-    const dto: UpdateUserPersonalDto = {
+    const dto: UpdateUserDto = {
       password: 'newpassword123',
     };
 
@@ -98,18 +106,47 @@ describe('UpdateUserPersonalUseCase - Integration', () => {
     );
 
     expect(result).toBeDefined();
+    const stored = await prisma.user.findUniqueOrThrow({
+      where: { id: authenticatedUser.id },
+    });
+    expect(stored.password).not.toBe(dto.password);
+    expect(
+      await module
+        .get<IPasswordHashingService>(IPasswordHashingService)
+        .compare(dto.password!, stored.password),
+    ).toBe(true);
   });
 
   it('should throw a not found exception when updating a non-existent user', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
 
-    const dto: UpdateUserPersonalDto = {
-      fullName: 'Nome Atualizado',
+    const dto: UpdateUserDto = {
+      email: 'updated@example.com',
     };
 
     await expect(
       updateUserPersonalUseCase.execute(ulid(), dto, authenticatedUser),
-    ).rejects.toThrow(UserNotFoundException);
+    ).rejects.toThrow(NotFoundException);
+  });
+  it('should reject cross-organization updates without changing data or audit', async () => {
+    const target =
+      await factories.users.createAuthenticatedPhysicianProfessional();
+    const actor =
+      await factories.users.createAuthenticatedPhysicianProfessional();
+    const before = await prisma.user.findUniqueOrThrow({
+      where: { id: target.id },
+    });
+    await expect(
+      updateUserPersonalUseCase.execute(
+        target.id,
+        { email: 'unauthorized@example.com' },
+        actor,
+      ),
+    ).rejects.toThrow(NotFoundException);
+    expect(
+      await prisma.user.findUniqueOrThrow({ where: { id: target.id } }),
+    ).toEqual(before);
+    expect(await prisma.auditLog.count()).toBe(0);
   });
 });

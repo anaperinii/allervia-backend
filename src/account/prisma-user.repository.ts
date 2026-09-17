@@ -43,6 +43,19 @@ export class PrismaUserRepository extends IUserRepository {
     return this.prismaService.user.findFirst({ where: { id } });
   }
 
+  async findUserByIdInOrganization(id: string, organizationId: string) {
+    if (!organizationId) return null;
+    return this.prismaService.user.findFirst({
+      where: {
+        id,
+        OR: [
+          { professional: { organizationId } },
+          { patient: { organizationId } },
+        ],
+      },
+    });
+  }
+
   async existsByEmail(email: string): Promise<boolean> {
     const count = await this.prismaService.user.count({ where: { email } });
 

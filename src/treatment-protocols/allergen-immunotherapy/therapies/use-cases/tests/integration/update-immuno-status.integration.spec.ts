@@ -1,3 +1,5 @@
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { TestingModule, Test } from '@nestjs/testing';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
@@ -22,6 +24,7 @@ describe('UpdateImmunotherapyStatusUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        { provide: IAuditLogService, useClass: PrismaAuditLogService },
         AbilityFactory,
         UpdateImmunotherapyStatusUseCase,
         {

@@ -21,7 +21,10 @@ export class ArchiveUserUseCase {
     id: string,
     currentUser: AuthenticatedUserPayload,
   ): Promise<User> {
-    const user = await this.userRepository.findUserById(id);
+    const user = await this.userRepository.findUserByIdInOrganization(
+      id,
+      currentUser.organizationId,
+    );
 
     if (!user) {
       throw new NotFoundException(USER_MESSAGES.notFound(id));

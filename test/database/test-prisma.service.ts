@@ -2,8 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import environment from './test-environment.cjs';
+
+const { assertTestDatabase } = environment as {
+  assertTestDatabase(this: void, env: NodeJS.ProcessEnv): void;
+};
 
 const TABLES = [
+  'VerificationToken',
   'AuditLog',
   'DoseObservation',
   'Dose',
@@ -19,10 +25,11 @@ const TABLES = [
 @Injectable()
 export class TestPrismaService extends PrismaClient {
   constructor() {
+    assertTestDatabase(process.env);
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
     });
-    const adapter = new PrismaPg(pool);
+    const adapter = new PrismaPg(pool, { disposeExternalPool: true });
 
     super({
       adapter,
@@ -34,22 +41,11 @@ export class TestPrismaService extends PrismaClient {
   }
 
   async cleanAll(): Promise<void> {
-    console.log('🧹 Limpando banco de testes...');
-
-    for (const table of TABLES) {
-      try {
-        await this.$executeRawUnsafe(
-          `TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`,
-        );
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        if (!message.includes('does not exist')) {
-          console.warn(`⚠️  Aviso ao limpar ${table}:`, message);
-        }
-      }
-    }
-
-    console.log('✅ Banco limpo com sucesso');
+    assertTestDatabase(process.env);
+    // Static table names only. One statement makes cleanup atomic and fails on schema drift.
+    await this.$executeRawUnsafe(
+      `TRUNCATE TABLE ${TABLES.map((table) => `"${table}"`).join(', ')} RESTART IDENTITY CASCADE;`,
+    );
   }
 
   async tableExists(tableName: string): Promise<boolean> {
