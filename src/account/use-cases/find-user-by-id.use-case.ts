@@ -1,3 +1,4 @@
+import { UserResponseDto } from 'src/account/dtos/user-response.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { IUserRepository } from 'src/account/user.repository';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
@@ -17,6 +18,6 @@ export class FindUserByIdUseCase {
       throw new NotFoundException(USER_MESSAGES.notFound(userId));
     }
 
-    return user;
+    return UserResponseDto.from(user);
   }
 }

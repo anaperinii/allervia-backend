@@ -66,6 +66,8 @@ describe('ArchiveUserUseCase - Integration', () => {
       authenticatedUser,
     );
 
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('tokenVersion');
     expect(result).toBeDefined();
     expect(result.isArchived).toBe(true);
   });

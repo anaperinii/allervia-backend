@@ -60,6 +60,47 @@ describe('UpdateUserPersonalUseCase - Integration', () => {
     await TestDatabaseManager.disconnect();
   });
 
+  it('persists professional profile fields and audits them', async () => {
+    const user =
+      await factories.users.createAuthenticatedPhysicianProfessional();
+    await updateUserPersonalUseCase.execute(
+      user.id,
+      {
+        fullName: 'Updated professional',
+        phoneNumber: '11999990000',
+      },
+      user,
+    );
+    const profile = await prisma.professional.findUniqueOrThrow({
+      where: { userId: user.id },
+    });
+    expect(profile.fullName).toBe('Updated professional');
+    expect(profile.phoneNumber).toBe('11999990000');
+    expect(
+      await prisma.auditLog.count({
+        where: { entityId: profile.id, action: 'PROFESSIONAL_UPDATED' },
+      }),
+    ).toBe(1);
+  });
+
+  it('rejects unsupported fields without partially changing the account', async () => {
+    const user =
+      await factories.users.createAuthenticatedPhysicianProfessional();
+    await expect(
+      updateUserPersonalUseCase.execute(
+        user.id,
+        {
+          email: 'must-not-persist@example.com',
+          specialty: 'Allergology',
+        },
+        user,
+      ),
+    ).rejects.toThrow('specialty');
+    expect(
+      (await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).email,
+    ).toBe(user.email);
+  });
+
   it('should persist updated email and audit the change', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
@@ -74,6 +115,8 @@ describe('UpdateUserPersonalUseCase - Integration', () => {
       authenticatedUser,
     );
 
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('tokenVersion');
     expect(result).toBeDefined();
 
     expect(result.email).toBe(dto.email);
@@ -105,11 +148,14 @@ describe('UpdateUserPersonalUseCase - Integration', () => {
       authenticatedUser,
     );
 
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('tokenVersion');
     expect(result).toBeDefined();
     const stored = await prisma.user.findUniqueOrThrow({
       where: { id: authenticatedUser.id },
     });
     expect(stored.password).not.toBe(dto.password);
+    expect(stored.tokenVersion).toBe(1);
     expect(
       await module
         .get<IPasswordHashingService>(IPasswordHashingService)

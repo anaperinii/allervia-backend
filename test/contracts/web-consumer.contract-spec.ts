@@ -133,7 +133,7 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
           maxBuffer: 1024 * 1024,
         },
       );
-      expect(result.stdout).toContain('3 passed');
+      expect(result.stdout).toContain('5 passed');
       expect(
         await prisma.dose.count({
           where: { immunotherapyId: therapy.immunotherapy.id },
