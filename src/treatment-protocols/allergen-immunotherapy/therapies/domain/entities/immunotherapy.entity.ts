@@ -1,7 +1,11 @@
+import type { ProtocolPrescription, Prisma } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { AdministrationRoute, TherapyStatus } from '@prisma/client';
 
 export interface ImmunotherapyProps {
+  prescription?: ProtocolPrescription | null;
+  revision?: number;
+  targetVolumeExact?: Prisma.Decimal | string | null;
   id: string;
   immunoType: string;
   administrationRoute: AdministrationRoute;
@@ -34,6 +38,9 @@ export interface CreateImmunotherapyProps {
 }
 
 export class Immunotherapy {
+  prescription?: ProtocolPrescription | null;
+  revision: number;
+  targetVolumeExact?: string | null;
   id: string;
   immunoType: string;
   administrationRoute: AdministrationRoute;
@@ -53,6 +60,9 @@ export class Immunotherapy {
   archivedAt: Date | null;
 
   constructor(props: ImmunotherapyProps) {
+    this.prescription = props.prescription;
+    this.revision = props.revision ?? 0;
+    this.targetVolumeExact = props.targetVolumeExact?.toString() ?? null;
     this.id = props.id;
     this.immunoType = props.immunoType;
     this.administrationRoute = props.administrationRoute;

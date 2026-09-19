@@ -48,9 +48,12 @@ describe('ValidateUserEmailUseCase - Integration', () => {
   it('should return user when email exists in organization', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
-    const targetUser = await factories.users.create({
-      email: 'test@example.com',
-    });
+    const targetUser = await factories.users.createInOrganization(
+      authenticatedUser.organizationId,
+      {
+        email: 'test@example.com',
+      },
+    );
 
     const result = await validateUserEmailUseCase.execute(
       targetUser.email,
@@ -73,20 +76,23 @@ describe('ValidateUserEmailUseCase - Integration', () => {
     expect(result).toBeNull();
   });
 
-  it('should return null when email exists in another organization', async () => {
-    const _authenticatedUser =
+  it('should detect globally unique email even in another organization', async () => {
+    const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
     const authenticatedUserAnotherOrg =
       await factories.users.createAuthenticatedPhysicianProfessional();
-    const targetUser = await factories.users.create({
-      email: 'test@example.com',
-    });
+    const targetUser = await factories.users.createInOrganization(
+      authenticatedUser.organizationId,
+      {
+        email: 'test@example.com',
+      },
+    );
 
     const result = await validateUserEmailUseCase.execute(
       targetUser.email,
       authenticatedUserAnotherOrg,
     );
 
-    expect(result).toBeNull();
+    expect(result?.id).toBe(targetUser.id);
   });
 });

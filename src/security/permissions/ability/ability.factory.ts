@@ -38,6 +38,7 @@ export class AbilityFactory {
 
     switch (role) {
       case Role.ADMINISTRATOR:
+        can('read', 'TreatmentProtocol', inOrg);
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can('read', 'Dose', doseInOrg);
@@ -50,6 +51,7 @@ export class AbilityFactory {
         break;
 
       case Role.PHYSICIAN:
+        can('manage', 'TreatmentProtocol', inOrg);
         can('create', 'Patient', inOrg);
         if (user.professionalId) {
           const ownPatient = { responsiblePhysicianId: user.professionalId };
@@ -63,6 +65,7 @@ export class AbilityFactory {
         break;
 
       case Role.NURSE:
+        can('read', 'TreatmentProtocol', inOrg);
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can(['read', 'create', 'update', 'archive'], 'Dose', doseInOrg);

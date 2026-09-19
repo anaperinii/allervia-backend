@@ -1,51 +1,50 @@
 import {
+  IsArray,
   IsDateString,
   IsEnum,
   IsNotEmpty,
-  IsNumber,
+  IsOptional,
   IsString,
-  Min,
-} from '@nestjs/class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+  Matches,
+  ValidateNested,
+  ArrayNotEmpty,
+  ArrayUnique,
+  IsDefined,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AdministrationRoute } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { ValidateNested } from 'class-validator';
 import { CreatePatientDto } from 'src/patients/dtos/create-patient.dto';
 
 export class CreateImmunotherapyDto {
-  @ApiProperty({ description: 'Informações do Paciente' })
+  @ApiProperty()
+  @IsDefined()
   @ValidateNested()
   @Type(() => CreatePatientDto)
   patient: CreatePatientDto;
-
-  @ApiProperty({ description: 'Tipo Imunoterapia' })
-  @IsString()
-  @IsNotEmpty()
-  immunoType: string;
-
-  @ApiProperty({ description: 'Rota de Administração' })
-  @IsNotEmpty()
+  @ApiProperty() @IsString() @IsNotEmpty() immunoType: string;
+  @ApiProperty({ enum: AdministrationRoute })
   @IsEnum(AdministrationRoute)
   administrationRoute: AdministrationRoute;
-
-  @ApiProperty({ description: 'Extrato' })
+  @ApiProperty() @IsString() @IsNotEmpty() extract: string;
+  @ApiProperty({ description: 'ISO timestamp with explicit offset' })
+  @IsDateString()
+  @Matches(/T.*(?:Z|[+-]\d{2}:\d{2})$/)
+  inductionStartDate: string;
+  @ApiPropertyOptional({
+    description:
+      'Published version; omitted uses the organizational default once',
+  })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  extract: string;
-
-  @ApiProperty({ description: 'Data de Ínicio Indução' })
-  @IsDateString({ strict: true })
-  @IsNotEmpty()
-  inductionStartDate: Date;
-
-  @ApiProperty({ description: 'Concentração Meta' })
-  @IsString()
-  @IsNotEmpty()
-  targetConcentration: number;
-
-  @ApiProperty({ description: 'Volume Meta' })
-  @IsNumber()
-  @IsNotEmpty()
-  @Min(0.01, { message: 'Volume meta deve ser maior que zero' })
-  targetVolume: number;
+  protocolVersionId?: string;
+  @ApiProperty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayUnique()
+  @IsString({ each: true })
+  stepIds: string[];
+  @ApiProperty() @IsString() @IsNotEmpty() startingStepId: string;
+  @ApiProperty() @IsString() @IsNotEmpty() targetStepId: string;
 }

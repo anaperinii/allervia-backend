@@ -67,6 +67,10 @@ model Organization {
   patients            Patient[]
   professionalInvites InternalUserInvite[]
   auditLogs           AuditLog[]
+  treatmentProtocols TreatmentProtocol[]
+  protocolDefaults OrganizationProtocolDefault[]
+  automationEnabled Boolean @default(false)
+  timeZone String @default("America/Sao_Paulo")
 }
 
 model ProfessionalRole {
@@ -243,6 +247,9 @@ model Immunotherapy {
   archivedBy   User?     @relation("ImmunotherapyArchivedBy", fields: [archivedById], references: [id])
 
   doses Dose[]
+  prescription ProtocolPrescription?
+  revision Int @default(0)
+  targetVolumeExact Decimal? @db.Decimal(65, 30)
 
   @@index([patientId, status, isArchived])
   @@index([administrationRoute])
@@ -278,6 +285,19 @@ model Dose {
   archivedById String?
   archivedBy   User?     @relation("DoseArchivedBy", fields: [archivedById], references: [id])
 
+  prescriptionId String?
+  prescription ProtocolPrescription? @relation(fields: [prescriptionId], references: [id])
+  plannedStepId String?
+  administeredStepId String?
+  plannedValues Json?
+  administeredValues Json?
+  plannedVolumeExact Decimal? @db.Decimal(65, 30)
+  administeredVolumeExact Decimal? @db.Decimal(65, 30)
+  sourceDoseId String? @unique
+  sourceDose Dose? @relation("DoseSuccessor", fields: [sourceDoseId], references: [id])
+  successor Dose? @relation("DoseSuccessor")
+  recommendation Json?
+  revision Int @default(0)
   observations DoseObservation[]
 
   @@index([immunotherapyId, scheduledAt])
@@ -353,4 +373,81 @@ model InternalUserInvite {
   @@index([organizationId, isActive])
   @@index([expiresAt])
   @@index([professionalId])
+}
+
+
+enum ProtocolVersionStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+model TreatmentProtocol {
+  id String @id @default(ulid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  name String
+  route AdministrationRoute
+  available Boolean @default(true)
+  createdById String
+  createdAt DateTime @default(now())
+  versions ProtocolVersion[]
+  @@unique([id, organizationId])
+  @@index([organizationId, route])
+}
+
+model ProtocolVersion {
+  id String @id @default(ulid())
+  protocolId String
+  organizationId String
+  protocol TreatmentProtocol @relation(fields: [protocolId, organizationId], references: [id, organizationId])
+  number Int
+  status ProtocolVersionStatus @default(DRAFT)
+  definition Json
+  schemaVersion Int @default(1)
+  engineVersion String @default("1")
+  revision Int @default(0)
+  createdById String
+  publishedById String?
+  createdAt DateTime @default(now())
+  publishedAt DateTime?
+  prescriptions ProtocolPrescription[]
+  defaults OrganizationProtocolDefault[]
+  @@unique([protocolId, number])
+  @@unique([id, organizationId])
+}
+
+model OrganizationProtocolDefault {
+  organizationId String
+  route AdministrationRoute
+  organization Organization @relation(fields: [organizationId], references: [id])
+  versionId String
+  version ProtocolVersion @relation(fields: [versionId, organizationId], references: [id, organizationId])
+  @@id([organizationId, route])
+}
+
+model ProtocolPrescription {
+  id String @id @default(ulid())
+  immunotherapyId String @unique
+  immunotherapy Immunotherapy @relation(fields: [immunotherapyId], references: [id])
+  organizationId String
+  versionId String
+  version ProtocolVersion @relation(fields: [versionId, organizationId], references: [id, organizationId])
+  resolved Json
+  revision Int @default(1)
+  createdById String
+  createdAt DateTime @default(now())
+  doses Dose[]
+}
+
+model ClinicalCommand {
+  id String @id @default(ulid())
+  organizationId String
+  actorId String
+  doseId String
+  key String
+  requestHash String
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([organizationId, actorId, doseId, key])
 }

@@ -7,7 +7,7 @@ import { PrismaUserRepository } from 'src/account/prisma-user.repository';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { ulid } from 'ulid';
-import { UserNotFoundException } from 'src/account/exceptions/user-not-found.exception';
+import { NotFoundException } from '@nestjs/common';
 import { IUserRepository } from 'src/account/user.repository';
 import { UpdateUserStatusDto } from 'src/account/dtos/update-user-status.dto';
 
@@ -57,9 +57,12 @@ describe('UpdateUserStatusUseCase - Integration', () => {
   it('should activate user correctly', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
-    const targetUser = await factories.users.create({
-      isActive: false,
-    });
+    const targetUser = await factories.users.createInOrganization(
+      authenticatedUser.organizationId,
+      {
+        isActive: false,
+      },
+    );
 
     const dto: UpdateUserStatusDto = {
       isActive: true,
@@ -78,9 +81,12 @@ describe('UpdateUserStatusUseCase - Integration', () => {
   it('should deactivate user correctly', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
-    const targetUser = await factories.users.create({
-      isActive: true,
-    });
+    const targetUser = await factories.users.createInOrganization(
+      authenticatedUser.organizationId,
+      {
+        isActive: true,
+      },
+    );
 
     const dto: UpdateUserStatusDto = {
       isActive: false,
@@ -106,15 +112,18 @@ describe('UpdateUserStatusUseCase - Integration', () => {
 
     await expect(
       updateUserStatusUseCase.execute(ulid(), dto, authenticatedUser),
-    ).rejects.toThrow(UserNotFoundException);
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('should throw a not found exception when updating user from another organization', async () => {
-    const _authenticatedUser =
+    const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
     const authenticatedUserAnotherOrg =
       await factories.users.createAuthenticatedPhysicianProfessional();
-    const targetUser = await factories.users.create({});
+    const targetUser = await factories.users.createInOrganization(
+      authenticatedUser.organizationId,
+      {},
+    );
 
     const dto: UpdateUserStatusDto = {
       isActive: true,
@@ -126,6 +135,6 @@ describe('UpdateUserStatusUseCase - Integration', () => {
         dto,
         authenticatedUserAnotherOrg,
       ),
-    ).rejects.toThrow(UserNotFoundException);
+    ).rejects.toThrow(NotFoundException);
   });
 });

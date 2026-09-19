@@ -3,7 +3,6 @@ import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
-import { CreateDoseUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/create-dose.use-case';
 import { ListDosesByTherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/dosing/use-cases/list-doses-by-therapy.use-case';
 import { CreateImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/create-immunotherapy.use-case';
 import { ImmunotherapyResponseDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto';
@@ -15,7 +14,6 @@ import { UpdateImmunotherapyUseCase } from 'src/treatment-protocols/allergen-imm
 import { CreateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/create-immunotherapy.dto';
 import { UpdateImmunotherapyStatusDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy-status.dto';
 import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
-import { PatientResponseDto } from 'src/patients/dtos/patient-response.dto';
 import { ListAllImmunotherapiesUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
 
 @ApiTags('immunotherapies')
@@ -28,7 +26,6 @@ export class ImmunotherapiesController {
     private listImmunotherapiesByTypeUseCase: ListImmunotherapiesByTypeUseCase,
     private updateImmunotherapyUseCase: UpdateImmunotherapyUseCase,
     private updateImmunotherapyStatusUseCase: UpdateImmunotherapyStatusUseCase,
-    private createDoseUseCase: CreateDoseUseCase,
     private listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
     private listAllImmunotherapies: ListAllImmunotherapiesUseCase,
   ) {}
@@ -38,10 +35,7 @@ export class ImmunotherapiesController {
   async createImmunotherapy(
     @Body() dto: CreateImmunotherapyDto,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ): Promise<{
-    patient: PatientResponseDto;
-    immunotherapy: ImmunotherapyResponseDto;
-  }> {
+  ) {
     return this.createImmunotherapyUseCase.execute(dto, currentUser);
   }
 

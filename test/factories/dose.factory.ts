@@ -7,6 +7,7 @@ export class DoseFactory extends BaseFactory<Dose> {
       concentration: 10000,
       volume: 0.1,
       nextIntervalInDays: 7,
+      betweenDosesReport: '',
     };
   }
 

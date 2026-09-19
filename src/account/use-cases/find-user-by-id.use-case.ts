@@ -7,8 +7,11 @@ import { USER_MESSAGES } from 'src/account/user.messages';
 export class FindUserByIdUseCase {
   constructor(private roleRepository: IUserRepository) {}
 
-  async execute(userId: string, _currentUser: AuthenticatedUserPayload) {
-    const user = await this.roleRepository.findUserById(userId);
+  async execute(userId: string, currentUser: AuthenticatedUserPayload) {
+    const user = await this.roleRepository.findUserByIdInOrganization(
+      userId,
+      currentUser.organizationId,
+    );
 
     if (!user) {
       throw new NotFoundException(USER_MESSAGES.notFound(userId));

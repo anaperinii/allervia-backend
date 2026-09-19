@@ -17,6 +17,11 @@ export abstract class IUserRepository {
 
   abstract findUserById(userId: string): Promise<User | null>;
 
+  abstract findUserByIdInOrganization(
+    userId: string,
+    organizationId: string,
+  ): Promise<User | null>;
+
   abstract existsByEmail(email: string): Promise<boolean>;
 
   abstract changePassword(

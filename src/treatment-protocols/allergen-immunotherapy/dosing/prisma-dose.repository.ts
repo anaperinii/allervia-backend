@@ -102,42 +102,4 @@ export class PrismaDoseRepository extends IDoseRepository {
 
     return count > 0;
   }
-
-  async countDosesByConcentration(
-    concentration: number,
-    immunotherapyId: string,
-    orgId: string,
-  ): Promise<number> {
-    const count = await this.prismaService.dose.count({
-      where: {
-        concentration,
-        immunotherapyId,
-        immunotherapy: { patient: { organizationId: orgId } },
-        status: {
-          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'],
-        },
-      },
-    });
-
-    return count;
-  }
-
-  async countDosesByInterval(
-    interval: number,
-    immunotherapyId: string,
-    orgId: string,
-  ): Promise<number> {
-    const count = await this.prismaService.dose.count({
-      where: {
-        nextIntervalInDays: interval,
-        immunotherapyId,
-        immunotherapy: { patient: { organizationId: orgId } },
-        status: {
-          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'],
-        },
-      },
-    });
-
-    return count;
-  }
 }

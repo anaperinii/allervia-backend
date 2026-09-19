@@ -1,14 +1,9 @@
+import { ProtocolMigrationService } from './allergen-immunotherapy/protocol-catalog/protocol-migration.service';
+import { ProtocolCatalogService } from './allergen-immunotherapy/protocol-catalog/protocol-catalog.service';
+import { ProtocolCatalogController } from './allergen-immunotherapy/protocol-catalog/protocol-catalog.controller';
+import { ConfiguredDoseService } from './allergen-immunotherapy/dosing/configured-dose.service';
+import { UpdateScheduledDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/update-scheduled-dose.use-case';
 import { Module } from '@nestjs/common';
-import { IBuildUpPhase } from './allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.interface';
-import { IMaintenancePhase } from './allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.interface';
-import { MaintenancePhaseService } from './allergen-immunotherapy/clinical-rules/maintenance-phase/maintenance-phase.service';
-import { RegisterStartingDoseUseCase } from './allergen-immunotherapy/clinical-rules/build-up-phase/register-starting-dose.use-case';
-import { RegisterNextScheduledBuildUpUseCase } from './allergen-immunotherapy/clinical-rules/build-up-phase/register-scheduled-build-up.use-case';
-import { RegisterNextScheduledMaintenanceUseCase } from './allergen-immunotherapy/clinical-rules/maintenance-phase/register-scheduled-maintenance.use-case';
-import { BuildUpPhaseService } from './allergen-immunotherapy/clinical-rules/build-up-phase/build-up-phase.service';
-import { CountDosesByConcentration } from './allergen-immunotherapy/dosing/use-cases/count-doses-by-concentration.use-case';
-import { CountDosesByIntervalUseCase } from './allergen-immunotherapy/dosing/use-cases/count-doses-by-interval.use-case';
-import { CreateDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/create-dose.use-case';
 import { ReadDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/read-dose.use-case';
 import { ListDosesByTherapyUseCase } from './allergen-immunotherapy/dosing/use-cases/list-doses-by-therapy.use-case';
 import { RegisterAdministeredDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/register-administered-dose.use-case';
@@ -34,16 +29,14 @@ import { PermissionsModule } from 'src/security/permissions/permissions.module';
 
 @Module({
   providers: [
-    RegisterStartingDoseUseCase,
-    RegisterNextScheduledBuildUpUseCase,
-    RegisterNextScheduledMaintenanceUseCase,
-    CreateDoseUseCase,
+    ProtocolCatalogService,
+    ProtocolMigrationService,
+    ConfiguredDoseService,
+    UpdateScheduledDoseUseCase,
     ReadDoseUseCase,
     ListDosesByTherapyUseCase,
     RegisterAdministeredDoseUseCase,
     UpdateDoseStatusUseCase,
-    CountDosesByConcentration,
-    CountDosesByIntervalUseCase,
     CreateImmunotherapyUseCase,
     FindImmunotherapyUseCase,
     ReadImmunotherapyUseCase,
@@ -52,14 +45,6 @@ import { PermissionsModule } from 'src/security/permissions/permissions.module';
     UpdateImmunotherapyUseCase,
     UpdateImmunotherapyStatusUseCase,
     ListAllImmunotherapiesUseCase,
-    {
-      provide: IBuildUpPhase,
-      useClass: BuildUpPhaseService,
-    },
-    {
-      provide: IMaintenancePhase,
-      useClass: MaintenancePhaseService,
-    },
     {
       provide: IDoseRepository,
       useClass: PrismaDoseRepository,
@@ -71,17 +56,16 @@ import { PermissionsModule } from 'src/security/permissions/permissions.module';
   ],
   imports: [PatientsModule, PrismaModule, AuditModule, PermissionsModule],
   exports: [
-    IBuildUpPhase,
-    IMaintenancePhase,
     IDoseRepository,
-    CreateDoseUseCase,
     ListDosesByTherapyUseCase,
-    CountDosesByConcentration,
-    CountDosesByIntervalUseCase,
     IImmunotherapyRepository,
     CreateImmunotherapyUseCase,
     FindImmunotherapyUseCase,
   ],
-  controllers: [DosesController, ImmunotherapiesController],
+  controllers: [
+    DosesController,
+    ImmunotherapiesController,
+    ProtocolCatalogController,
+  ],
 })
 export class TreatmentProtocolsModule {}

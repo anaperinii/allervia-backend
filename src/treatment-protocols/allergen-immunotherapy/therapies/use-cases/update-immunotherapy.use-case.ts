@@ -1,75 +1,56 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { accessibleBy } from '@casl/prisma';
-import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
-import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
-import { ImmunotherapyResponseDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto';
-import { IMMUNOTHERAPY_MESSAGES } from 'src/treatment-protocols/allergen-immunotherapy/therapies/immunotherapy.messages';
-import { AUDITED_IMMUNOTHERAPY_FIELDS } from 'src/treatment-protocols/allergen-immunotherapy/therapies/immunotherapy.audit-fields';
+import {
+  ConflictException,
+  Injectable,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
-import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
-import { diffFields, snapshotFields } from 'src/infra/audit/diff-fields';
-import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
-import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
-
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
+import { ConfiguredDoseService } from '../../dosing/configured-dose.service';
+import { UpdateImmunotherapyDto } from '../dtos/update-immunotherapy.dto';
 @Injectable()
 export class UpdateImmunotherapyUseCase {
   constructor(
-    private readonly immunotherapyRepository: IImmunotherapyRepository,
-    private readonly abilityFactory: AbilityFactory,
     private readonly prisma: PrismaService,
-    private readonly auditLog: IAuditLogService,
+    private readonly clinical: ConfiguredDoseService,
+    private readonly audit: IAuditLogService,
   ) {}
-
   async execute(
     id: string,
     dto: UpdateImmunotherapyDto,
-    currentUser: AuthenticatedUserPayload,
-  ): Promise<ImmunotherapyResponseDto> {
-    const ability = this.abilityFactory.createForUser(currentUser);
-    const where = accessibleBy(ability, 'update').ofType('Immunotherapy');
-
-    const immunotherapy = await this.immunotherapyRepository.findByIdAccessible(
-      id,
-      where,
-    );
-
-    if (!immunotherapy) {
-      throw new NotFoundException(IMMUNOTHERAPY_MESSAGES.notFound(id));
-    }
-
-    const before = snapshotFields(
-      immunotherapy as unknown as Record<string, unknown>,
-      AUDITED_IMMUNOTHERAPY_FIELDS,
-    );
-
+    user: AuthenticatedUserPayload,
+  ) {
+    if (
+      Object.keys(dto).some(
+        (key) => !['immunoType', 'expectedRevision'].includes(key),
+      )
+    )
+      throw new BadRequestException('PRESCRIPTION_REVISION_REQUIRED');
     return this.prisma.$transaction(async (tx) => {
-      const updated = await this.immunotherapyRepository.update(
-        immunotherapy.id,
-        dto,
+      const therapy = await this.clinical.lockTherapy(tx, id, user);
+      if (therapy.revision !== dto.expectedRevision)
+        throw new ConflictException('STALE_CLINICAL_REVISION');
+      const updated = await tx.immunotherapy.update({
+        where: { id },
+        data: {
+          immunoType: dto.immunoType,
+          revision: { increment: 1 },
+          updatedById: user.id,
+        },
+      });
+      await this.audit.record(
+        {
+          userId: user.id,
+          organizationId: user.organizationId,
+          entityType: 'Immunotherapy',
+          entityId: id,
+          action: 'IMMUNOTHERAPY_UPDATED',
+          oldValues: { immunoType: therapy.immunoType },
+          newValues: { immunoType: updated.immunoType },
+          changedFields: ['immunoType'],
+        },
         tx,
       );
-
-      const diff = diffFields(
-        before,
-        updated as unknown as Record<string, unknown>,
-        AUDITED_IMMUNOTHERAPY_FIELDS,
-      );
-
-      if (diff.changedFields.length > 0) {
-        await this.auditLog.record(
-          {
-            userId: currentUser.id,
-            organizationId: currentUser.organizationId,
-            entityType: AUDIT_ENTITY_TYPES.IMMUNOTHERAPY,
-            entityId: immunotherapy.id,
-            action: AUDIT_ACTIONS.IMMUNOTHERAPY_UPDATED,
-            ...diff,
-          },
-          tx,
-        );
-      }
-
       return updated;
     });
   }

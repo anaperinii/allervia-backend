@@ -24,7 +24,10 @@ export class UpdateUserUseCase {
     dto: UpdateUserDto,
     currentUser: AuthenticatedUserPayload,
   ): Promise<UserResponseDto> {
-    const user = await this.userRepository.findUserById(id);
+    const user = await this.userRepository.findUserByIdInOrganization(
+      id,
+      currentUser.organizationId,
+    );
 
     if (!user) {
       throw new NotFoundException(USER_MESSAGES.notFound(id));
