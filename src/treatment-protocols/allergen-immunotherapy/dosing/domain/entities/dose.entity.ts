@@ -1,10 +1,17 @@
-import { DoseStatus } from '@prisma/client';
+import { DoseStatus, Prisma } from '@prisma/client';
 import { DoseAlreadyArchivedException } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/dose-already-archived.exception';
 import { UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { UpdateDoseStatusDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose-status.dto';
 import { InvalidDoseStatusException } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/invalid-dose-status.exception';
 
 export interface DoseProps {
+  revision?: number;
+  prescriptionId?: string | null;
+  plannedStepId?: string | null;
+  administeredStepId?: string | null;
+  plannedValues?: Prisma.JsonValue;
+  administeredValues?: Prisma.JsonValue;
+  recommendation?: Prisma.JsonValue;
   id: string;
   concentration: number;
   volume: number;
@@ -38,6 +45,13 @@ export interface CreateDoseProps {
 }
 
 export class Dose {
+  revision: number;
+  prescriptionId?: string | null;
+  plannedStepId?: string | null;
+  administeredStepId?: string | null;
+  plannedValues?: Prisma.JsonValue;
+  administeredValues?: Prisma.JsonValue;
+  recommendation?: Prisma.JsonValue;
   id: string;
   concentration: number;
   volume: number;
@@ -57,6 +71,13 @@ export class Dose {
   updatedAt: Date;
 
   constructor(props: DoseProps) {
+    this.revision = props.revision ?? 0;
+    this.prescriptionId = props.prescriptionId;
+    this.plannedStepId = props.plannedStepId;
+    this.administeredStepId = props.administeredStepId;
+    this.plannedValues = props.plannedValues;
+    this.administeredValues = props.administeredValues;
+    this.recommendation = props.recommendation;
     this.id = props.id;
     this.concentration = props.concentration;
     this.volume = props.volume;

@@ -25,16 +25,4 @@ export abstract class IDoseRepository {
   ): Promise<Dose[]>;
 
   abstract exists(id: string): Promise<boolean>;
-
-  abstract countDosesByConcentration(
-    concentration: number,
-    immunotherapyId: string,
-    orgId: string,
-  ): Promise<number>;
-
-  abstract countDosesByInterval(
-    intervalInDays: number,
-    immunotherapyId: string,
-    orgId: string,
-  ): Promise<number>;
 }

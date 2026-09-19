@@ -1,52 +1,81 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
-import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
-import { ReadDoseUseCase } from './use-cases/read-dose.use-case';
-import { ListDosesByTherapyUseCase } from './use-cases/list-doses-by-therapy.use-case';
-import { RegisterAdministeredDoseUseCase } from './use-cases/register-administered-dose.use-case';
-import { UpdateDoseStatusUseCase } from './use-cases/update-dose-status.use-case';
-import { UpdateDoseDto } from './dtos/update-dose.dto';
-import { UpdateDoseStatusDto } from './dtos/update-dose-status.dto';
-
+import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
+import { ConfiguredDoseService } from './configured-dose.service';
+import {
+  AdministerDoseDto,
+  DosePreviewDto,
+  UpdateScheduledDoseDto,
+} from './dtos/configured-dose.dto';
+@ApiTags('doses')
+@ApiResponse({
+  status: 400,
+  description:
+    'Invalid configured value, conflicting step ID, ambiguous value or invalid calendar input',
+})
+@ApiResponse({
+  status: 409,
+  description:
+    'Stale dose/therapy revision, inactive treatment, disabled automation, pending migration or conflicting idempotency key',
+})
+@ApiResponse({
+  status: 410,
+  description:
+    'Legacy write route retired; use scheduled, preview or administer',
+})
 @Controller('doses')
 export class DosesController {
-  constructor(
-    private readonly readDoseUseCase: ReadDoseUseCase,
-    private readonly listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
-    private readonly updateDoseUseCase: RegisterAdministeredDoseUseCase,
-    private readonly updateDoseStatusUseCase: UpdateDoseStatusUseCase,
-  ) {}
-
+  constructor(private readonly clinical: ConfiguredDoseService) {}
   @Get(':id')
   @CheckPolicies({ action: 'read', subject: 'Dose' })
-  async findOne(
-    @Param('id') id: string,
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ) {
-    return this.readDoseUseCase.execute(id, currentUser);
+  read(@Param('id') id: string, @CurrentUser() user: AuthenticatedUserPayload) {
+    return this.clinical.read(id, user);
   }
-
-  @ApiBody({ type: UpdateDoseDto })
+  @Patch(':id/scheduled')
+  @CheckPolicies({ action: 'update', subject: 'Dose' })
+  edit(
+    @Param('id') id: string,
+    @Body() dto: UpdateScheduledDoseDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.clinical.edit(id, dto, user);
+  }
+  @Post(':id/preview')
+  @CheckPolicies({ action: 'read', subject: 'Dose' })
+  preview(
+    @Param('id') id: string,
+    @Body() dto: DosePreviewDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.clinical.preview(id, dto, user);
+  }
+  @Post(':id/administer')
+  @CheckPolicies({ action: 'update', subject: 'Dose' })
+  administer(
+    @Param('id') id: string,
+    @Body() dto: AdministerDoseDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.clinical.administer(id, dto, user);
+  }
   @Patch(':id')
+  @ApiOperation({ deprecated: true })
   @CheckPolicies({ action: 'update', subject: 'Dose' })
-  async update(
+  legacy(
     @Param('id') id: string,
-    @Body() dto: UpdateDoseDto,
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
+    @CurrentUser() user: AuthenticatedUserPayload,
   ) {
-    return this.updateDoseUseCase.execute(id, dto, currentUser);
+    return this.clinical.rejectLegacyWrite(id, user);
   }
-
-  @ApiBody({ type: UpdateDoseStatusDto })
   @Patch('update/status/:id')
+  @ApiOperation({ deprecated: true })
   @CheckPolicies({ action: 'update', subject: 'Dose' })
-  async updateStatus(
+  legacyStatus(
     @Param('id') id: string,
-    @Body() dto: UpdateDoseStatusDto,
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
+    @CurrentUser() user: AuthenticatedUserPayload,
   ) {
-    return this.updateDoseStatusUseCase.execute(id, dto, currentUser);
+    return this.clinical.rejectLegacyWrite(id, user);
   }
 }

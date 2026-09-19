@@ -9,6 +9,11 @@ const { assertTestDatabase } = environment as {
 };
 
 const TABLES = [
+  'ClinicalCommand',
+  'OrganizationProtocolDefault',
+  'ProtocolPrescription',
+  'ProtocolVersion',
+  'TreatmentProtocol',
   'VerificationToken',
   'AuditLog',
   'DoseObservation',
@@ -73,15 +78,19 @@ export class TestPrismaService extends PrismaClient {
 
   async showStats(): Promise<void> {
     console.log('\n📊 Estatísticas do Banco de Testes:');
-    console.log('─────────────────────────────────────');
+    console.log(
+      'â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€',
+    );
 
     for (const table of TABLES) {
       if (await this.tableExists(table)) {
         const count = await this.countRecords(table);
-        console.log(`  ${table.padEnd(20)} → ${count} registro(s)`);
+        console.log(`  ${table.padEnd(20)} â†’ ${count} registro(s)`);
       }
     }
 
-    console.log('─────────────────────────────────────\n');
+    console.log(
+      'â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\n',
+    );
   }
 }

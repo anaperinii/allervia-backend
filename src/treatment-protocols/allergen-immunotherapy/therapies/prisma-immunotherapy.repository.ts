@@ -9,6 +9,7 @@ import {
 import { Prisma } from '@prisma/client';
 
 const IMMUNO_INCLUDE = {
+  prescription: true,
   patient: { include: { responsiblePhysician: true } },
   createdBy: { select: { id: true } },
   updatedBy: { select: { id: true } },
