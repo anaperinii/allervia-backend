@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { FindInviteByIdUseCase } from './find-invite-by-id.use-case';
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
-import { InviteResponseDto } from 'src/invites/dtos/invite-response.dto';
+import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
 import { AUDITED_INVITE_FIELDS } from 'src/invites/invite.audit-fields';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
@@ -21,7 +21,7 @@ export class CancelInviteUseCase {
   async execute(
     inviteId: string,
     currentUser: AuthenticatedUserPayload,
-  ): Promise<InviteResponseDto> {
+  ): Promise<UserInvite> {
     const invite = await this.findInviteByIdUseCase.execute(
       inviteId,
       currentUser,

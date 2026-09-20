@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
-import { IEmailService } from './email.service';
+import { IEmailService, InviteEmailParams } from './email.service';
 
 /**
  * Entrega real por SMTP. A mensagem carrega apenas o necessário para a ação:
@@ -53,6 +53,29 @@ export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
 
     // O token nunca entra em log; apenas o fato do envio.
     this.logger.log('Password reset link dispatched.');
+  }
+
+  async sendInviteLink(params: InviteEmailParams): Promise<void> {
+    const link = `${this.appBaseUrl}/register?token=${encodeURIComponent(params.token)}`;
+    const deadline = params.expiresAt.toLocaleDateString('pt-BR');
+
+    await this.transporter.sendMail({
+      from: this.sender,
+      to: params.email,
+      subject: `Convite para ${params.organizationName} — Allervia`,
+      text: [
+        `Olá, ${params.fullName}.`,
+        '',
+        `Você foi convidado(a) para acessar o Allervia em ${params.organizationName}.`,
+        '',
+        'Abra o endereço abaixo para criar sua conta:',
+        link,
+        '',
+        `O convite é válido até ${deadline} e vale uma única vez.`,
+      ].join('\n'),
+    });
+
+    this.logger.log('Invite link dispatched.');
   }
 
   async sendPasswordChangedNotification(email: string): Promise<void> {

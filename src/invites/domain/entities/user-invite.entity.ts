@@ -105,8 +105,13 @@ export class UserInvite {
     return this.expiresAt < new Date();
   }
 
+  /**
+   * Usado e cancelado são fatos diferentes: o primeiro tem `usedAt`, o segundo
+   * apenas perdeu a validade por decisão da administração. Confundi-los faria a
+   * tela dizer ao convidado que ele já se cadastrou.
+   */
   isUsed(): boolean {
-    return !this.isActive || this.usedAt !== null;
+    return this.usedAt !== null;
   }
 
   isDeactive(): boolean {

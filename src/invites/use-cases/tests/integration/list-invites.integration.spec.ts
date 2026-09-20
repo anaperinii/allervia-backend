@@ -75,10 +75,11 @@ describe('ListInvitesUseCase - Integration', () => {
 
     const result = await listInvitesUseCase.execute(authenticatedUser, query);
 
-    expect(result).toBeDefined();
-    expect(result.length).toBeGreaterThanOrEqual(2);
-    expect(result.some((i) => i.id === invite1.id)).toBe(true);
-    expect(result.some((i) => i.id === invite2.id)).toBe(true);
+    expect(result.total).toBeGreaterThanOrEqual(2);
+    expect(result.page).toBe(1);
+    expect(result.items.some((i) => i.id === invite1.id)).toBe(true);
+    expect(result.items.some((i) => i.id === invite2.id)).toBe(true);
+    expect(result.items.every((i) => !('token' in i))).toBe(true);
   });
 
   it('should return empty array when organization has no invites', async () => {
@@ -88,7 +89,7 @@ describe('ListInvitesUseCase - Integration', () => {
 
     const result = await listInvitesUseCase.execute(authenticatedUser, query);
 
-    expect(result).toBeDefined();
-    expect(Array.isArray(result)).toBe(true);
+    expect(result.items).toEqual([]);
+    expect(result.total).toBe(0);
   });
 });

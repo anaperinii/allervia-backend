@@ -1,43 +1,52 @@
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { ListInvitesQueryDto } from 'src/invites/dtos/list-invites-query.dto';
-import { FindInviteByOrgUseCase } from './find-invite-by-org.use-case';
-import { FindUserByIdUseCase } from 'src/account/use-cases/find-user-by-id.use-case';
+import {
+  InviteResponseDto,
+  resolveInviteStatus,
+} from 'src/invites/dtos/invite-response.dto';
+import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
+import { buildPage, PageDto, resolvePage } from 'src/infra/http/pagination';
 
+/**
+ * Convites da organização do ator, paginados no banco. O escopo entra na
+ * consulta e no total: nenhuma outra organização aparece na contagem.
+ */
 @Injectable()
 export class ListInvitesUseCase {
-  constructor(
-    private findInviteByOrgUseCase: FindInviteByOrgUseCase,
-    private findUserById: FindUserByIdUseCase,
-  ) {}
+  constructor(private readonly inviteRepository: IUserInviteRepository) {}
 
   async execute(
     currentUser: AuthenticatedUserPayload,
     query: ListInvitesQueryDto,
-  ) {
-    const organizationId = currentUser.organizationId;
+  ): Promise<PageDto<InviteResponseDto>> {
+    const bounds = resolvePage(query);
 
-    const invites = await this.findInviteByOrgUseCase.execute(organizationId, {
-      role: query.role,
-      onlyActive: query.onlyActive ?? false,
-      includeExpired: query.includeExpired ?? false,
-    });
-
-    const result = await Promise.all(
-      invites.map(async (invite) => {
-        const createdByUser = await this.findUserById.execute(
-          invite.createdById,
-          currentUser,
-        );
-
-        return {
-          ...invite,
-          createdById: createdByUser.id,
-          createdByEmail: createdByUser.email,
-        };
-      }),
+    const { items, total } = await this.inviteRepository.findPageByOrganization(
+      currentUser.organizationId,
+      {
+        role: query.role,
+        onlyActive: query.onlyActive ?? false,
+        includeExpired: query.includeExpired ?? false,
+        search: query.search?.trim() || undefined,
+      },
+      bounds,
     );
 
-    return result;
+    return buildPage(
+      items.map((invite) => ({
+        id: invite.id,
+        email: invite.email,
+        fullName: invite.fullName,
+        role: invite.role,
+        status: resolveInviteStatus(invite),
+        expiresAt: invite.expiresAt,
+        usedAt: invite.usedAt,
+        createdAt: invite.createdAt,
+        createdBy: invite.createdBy,
+      })),
+      total,
+      bounds,
+    );
   }
 }

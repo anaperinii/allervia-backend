@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from 'src/infra/audit/audit.module';
+import { EmailModule } from 'src/infra/email/email.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { AccountModule } from 'src/account/account.module';
 import { PermissionsModule } from 'src/security/permissions/permissions.module';
@@ -19,6 +20,7 @@ import { FindInviteByOrgUseCase } from './use-cases/find-invite-by-org.use-case'
 import { FindInviteByTokenUseCase } from './use-cases/find-invite-by-token.use-case';
 import { ValidateInviteForRegisterUseCase } from './use-cases/validate-invite-for-registration.use-case';
 import { FindActiveInviteUseCase } from './use-cases/find-active-invite.use-case';
+import { FindInviteContextUseCase } from './use-cases/find-invite-context.use-case';
 import { RegisterStrategyContext } from './strategies/register/register-strategy.context';
 import { InternalUserRegisterStrategy } from './strategies/register/internal-user-register.strategy';
 import { ProfessionalsModule } from 'src/professionals/professionals.module';
@@ -27,6 +29,7 @@ import { ProfessionalsModule } from 'src/professionals/professionals.module';
   imports: [
     PrismaModule,
     AuditModule,
+    EmailModule,
     AccountModule,
     PermissionsModule,
     AuthModule,
@@ -42,6 +45,7 @@ import { ProfessionalsModule } from 'src/professionals/professionals.module';
     FindInviteByTokenUseCase,
     ValidateInviteForRegisterUseCase,
     FindActiveInviteUseCase,
+    FindInviteContextUseCase,
 
     // Strategies
     InviteStrategyContext,
