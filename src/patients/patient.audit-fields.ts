@@ -3,6 +3,7 @@ export const AUDITED_PATIENT_FIELDS = [
   'birthDate',
   'weightInKg',
   'phoneNumber',
+  'cpf',
   'responsiblePhysicianId',
   'isActive',
   'isArchived',
