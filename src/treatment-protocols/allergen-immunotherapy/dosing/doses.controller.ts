@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
@@ -43,6 +52,7 @@ export class DosesController {
     return this.clinical.edit(id, dto, user);
   }
   @Post(':id/preview')
+  @HttpCode(HttpStatus.OK)
   @CheckPolicies({ action: 'read', subject: 'Dose' })
   preview(
     @Param('id') id: string,

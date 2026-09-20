@@ -74,6 +74,8 @@ describe('UpdateUserStatusUseCase - Integration', () => {
       authenticatedUser,
     );
 
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('tokenVersion');
     expect(result).toBeDefined();
     expect(result.isActive).toBe(true);
   });
@@ -98,6 +100,8 @@ describe('UpdateUserStatusUseCase - Integration', () => {
       authenticatedUser,
     );
 
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('tokenVersion');
     expect(result).toBeDefined();
     expect(result.isActive).toBe(false);
   });

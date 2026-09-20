@@ -1,5 +1,5 @@
+import { UserResponseDto } from 'src/account/dtos/user-response.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { User } from '@prisma/client';
 import { IUserRepository } from 'src/account/user.repository';
 import { AUDITED_USER_FIELDS } from 'src/account/user.audit-fields';
 import { PrismaService } from 'src/infra/database/prisma.service';
@@ -20,7 +20,7 @@ export class ArchiveUserUseCase {
   async execute(
     id: string,
     currentUser: AuthenticatedUserPayload,
-  ): Promise<User> {
+  ): Promise<UserResponseDto> {
     const user = await this.userRepository.findUserByIdInOrganization(
       id,
       currentUser.organizationId,
@@ -48,7 +48,7 @@ export class ArchiveUserUseCase {
         tx,
       );
 
-      return archived;
+      return UserResponseDto.from(archived);
     });
   }
 }

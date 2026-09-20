@@ -56,6 +56,8 @@ describe('FindUserByIdUseCase - Integration', () => {
       authenticatedUser,
     );
 
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('tokenVersion');
     expect(result).toBeDefined();
     expect(result.id).toBe(authenticatedUser.id);
     expect(result.email).toBe(authenticatedUser.email);
@@ -69,6 +71,8 @@ describe('FindUserByIdUseCase - Integration', () => {
       systemAdmin,
     );
 
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('tokenVersion');
     expect(result).toBeDefined();
     expect(result.id).toBe(systemAdmin.id);
     expect(result.type).toBe('PROFESSIONAL');

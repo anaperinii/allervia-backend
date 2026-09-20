@@ -27,6 +27,12 @@ export class PrismaUserRepository extends IUserRepository {
       data: {
         email: user.email,
         password: user.password,
+        tokenVersion:
+          user.password !== undefined ||
+          user.isActive === false ||
+          user.isArchived === true
+            ? { increment: 1 }
+            : undefined,
         isActive: user.isActive,
         isArchived: user.isArchived,
       },

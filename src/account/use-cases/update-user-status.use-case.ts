@@ -52,7 +52,7 @@ export class UpdateUserStatusUseCase {
         tx,
       );
 
-      return updated;
+      return UserResponseDto.from(updated);
     });
   }
 }
