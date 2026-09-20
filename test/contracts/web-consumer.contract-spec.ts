@@ -3,12 +3,14 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { Test } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 import { JwtService } from '@nestjs/jwt';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { DomainExceptionFilter } from 'src/infra/filters/domain-exception.filter';
+import { buildValidationPipe } from 'src/infra/http/validation-pipe';
 import { ProtocolCatalogService } from 'src/treatment-protocols/allergen-immunotherapy/protocol-catalog/protocol-catalog.service';
 import { CreateImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/create-immunotherapy.use-case';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
@@ -31,6 +33,12 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
         'Install allervia-web dependencies and set ALLERVIA_WEB_ROOT if not a sibling checkout.',
       );
     }
+    // Sem HTTPS no servidor efêmero, os atributos do cookie são exercitados em
+    // modo de desenvolvimento explícito.
+    process.env.AUTH_INSECURE_COOKIES = 'true';
+    process.env.AUTH_MFA_ENFORCEMENT = 'optional';
+    process.env.AUTH_LEGACY_BEARER = 'enabled';
+
     await TestDatabaseManager.connect();
     await TestDatabaseManager.cleanAll();
     const module = await Test.createTestingModule({ imports: [AppModule] })
@@ -38,13 +46,10 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
       .useValue(TestDatabaseManager.getInstance())
       .compile();
     app = module.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({
-        transform: true,
-        whitelist: true,
-        forbidNonWhitelisted: true,
-      }),
-    );
+    // O consumidor real roda atrás do mesmo transporte da aplicação: cookies
+    // analisados, validação com erros por campo e envelope único de erro.
+    app.use(cookieParser());
+    app.useGlobalPipes(buildValidationPipe());
     app.useGlobalFilters(new DomainExceptionFilter());
     await app.listen(0, '127.0.0.1');
     const contractDirectory = resolve('docs/integration-baseline');
@@ -133,7 +138,7 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
           maxBuffer: 1024 * 1024,
         },
       );
-      expect(result.stdout).toContain('5 passed');
+      expect(result.stdout).toContain('7 passed');
       expect(
         await prisma.dose.count({
           where: { immunotherapyId: therapy.immunotherapy.id },

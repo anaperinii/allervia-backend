@@ -21,10 +21,15 @@ module.exports = {
   ],
 
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': ['ts-jest', { tsconfig: { allowJs: true } }],
+    '^.+\\.mjs$': ['ts-jest', { tsconfig: { allowJs: true } }],
   },
 
-  transformIgnorePatterns: ['node_modules/(?!(@faker-js/faker)/)'],
+  // `@scure/base` (via otplib) é ESM puro: o Node 22 aceita require de ESM, o
+  // Jest não. Transformar o pacote é o que mantém a suíte executável.
+  transformIgnorePatterns: [
+    'node_modules/(?!(@faker-js/faker|@scure|@noble|@otplib|otplib)/)',
+  ],
 
   coverageDirectory: 'coverage',
 
@@ -33,6 +38,9 @@ module.exports = {
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
     '^test/(.*)$': '<rootDir>/test/$1',
+    // otplib publica ESM e também os fontes TypeScript; o Jest resolveria os
+    // fontes e falharia no ESM de `@scure/base`. O bundle CJS é o mesmo código.
+    '^otplib$': '<rootDir>/node_modules/otplib/dist/index.cjs',
   },
 
   modulePaths: ['<rootDir>'],

@@ -10,6 +10,11 @@ import { ulid } from 'ulid';
 import { NotFoundException } from '@nestjs/common';
 import { IUserRepository } from 'src/account/user.repository';
 import { UpdateUserStatusDto } from 'src/account/dtos/update-user-status.dto';
+import { ConfigModule } from '@nestjs/config';
+import { SessionConfig } from 'src/security/session/session.config';
+import { SessionService } from 'src/security/session/session.service';
+import { IAuthSessionRepository } from 'src/security/session/auth-session.repository';
+import { PrismaAuthSessionRepository } from 'src/security/session/prisma-auth-session.repository';
 
 describe('UpdateUserStatusUseCase - Integration', () => {
   let module: TestingModule;
@@ -21,8 +26,11 @@ describe('UpdateUserStatusUseCase - Integration', () => {
     await TestDatabaseManager.connect();
 
     module = await Test.createTestingModule({
+      imports: [ConfigModule.forRoot()],
       providers: [
         UpdateUserStatusUseCase,
+        SessionConfig,
+        SessionService,
         {
           provide: PrismaService,
           useValue: TestDatabaseManager.getInstance(),
@@ -34,6 +42,10 @@ describe('UpdateUserStatusUseCase - Integration', () => {
         {
           provide: IAuditLogService,
           useClass: PrismaAuditLogService,
+        },
+        {
+          provide: IAuthSessionRepository,
+          useClass: PrismaAuthSessionRepository,
         },
       ],
     }).compile();
