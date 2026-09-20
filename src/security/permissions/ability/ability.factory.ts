@@ -46,7 +46,9 @@ export class AbilityFactory {
         can('manage', 'User', userInOrg);
         can('manage', 'InternalUserInvite', inOrg);
         can('manage', 'ProfessionalRole', roleInOrg);
-        can('read', 'Organization', { id: orgId });
+        // Administração cuida do cadastro da própria organização; nenhuma
+        // capacidade clínica vem junto.
+        can('manage', 'Organization', { id: orgId });
         can('read', 'AuditLog', inOrg);
         break;
 

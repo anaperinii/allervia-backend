@@ -1,10 +1,9 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Prisma, Role } from '@prisma/client';
 import { IRoleRepository } from 'src/security/permissions/role.repository';
 import { ROLE_MESSAGES } from 'src/security/permissions/role.messages';
@@ -20,7 +19,6 @@ interface GrantRoleParams {
   grantedById: string;
   actorUserId?: string;
   organizationId?: string;
-  bootstrapKey?: string;
 }
 
 @Injectable()
@@ -28,22 +26,11 @@ export class GrantRoleUseCase {
   constructor(
     private roleRepository: IRoleRepository,
     private professionalRepository: ProfessionalRepository,
-    private configService: ConfigService,
     private prisma: PrismaService,
     private auditLog: IAuditLogService,
   ) {}
 
   async execute(params: GrantRoleParams, tx?: Prisma.TransactionClient) {
-    if (params.bootstrapKey !== undefined) {
-      const secretKey = this.configService.get<string>(
-        'SUPER_ADMIN_REGISTRATION_KEY',
-      );
-
-      if (params.bootstrapKey !== secretKey) {
-        throw new UnauthorizedException(ROLE_MESSAGES.invalidBootstrapKey);
-      }
-    }
-
     if (tx) {
       return this.grantWithAudit(params, tx);
     }
@@ -55,6 +42,8 @@ export class GrantRoleUseCase {
     params: GrantRoleParams,
     tx: Prisma.TransactionClient,
   ) {
+    const actor = await this.resolveActor(params, tx);
+
     const existing = await this.roleRepository.findActiveByProfessionalAndRole(
       params.professionalId,
       params.role,
@@ -64,8 +53,6 @@ export class GrantRoleUseCase {
     if (existing) {
       throw new ConflictException(ROLE_MESSAGES.alreadyGranted(params.role));
     }
-
-    const actor = await this.resolveActor(params, tx);
 
     const granted = await this.roleRepository.grant(
       {
@@ -96,31 +83,51 @@ export class GrantRoleUseCase {
     return granted;
   }
 
+  /**
+   * O papel só pode ser concedido dentro da organização do ator. Conhecer o
+   * identificador de um profissional de outra clínica não autoriza nada.
+   */
   private async resolveActor(
     params: GrantRoleParams,
     tx: Prisma.TransactionClient,
   ): Promise<{ userId: string; organizationId: string }> {
+    const target = await this.professionalRepository.findById(
+      params.professionalId,
+      tx,
+    );
+
+    if (!target) {
+      throw new NotFoundException(
+        PROFESSIONAL_MESSAGES.notFound(params.professionalId),
+      );
+    }
+
     if (params.actorUserId && params.organizationId) {
+      if (target.organizationId !== params.organizationId) {
+        throw new NotFoundException(
+          PROFESSIONAL_MESSAGES.notFound(params.professionalId),
+        );
+      }
+
+      const granter = await this.professionalRepository.findById(
+        params.grantedById,
+        tx,
+      );
+
+      if (!granter || granter.organizationId !== params.organizationId) {
+        throw new ForbiddenException(ROLE_MESSAGES.grantOutsideOrganization);
+      }
+
       return {
         userId: params.actorUserId,
         organizationId: params.organizationId,
       };
     }
 
-    const professional = await this.professionalRepository.findById(
-      params.professionalId,
-      tx,
-    );
-
-    if (!professional) {
-      throw new NotFoundException(
-        PROFESSIONAL_MESSAGES.notFound(params.professionalId),
-      );
-    }
-
+    // Concessão interna (registro por convite): a autoria acompanha o vínculo.
     return {
-      userId: professional.userId,
-      organizationId: professional.organizationId,
+      userId: target.userId,
+      organizationId: target.organizationId,
     };
   }
 }
