@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
@@ -20,6 +21,33 @@ import {
   prescriptionFromJson,
 } from '../../dosing/configured-dose.service';
 
+export interface RegistrationResult {
+  patient: { id: string } & Record<string, unknown>;
+  immunotherapy: {
+    id: string;
+    patientId: string;
+    prescription: { id: string; versionId: string } & Record<string, unknown>;
+    /** Decimal vivo na resposta original; string quando reidratado do cache. */
+    targetVolumeExact?: { toString(): string } | null;
+  } & Record<string, unknown>;
+  firstDose: {
+    id: string;
+    plannedValues?: unknown;
+  } & Record<string, unknown>;
+}
+
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, entry]) => [key, canonical(entry)]),
+    );
+  }
+  return value;
+}
+
 @Injectable()
 export class CreateImmunotherapyUseCase {
   constructor(
@@ -27,17 +55,48 @@ export class CreateImmunotherapyUseCase {
     private readonly patients: CreatePatientUseCase,
     private readonly audit: IAuditLogService,
   ) {}
-  async execute(dto: CreateImmunotherapyDto, user: AuthenticatedUserPayload) {
+
+  async execute(
+    dto: CreateImmunotherapyDto,
+    user: AuthenticatedUserPayload,
+  ): Promise<RegistrationResult> {
     requireClinicalAuthor(user);
     if (dto.administrationRoute !== 'SUBCUTANEOUS')
       throw new BadRequestException('UNSUPPORTED_AUTOMATION_ROUTE');
+    if (Boolean(dto.patient) === Boolean(dto.patientId))
+      throw new BadRequestException('PATIENT_XOR_PATIENT_ID_REQUIRED');
+    if (!dto.idempotencyKey?.trim())
+      throw new BadRequestException('IDEMPOTENCY_KEY_REQUIRED');
+
+    const { idempotencyKey, ...intent } = dto;
+    const requestHash = createHash('sha256')
+      .update(JSON.stringify(canonical(intent)))
+      .digest('hex');
+
     return this.prisma.$transaction(async (tx) => {
+      // Perda de resposta exige repetir o MESMO comando: a chave devolve o
+      // resultado original; chave reutilizada com corpo diferente é conflito.
+      const commandKey = {
+        organizationId: user.organizationId,
+        actorId: user.id,
+        key: idempotencyKey,
+      };
+      const previous = await tx.registrationCommand.findUnique({
+        where: { organizationId_actorId_key: commandKey },
+      });
+      if (previous) {
+        if (previous.requestHash !== requestHash)
+          throw new ConflictException('IDEMPOTENCY_KEY_REUSED');
+        return previous.result as unknown as RegistrationResult;
+      }
+
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR SHARE`;
       const organization = await tx.organization.findUniqueOrThrow({
         where: { id: user.organizationId },
       });
       if (!organization.automationEnabled)
         throw new ConflictException('AUTOMATION_DISABLED');
+
       const defaultVersion = dto.protocolVersionId
         ? null
         : await tx.organizationProtocolDefault.findUnique({
@@ -73,20 +132,9 @@ export class CreateImmunotherapyUseCase {
         },
         protocol,
       );
-      if (dto.patient.responsiblePhysicianId !== user.professionalId)
-        throw new BadRequestException(
-          'PRESCRIBER_MUST_BE_RESPONSIBLE_PHYSICIAN',
-        );
-      const professional = await tx.professional.findFirst({
-        where: {
-          id: dto.patient.responsiblePhysicianId,
-          organizationId: user.organizationId,
-          user: { isActive: true, isArchived: false },
-        },
-      });
-      if (!professional)
-        throw new NotFoundException('RESPONSIBLE_PHYSICIAN_NOT_FOUND');
-      const patient = await this.patients.execute(dto.patient, user, tx);
+
+      const patient = await this.resolvePatient(tx, dto, user);
+
       const target = protocol.steps.find(
         (step) => step.id === resolved.targetStepId,
       )!;
@@ -141,11 +189,67 @@ export class CreateImmunotherapyUseCase {
         },
         tx,
       );
-      return {
+
+      const result = {
         patient,
         immunotherapy: { ...therapy, prescription },
         firstDose: dose,
-      };
+      } as unknown as RegistrationResult;
+
+      // O registro do comando participa da transação: ou o cadastro inteiro e
+      // a chave existem, ou nada existe.
+      await tx.registrationCommand.create({
+        data: {
+          ...commandKey,
+          requestHash,
+          result: json(result),
+        },
+      });
+
+      return result;
     });
+  }
+
+  /**
+   * Paciente novo é criado na mesma transação; paciente existente é vinculado
+   * sem duplicação, exigindo que o prescritor seja o responsável atual.
+   */
+  private async resolvePatient(
+    tx: Prisma.TransactionClient,
+    dto: CreateImmunotherapyDto,
+    user: AuthenticatedUserPayload,
+  ) {
+    if (dto.patient) {
+      if (dto.patient.responsiblePhysicianId !== user.professionalId)
+        throw new BadRequestException(
+          'PRESCRIBER_MUST_BE_RESPONSIBLE_PHYSICIAN',
+        );
+      const professional = await tx.professional.findFirst({
+        where: {
+          id: dto.patient.responsiblePhysicianId,
+          organizationId: user.organizationId,
+          user: { isActive: true, isArchived: false },
+        },
+      });
+      if (!professional)
+        throw new NotFoundException('RESPONSIBLE_PHYSICIAN_NOT_FOUND');
+      return this.patients.execute(dto.patient, user, tx);
+    }
+
+    const rows = await tx.$queryRaw<
+      { id: string }[]
+    >`SELECT id FROM "Patient" WHERE id = ${dto.patientId} AND "organizationId" = ${user.organizationId} FOR UPDATE`;
+    if (!rows.length) throw new NotFoundException('PATIENT_NOT_FOUND');
+
+    const patient = await tx.patient.findUniqueOrThrow({
+      where: { id: dto.patientId },
+    });
+
+    if (patient.isArchived || !patient.isActive)
+      throw new ConflictException('PATIENT_INACTIVE');
+    if (patient.responsiblePhysicianId !== user.professionalId)
+      throw new BadRequestException('PRESCRIBER_MUST_BE_RESPONSIBLE_PHYSICIAN');
+
+    return patient;
   }
 }
