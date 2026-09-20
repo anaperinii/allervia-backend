@@ -15,6 +15,7 @@ import { LoginDto } from 'src/security/dtos/login.dto';
 import { BcryptPasswordHashingService } from 'src/security/bcrypt-password-hashing.service';
 import { NestJwtTokenService } from 'src/security/jwt-token.service';
 import { PrismaUserAuthRepository } from 'src/security/prisma-user-auth.repository';
+import { SessionConfig } from 'src/security/session/session.config';
 
 describe('LoginUseCase - Integration', () => {
   let module: TestingModule;
@@ -36,6 +37,7 @@ describe('LoginUseCase - Integration', () => {
       providers: [
         LoginUseCase,
         TokenGeneratorFactory,
+        SessionConfig,
         {
           provide: PrismaService,
           useValue: TestDatabaseManager.getInstance(),

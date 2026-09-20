@@ -94,4 +94,50 @@ export class UserFactory extends BaseFactory<User> {
   ): Promise<AuthenticatedUserPayload> {
     return this.createProfessionalUser(['ADMINISTRATOR'], overrides);
   }
+
+  async createAuthenticatedNurse(
+    overrides: Partial<User> = {},
+  ): Promise<AuthenticatedUserPayload> {
+    return this.createProfessionalUser(['NURSE'], overrides);
+  }
+
+  /**
+   * Profissional na mesma organização de um usuário já criado, com os papéis
+   * indicados. Papel forjado apenas no token não vale: a autorização é
+   * recarregada do banco a cada requisição.
+   */
+  async createColleagueWithRoles(
+    organizationId: string,
+    roles: Role[],
+    overrides: Partial<User> = {},
+  ): Promise<AuthenticatedUserPayload> {
+    const user = await this.create({ ...overrides, type: 'PROFESSIONAL' });
+
+    const professional = await this.prisma.professional.create({
+      data: {
+        userId: user.id,
+        organizationId,
+        fullName: faker.person.fullName(),
+        phoneNumber: faker.phone.number(),
+        profession: 'NURSE',
+      },
+    });
+
+    await this.prisma.professionalRole.createMany({
+      data: roles.map((role) => ({
+        professionalId: professional.id,
+        role,
+        grantedById: professional.id,
+      })),
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      type: 'PROFESSIONAL',
+      organizationId,
+      professionalId: professional.id,
+      roles,
+    };
+  }
 }

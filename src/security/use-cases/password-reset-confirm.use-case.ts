@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { VerificationPurpose } from '@prisma/client';
+import { AuthSessionRevokeReason, VerificationPurpose } from '@prisma/client';
 import { PasswordResetConfirmDTO } from '../dtos/password-reset-confirm.dto';
 import { SecurityUtil } from 'src/utils/security.utils';
 import { IUserAuthRepository } from '../interfaces/user-auth.repository.interface';
@@ -51,6 +51,16 @@ export class PasswordResetConfirmUseCase {
         passwordHash,
         tx,
       );
+
+      // Redefinir a senha encerra as sessões abertas na mesma transação: não
+      // existe janela em que a credencial antiga continue válida.
+      await tx.authSession.updateMany({
+        where: { userId: token.userId, revokedAt: null },
+        data: {
+          revokedAt: new Date(),
+          revokedReason: AuthSessionRevokeReason.PASSWORD_CHANGED,
+        },
+      });
 
       await this.auditLog.record(
         {

@@ -5,12 +5,100 @@ import {
   UserCreationData,
   UserUpdateData,
 } from 'src/account/account.interface';
-import { IUserRepository } from 'src/account/user.repository';
+import {
+  AccountProfileRow,
+  IUserRepository,
+} from 'src/account/user.repository';
+
+/**
+ * Seleção pública do perfil de conta. Enumerar os campos aqui é o que impede
+ * que `password`, `tokenVersion` ou relações internas cheguem à resposta.
+ */
+const accountProfileSelection = {
+  id: true,
+  email: true,
+  type: true,
+  isActive: true,
+  createdAt: true,
+  professional: {
+    select: {
+      id: true,
+      fullName: true,
+      phoneNumber: true,
+      profession: true,
+      councilNumber: true,
+      councilUf: true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          timeZone: true,
+          automationEnabled: true,
+        },
+      },
+      professionalRoles: {
+        where: { revokedAt: null },
+        select: { role: true },
+      },
+    },
+  },
+  patient: {
+    select: {
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          timeZone: true,
+          automationEnabled: true,
+        },
+      },
+    },
+  },
+  mfaCredentials: {
+    where: { revokedAt: null, confirmedAt: { not: null } },
+    select: { id: true },
+  },
+} satisfies Prisma.UserSelect;
 
 @Injectable()
 export class PrismaUserRepository extends IUserRepository {
   constructor(private prismaService: PrismaService) {
     super();
+  }
+
+  async findAccountProfile(userId: string): Promise<AccountProfileRow | null> {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+      select: accountProfileSelection,
+    });
+
+    if (!user) return null;
+
+    const professional = user.professional;
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        type: user.type,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+      },
+      professional: professional
+        ? {
+            id: professional.id,
+            fullName: professional.fullName,
+            phoneNumber: professional.phoneNumber,
+            profession: professional.profession,
+            councilNumber: professional.councilNumber,
+            councilUf: professional.councilUf,
+          }
+        : null,
+      organization:
+        professional?.organization ?? user.patient?.organization ?? null,
+      roles: professional?.professionalRoles.map((item) => item.role) ?? [],
+      hasConfirmedMfa: user.mfaCredentials.length > 0,
+    };
   }
 
   async create(user: UserCreationData, tx?: Prisma.TransactionClient) {

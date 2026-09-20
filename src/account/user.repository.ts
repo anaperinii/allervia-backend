@@ -1,8 +1,26 @@
 import { UserCreationData, UserUpdateData } from './account.interface';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { User } from '@prisma/client';
+import {
+  AccountOrganizationDto,
+  AccountProfessionalDto,
+  AccountUserDto,
+} from './dtos/account-context.dto';
+
+export interface AccountProfileRow {
+  user: AccountUserDto;
+  professional: AccountProfessionalDto | null;
+  organization: AccountOrganizationDto | null;
+  roles: Role[];
+  hasConfirmedMfa: boolean;
+}
 
 export abstract class IUserRepository {
+  /** Seleção pública do perfil; nunca devolve senha, tokenVersion ou segredos. */
+  abstract findAccountProfile(
+    userId: string,
+  ): Promise<AccountProfileRow | null>;
+
   abstract create(
     userCreationData: UserCreationData,
     tx?: Prisma.TransactionClient,

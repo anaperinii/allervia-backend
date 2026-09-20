@@ -198,6 +198,11 @@ model User {
   usersUpdated       User[]              @relation("UserUpdatedBy")
   verificationTokens VerificationToken[] @relation("UserVerificationToken")
 
+  authSessions      AuthSession[]      @relation("UserAuthSession")
+  mfaCredentials    MfaCredential[]    @relation("UserMfaCredential")
+  mfaRecoveryCodes  MfaRecoveryCode[]  @relation("UserMfaRecoveryCode")
+  preAuthChallenges PreAuthChallenge[] @relation("UserPreAuthChallenge")
+
   @@index([type, isActive, isArchived])
 }
 
@@ -450,4 +455,144 @@ model ClinicalCommand {
   result Json
   createdAt DateTime @default(now())
   @@unique([organizationId, actorId, doseId, key])
+}
+
+enum MfaFactorType {
+  TOTP
+}
+
+enum PreAuthPurpose {
+  MFA_CHALLENGE
+  MFA_ENROLLMENT
+  REAUTHENTICATION
+}
+
+enum AuthSessionRevokeReason {
+  LOGOUT
+  LOGOUT_ALL
+  DEVICE_REVOKED
+  PASSWORD_CHANGED
+  ACCOUNT_DISABLED
+  MFA_CHANGED
+  IDLE_TIMEOUT
+  ABSOLUTE_TIMEOUT
+  SUPERSEDED
+}
+
+/// Sessão opaca do navegador. O cookie transporta apenas o segredo; o banco
+/// guarda o hash. Identidade, expiração e revogação vivem aqui.
+model AuthSession {
+  id String @id @default(ulid())
+
+  /// SHA-256 do segredo aleatório enviado no cookie. Nunca o segredo em claro.
+  secretHash String @unique
+  /// SHA-256 do token CSRF sincronizador vinculado a esta sessão.
+  csrfTokenHash String
+
+  userId String
+  user   User   @relation("UserAuthSession", fields: [userId], references: [id])
+
+  /// Versão de autorização observada na criação; divergência invalida a sessão.
+  authVersion Int
+
+  createdAt         DateTime  @default(now())
+  expiresAt         DateTime
+  lastInteractiveAt DateTime  @default(now())
+  mfaVerifiedAt     DateTime?
+  reauthenticatedAt DateTime?
+
+  revokedAt     DateTime?
+  revokedReason AuthSessionRevokeReason?
+
+  /// Metadados mínimos para a tela de dispositivos; sem geolocalização inferida.
+  userAgent     String?
+  ipAddressHash String?
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+/// Segundo fator registrado pelo usuário. O segredo TOTP precisa ser reversível
+/// para verificação, então é guardado com criptografia autenticada e chave externa.
+model MfaCredential {
+  id String @id @default(ulid())
+
+  userId String
+  user   User   @relation("UserMfaCredential", fields: [userId], references: [id])
+
+  type  MfaFactorType @default(TOTP)
+  label String
+
+  secretCiphertext String
+  secretIv         String
+  secretAuthTag    String
+  keyVersion       Int    @default(1)
+
+  confirmedAt     DateTime?
+  lastUsedAt      DateTime?
+  /// Último contador TOTP aceito; impede replay do mesmo código.
+  lastUsedCounter BigInt?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@index([userId, revokedAt])
+}
+
+/// Código de recuperação exibido uma vez, guardado por hash e consumido atomicamente.
+model MfaRecoveryCode {
+  id String @id @default(ulid())
+
+  userId String
+  user   User   @relation("UserMfaRecoveryCode", fields: [userId], references: [id])
+
+  codeHash String @unique
+
+  createdAt  DateTime  @default(now())
+  consumedAt DateTime?
+
+  @@index([userId, consumedAt])
+}
+
+/// Estado curto entre senha verificada e sessão clínica criada, ou desafio de
+/// reautenticação de ação sensível. Não concede acesso clínico.
+model PreAuthChallenge {
+  id String @id @default(ulid())
+
+  secretHash String @unique
+
+  userId String
+  user   User   @relation("UserPreAuthChallenge", fields: [userId], references: [id])
+
+  purpose PreAuthPurpose
+
+  /// Preenchido apenas em reautenticação, para vincular o desafio à sessão.
+  sessionId String?
+  /// Credencial em confirmação durante o enrollment de MFA.
+  credentialId String?
+
+  attemptCount Int @default(0)
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+}
+
+/// Tentativas de autenticação para limitar por conta, IP e operação.
+model AuthAttempt {
+  id String @id @default(ulid())
+
+  /// Hash do identificador (e-mail normalizado ou IP); não guardar o valor cru.
+  identifierHash String
+  scope          String
+  operation      String
+  succeeded      Boolean
+  occurredAt     DateTime @default(now())
+
+  @@index([identifierHash, operation, occurredAt])
+  @@index([occurredAt])
 }

@@ -9,6 +9,8 @@ import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
 import { diffFields } from 'src/infra/audit/diff-fields';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { USER_MESSAGES } from 'src/account/user.messages';
+import { SessionService } from 'src/security/session/session.service';
+import { AuthSessionRevokeReason } from '@prisma/client';
 
 @Injectable()
 export class UpdateUserStatusUseCase {
@@ -16,6 +18,7 @@ export class UpdateUserStatusUseCase {
     private readonly userRepository: IUserRepository,
     private readonly prisma: PrismaService,
     private readonly auditLog: IAuditLogService,
+    private readonly sessionService: SessionService,
   ) {}
 
   async execute(
@@ -30,6 +33,14 @@ export class UpdateUserStatusUseCase {
 
     if (!user) {
       throw new NotFoundException(USER_MESSAGES.notFound(id));
+    }
+
+    if (!dto.isActive) {
+      // Desativar a conta encerra os acessos abertos, não apenas impede novos.
+      await this.sessionService.revokeAllForUser(
+        id,
+        AuthSessionRevokeReason.ACCOUNT_DISABLED,
+      );
     }
 
     return this.prisma.$transaction(async (tx) => {
