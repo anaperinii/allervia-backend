@@ -86,8 +86,12 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       user,
     );
   });
+  let registrationSequence = 0;
+
   function createInput(): CreateImmunotherapyDto {
+    registrationSequence += 1;
     return {
+      idempotencyKey: `workflow-${registrationSequence}`,
       patient: {
         fullName: 'Synthetic patient',
         birthDate: new Date('1990-01-01'),
