@@ -136,6 +136,11 @@ model Patient {
   weightInKg  Float
   phoneNumber String
 
+  /// Documento protegido, apenas dígitos. Nullable porque o legado foi criado
+  /// sem CPF e porque existe pessoa sem CPF conhecido — a ausência é um fato,
+  /// não um valor a inventar. Unicidade vale por organização quando informado.
+  cpf String?
+
   isActive   Boolean @default(true)
   isArchived Boolean @default(false)
 
@@ -153,6 +158,7 @@ model Patient {
 
   immunotherapies Immunotherapy[]
 
+  @@unique([organizationId, cpf])
   @@index([organizationId, isActive, isArchived])
   @@index([responsiblePhysicianId])
   @@index([fullName])

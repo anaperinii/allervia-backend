@@ -7,7 +7,24 @@ import {
   Max,
   Matches,
 } from '@nestjs/class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, Validate } from 'class-validator';
+import {
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { isValidCpf } from '../cpf';
+
+@ValidatorConstraint({ name: 'cpf', async: false })
+export class CpfConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    return typeof value === 'string' && isValidCpf(value);
+  }
+
+  defaultMessage(): string {
+    return 'CPF inválido.';
+  }
+}
 
 export class CreatePatientDto {
   @ApiProperty({ description: 'Nome completo' })
@@ -33,6 +50,15 @@ export class CreatePatientDto {
     message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.',
   })
   phoneNumber: string;
+
+  @ApiPropertyOptional({
+    description:
+      'CPF do paciente, com ou sem máscara. Ausente quando a pessoa não possui CPF conhecido — a ausência é registrada, nunca inventada.',
+  })
+  @IsOptional()
+  @IsString()
+  @Validate(CpfConstraint)
+  cpf?: string;
 
   @ApiProperty({ description: 'ID do Médico Responsável' })
   @IsString()
