@@ -5,9 +5,12 @@ import { UserInvite } from './domain/entities/user-invite.entity';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import {
   FindInvitesFilters,
+  InviteContext,
+  InviteWithAuthor,
   UpdateInviteData,
 } from './domain/interfaces/invite.interface';
 import { Prisma } from '@prisma/client';
+import { PageBounds } from 'src/infra/http/pagination';
 
 @Injectable()
 export class PrismaUserInviteRepository extends IUserInviteRepository {
@@ -90,6 +93,81 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
     });
 
     return invites.map((i) => new UserInvite(i));
+  }
+
+  async findPageByOrganization(
+    organizationId: string,
+    filters: FindInvitesFilters,
+    bounds: PageBounds,
+  ): Promise<{ items: InviteWithAuthor[]; total: number }> {
+    const where = this.buildWhere(organizationId, filters);
+
+    const [rows, total] = await this.prismaService.$transaction([
+      this.prismaService.internalUserInvite.findMany({
+        where,
+        // Desempate por id mantém a ordenação estável entre páginas.
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: bounds.skip,
+        take: bounds.take,
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          role: true,
+          expiresAt: true,
+          isActive: true,
+          usedAt: true,
+          createdAt: true,
+          createdBy: { select: { id: true, email: true } },
+        },
+      }),
+      this.prismaService.internalUserInvite.count({ where }),
+    ]);
+
+    return { items: rows, total };
+  }
+
+  async findContextByToken(token: string): Promise<InviteContext | null> {
+    const invite = await this.prismaService.internalUserInvite.findUnique({
+      where: { token },
+      select: {
+        email: true,
+        fullName: true,
+        role: true,
+        expiresAt: true,
+        organization: { select: { name: true } },
+      },
+    });
+
+    if (!invite) return null;
+
+    return {
+      email: invite.email,
+      fullName: invite.fullName,
+      role: invite.role,
+      expiresAt: invite.expiresAt,
+      organizationName: invite.organization.name,
+    };
+  }
+
+  private buildWhere(
+    organizationId: string,
+    filters: FindInvitesFilters,
+  ): Prisma.InternalUserInviteWhereInput {
+    const where: Prisma.InternalUserInviteWhereInput = { organizationId };
+
+    if (filters.role) where.role = filters.role;
+    if (filters.onlyActive) where.isActive = true;
+    if (!filters.includeExpired) where.expiresAt = { gte: new Date() };
+
+    if (filters.search) {
+      where.OR = [
+        { fullName: { contains: filters.search, mode: 'insensitive' } },
+        { email: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+
+    return where;
   }
 
   async findActiveInvite(

@@ -3,9 +3,12 @@ import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.
 import {
   CreateInviteData,
   FindInvitesFilters,
+  InviteContext,
+  InviteWithAuthor,
   UpdateInviteData,
 } from './invite.interface';
 import { Prisma } from '@prisma/client';
+import { PageBounds } from 'src/infra/http/pagination';
 
 export abstract class IUserInviteRepository {
   abstract create(
@@ -29,6 +32,19 @@ export abstract class IUserInviteRepository {
     organizationId: string,
     filters?: FindInvitesFilters,
   ): Promise<UserInvite[]>;
+
+  /** Página de convites da organização, com o autor já resolvido. */
+  abstract findPageByOrganization(
+    organizationId: string,
+    filters: FindInvitesFilters,
+    bounds: PageBounds,
+  ): Promise<{ items: InviteWithAuthor[]; total: number }>;
+
+  /**
+   * Contexto mínimo do convite para quem abre o link. Não revela nada além do
+   * necessário para completar o cadastro.
+   */
+  abstract findContextByToken(token: string): Promise<InviteContext | null>;
 
   abstract findActiveInvite(
     email: string,

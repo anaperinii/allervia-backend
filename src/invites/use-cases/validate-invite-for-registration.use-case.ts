@@ -1,31 +1,19 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { UserInviteAlreadyUsedException } from 'src/invites/domain/exceptions/user-invite-already-used.exception';
-import { UserInviteExpiredException } from 'src/invites/domain/exceptions/user-invite-expired.exception';
+import { Injectable } from '@nestjs/common';
 import { FindInviteByTokenUseCase } from './find-invite-by-token.use-case';
-import { UserInviteCancelledException } from 'src/invites/domain/exceptions/user-invite-cancelled.exception';
 
+/**
+ * Valida o convite antes do cadastro. As exceções de domínio já carregam
+ * status e código estáveis (`USER_INVITE_EXPIRED`, `USER_INVITE_ALREADY_USED`,
+ * `USER_INVITE_CANCELLED`); convertê-las em texto apagaria a distinção que a
+ * interface precisa para orientar o convidado.
+ */
 @Injectable()
 export class ValidateInviteForRegisterUseCase {
   constructor(private findInviteByToken: FindInviteByTokenUseCase) {}
 
   async execute(token: string) {
     const invite = await this.findInviteByToken.execute(token);
-
-    try {
-      invite.validateForUse();
-    } catch (error) {
-      if (error instanceof UserInviteAlreadyUsedException) {
-        throw new BadRequestException('Convite já foi utilizado');
-      }
-      if (error instanceof UserInviteExpiredException) {
-        throw new BadRequestException('Convite expirado');
-      }
-      if (error instanceof UserInviteCancelledException) {
-        throw new BadRequestException('Convite cancelado');
-      }
-      throw error;
-    }
-
+    invite.validateForUse();
     return invite;
   }
 }
