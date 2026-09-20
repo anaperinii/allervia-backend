@@ -7,6 +7,7 @@ import { AuditModule } from 'src/infra/audit/audit.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { EmailModule } from 'src/infra/email/email.module';
 import { AuthController } from './auth.controller';
+import { AuthPolicyModule } from './auth-policy.module';
 import { LoginUseCase } from './use-cases/login.use-case';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IPasswordHashingService } from './interfaces/password-hashing.service.interface';
@@ -27,6 +28,7 @@ import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.
     AuditModule,
     PassportModule,
     ConfigModule,
+    AuthPolicyModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -60,6 +62,13 @@ import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.
     JwtAuthGuard,
   ],
   controllers: [AuthController],
-  exports: [IJwtTokenService, IPasswordHashingService, JwtAuthGuard],
+  exports: [
+    IJwtTokenService,
+    IPasswordHashingService,
+    IUserAuthRepository,
+    JwtAuthGuard,
+    PassportModule,
+    AuthPolicyModule,
+  ],
 })
 export class AuthModule {}
