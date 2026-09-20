@@ -451,6 +451,19 @@ model ProtocolPrescription {
   doses Dose[]
 }
 
+/// Idempotência do cadastro de prescrição: mesma chave e corpo devolvem o
+/// resultado original; chave reutilizada com corpo diferente é conflito.
+model RegistrationCommand {
+  id String @id @default(ulid())
+  organizationId String
+  actorId String
+  key String
+  requestHash String
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([organizationId, actorId, key])
+}
+
 model ClinicalCommand {
   id String @id @default(ulid())
   organizationId String

@@ -85,6 +85,7 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
     );
     const therapy = await module.get(CreateImmunotherapyUseCase).execute(
       {
+        idempotencyKey: 'contract-fixture-1',
         patient: {
           fullName: 'Synthetic contract patient',
           birthDate: new Date('1990-01-01'),

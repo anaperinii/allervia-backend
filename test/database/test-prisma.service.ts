@@ -14,6 +14,7 @@ const TABLES = [
   'MfaRecoveryCode',
   'MfaCredential',
   'AuthSession',
+  'RegistrationCommand',
   'ClinicalCommand',
   'OrganizationProtocolDefault',
   'ProtocolPrescription',

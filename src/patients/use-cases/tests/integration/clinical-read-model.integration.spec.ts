@@ -139,9 +139,13 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     };
   }
 
+  let therapySequence = 0;
+
   function createTherapy(fullName: string, extract: string) {
+    therapySequence += 1;
     return module.get(CreateImmunotherapyUseCase).execute(
       {
+        idempotencyKey: `read-model-${therapySequence}-${fullName}`,
         patient: {
           fullName,
           birthDate: new Date('1990-01-01'),

@@ -9,7 +9,6 @@ import {
   ValidateNested,
   ArrayNotEmpty,
   ArrayUnique,
-  IsDefined,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AdministrationRoute } from '@prisma/client';
@@ -17,11 +16,31 @@ import { Type } from 'class-transformer';
 import { CreatePatientDto } from 'src/patients/dtos/create-patient.dto';
 
 export class CreateImmunotherapyDto {
-  @ApiProperty()
-  @IsDefined()
+  @ApiPropertyOptional({
+    description:
+      'Dados do paciente novo. Exatamente um entre patient e patientId.',
+  })
+  @IsOptional()
   @ValidateNested()
   @Type(() => CreatePatientDto)
-  patient: CreatePatientDto;
+  patient?: CreatePatientDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Paciente já cadastrado que recebe um novo tratamento, sem duplicá-lo.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  patientId?: string;
+
+  @ApiProperty({
+    description:
+      'Chave de idempotência da intenção confirmada; reenvio com a mesma chave e corpo devolve o resultado original.',
+  })
+  @IsString()
+  @IsNotEmpty()
+  idempotencyKey: string;
   @ApiProperty() @IsString() @IsNotEmpty() immunoType: string;
   @ApiProperty({ enum: AdministrationRoute })
   @IsEnum(AdministrationRoute)
