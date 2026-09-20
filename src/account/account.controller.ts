@@ -22,9 +22,6 @@ import { AuthenticatedOnly } from 'src/security/decorators/authenticated-only.de
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { UpdateUserStatusUseCase } from './use-cases/update-user-status.use-case';
 import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
-import { UpdateUserBackofficeDto } from './dtos/update-user-backoffice.dto';
-import { UpdateUserPersonalDto } from './dtos/update-user-personal.dto';
-import { UpdateUserUseCase } from './use-cases/update-user.use-case';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 
@@ -33,7 +30,6 @@ export class AccountController {
   constructor(
     private getAccountContextUseCase: GetAccountContextUseCase,
     private updateUserStatusUseCase: UpdateUserStatusUseCase,
-    private updateUserPersonalUseCase: UpdateUserUseCase,
     private changePasswordUseCase: ChangePasswordUseCase,
     private sessionService: SessionService,
   ) {}
@@ -83,30 +79,9 @@ export class AccountController {
     return this.updateUserStatusUseCase.execute(id, dto, currentUser);
   }
 
-  @Patch('update/me')
-  @AuthenticatedOnly()
-  async updateUserPersonal(
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
-    @Body() updateUserDto: UpdateUserPersonalDto,
-  ) {
-    return this.updateUserPersonalUseCase.execute(
-      currentUser.id,
-      updateUserDto,
-      currentUser,
-    );
-  }
-
-  @Patch('update/:id')
-  @CheckPolicies({ action: 'update', subject: 'User' })
-  async updateUserAsAdmin(
-    @Param('id') userId: string,
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
-    @Body() updateUserDto: UpdateUserBackofficeDto,
-  ) {
-    return this.updateUserPersonalUseCase.execute(
-      userId,
-      updateUserDto,
-      currentUser,
-    );
-  }
+  /**
+   * O cadastro profissional tem contrato próprio em `PATCH /professionals/me` e
+   * `PATCH /professionals/:id`: nome, telefone e conselho não são campos de um
+   * PATCH genérico de usuário.
+   */
 }
