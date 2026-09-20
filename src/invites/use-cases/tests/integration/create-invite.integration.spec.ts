@@ -1,6 +1,7 @@
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { Test, TestingModule } from '@nestjs/testing';
+import { IEmailService } from 'src/infra/email/email.service';
 import { CreateInviteUseCase } from 'src/invites/use-cases/create-invite.use-case';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
@@ -30,6 +31,14 @@ describe('CreateInviteUseCase - Integration', () => {
     module = await Test.createTestingModule({
       providers: [
         { provide: IAuditLogService, useClass: PrismaAuditLogService },
+        {
+          provide: IEmailService,
+          useValue: {
+            sendPasswordResetLink: () => Promise.resolve(),
+            sendPasswordChangedNotification: () => Promise.resolve(),
+            sendInviteLink: () => Promise.resolve(),
+          },
+        },
         CreateInviteUseCase,
         InviteStrategyContext,
         InviteStrategyFactory,
@@ -83,7 +92,10 @@ describe('CreateInviteUseCase - Integration', () => {
     expect(result.email).toBe(dto.email);
     expect(result.fullName).toBe(dto.fullName);
     expect(result.role).toBe(dto.userRole);
-    expect(result.organizationId).toBe(authenticatedUser.organizationId);
+    expect(result.status).toBe('ACTIVE');
+    expect(result.createdBy?.id).toBe(authenticatedUser.id);
+    // O token do convite é credencial: ele não volta para quem convidou.
+    expect(result).not.toHaveProperty('token');
   });
 
   it('should throw conflict exception when active invite already exists', async () => {
