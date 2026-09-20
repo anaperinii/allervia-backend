@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
@@ -15,6 +25,12 @@ import { CreateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunot
 import { UpdateImmunotherapyStatusDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy-status.dto';
 import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
 import { ListAllImmunotherapiesUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
+import { PageDto } from 'src/infra/http/pagination';
+import {
+  ImmunotherapyDetailDto,
+  ImmunotherapyListItemDto,
+  ListImmunotherapiesQueryDto,
+} from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-read.dto';
 
 @ApiTags('immunotherapies')
 @Controller('immunotherapies')
@@ -43,8 +59,11 @@ export class ImmunotherapiesController {
   @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
   async findAll(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ): Promise<ImmunotherapyResponseDto[]> {
-    return this.listAllImmunotherapies.execute(currentUser);
+    @Query() query: ListImmunotherapiesQueryDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<PageDto<ImmunotherapyListItemDto>> {
+    response.setHeader('Cache-Control', 'no-store');
+    return this.listAllImmunotherapies.execute(currentUser, query);
   }
 
   @Get('patients/:patientId')
@@ -52,7 +71,7 @@ export class ImmunotherapiesController {
   async findAllForPatient(
     @Param('patientId') patientId: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ): Promise<ImmunotherapyResponseDto[]> {
+  ): Promise<ImmunotherapyListItemDto[]> {
     return this.listImmunotherapiesForPatientUseCase.execute(
       patientId,
       currentUser,
@@ -73,7 +92,9 @@ export class ImmunotherapiesController {
   async findOneImmunotherapy(
     @Param('id') immunoId: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ): Promise<ImmunotherapyResponseDto> {
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ImmunotherapyDetailDto> {
+    response.setHeader('Cache-Control', 'no-store');
     return this.readImmunotherapyUseCase.execute(immunoId, currentUser);
   }
 

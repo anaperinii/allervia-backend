@@ -65,15 +65,14 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
       patientId: patient.id,
     });
 
-    console.log(authenticatedUser);
+    const result = await listAllUseCase.execute(authenticatedUser, {});
 
-    console.log(immunotherapy.createdById);
-
-    const result = await listAllUseCase.execute(authenticatedUser);
-
-    expect(result).toBeDefined();
-    expect(result.length).toBeGreaterThan(0);
-    console.log(JSON.stringify(result, null, 2));
+    expect(result.total).toBeGreaterThan(0);
+    const item = result.items.find((entry) => entry.id === immunotherapy.id);
+    expect(item?.patient.id).toBe(patient.id);
+    expect(item?.responsiblePhysician.id).toBe(
+      authenticatedUser.professionalId,
+    );
   });
 
   it('should return an empty list when from another organization', async () => {
@@ -97,9 +96,12 @@ describe('ListAllImunotherapiesUseCase - Integration', () => {
       patientId: patient.id,
     });
 
-    const result = await listAllUseCase.execute(authenticatedUserAnotherOrg);
+    const result = await listAllUseCase.execute(
+      authenticatedUserAnotherOrg,
+      {},
+    );
 
-    expect(result).toEqual([]);
-    expect(result).toHaveLength(0);
+    expect(result.items).toEqual([]);
+    expect(result.total).toBe(0);
   });
 });
