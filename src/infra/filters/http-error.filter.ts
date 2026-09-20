@@ -78,10 +78,17 @@ export class HttpErrorFilter implements ExceptionFilter {
       const body: NestErrorBody =
         typeof raw === 'string' ? { message: raw } : (raw as NestErrorBody);
 
+      const message = this.flatten(body.message) ?? exception.message;
+      // Módulos que lançam `new ConflictException('STALE_PROTOCOL_REVISION')`
+      // carregam o código na mensagem. Promovê-lo ao campo `code` permite à UI
+      // ramificar sem depender do texto.
+      const messageIsCode = /^[A-Z][A-Z0-9_]{2,}$/.test(message);
+
       return {
         statusCode: status,
-        code: body.code ?? defaultCodeForStatus(status),
-        message: this.flatten(body.message) ?? exception.message,
+        code:
+          body.code ?? (messageIsCode ? message : defaultCodeForStatus(status)),
+        message,
         ...(body.fieldErrors ? { fieldErrors: body.fieldErrors } : {}),
         ...(requestId ? { requestId } : {}),
       };
