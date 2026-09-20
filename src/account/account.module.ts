@@ -3,7 +3,10 @@ import { AuditModule } from 'src/infra/audit/audit.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { EmailModule } from 'src/infra/email/email.module';
 import { AuthModule } from 'src/security/auth.module';
+import { SessionModule } from 'src/security/session/session.module';
+import { PermissionsModule } from 'src/security/permissions/permissions.module';
 import { AccountController } from './account.controller';
+import { GetAccountContextUseCase } from './use-cases/get-account-context.use-case';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-case';
 import { UpdateUserStatusUseCase } from './use-cases/update-user-status.use-case';
 import { PrismaUserRepository } from './prisma-user.repository';
@@ -21,9 +24,17 @@ import { UpdateUserStatusDto } from './dtos/update-user-status.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
 
 @Module({
-  imports: [PrismaModule, EmailModule, AuditModule, AuthModule],
+  imports: [
+    PrismaModule,
+    EmailModule,
+    AuditModule,
+    AuthModule,
+    SessionModule,
+    PermissionsModule,
+  ],
   providers: [
     FindUserByIdUseCase,
+    GetAccountContextUseCase,
     UpdateUserStatusUseCase,
     ArchiveUserUseCase,
     ValidateUserEmailUseCase,

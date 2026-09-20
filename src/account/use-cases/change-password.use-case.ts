@@ -12,6 +12,8 @@ import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { USER_MESSAGES } from '../user.messages';
+import { SessionService } from 'src/security/session/session.service';
+import { AuthSessionRevokeReason } from '@prisma/client';
 
 @Injectable()
 export class ChangePasswordUseCase {
@@ -21,6 +23,7 @@ export class ChangePasswordUseCase {
     private readonly emailService: IEmailService,
     private readonly prisma: PrismaService,
     private readonly auditLog: IAuditLogService,
+    private readonly sessionService: SessionService,
   ) {}
 
   async execute(
@@ -59,6 +62,14 @@ export class ChangePasswordUseCase {
         tx,
       );
     });
+
+    // Senha trocada encerra os acessos abertos em outros dispositivos. A
+    // versão de autorização já invalida a credencial antiga; a revogação
+    // explícita também limpa a lista de dispositivos do usuário.
+    await this.sessionService.revokeAllForUser(
+      userId,
+      AuthSessionRevokeReason.PASSWORD_CHANGED,
+    );
 
     await this.emailService.sendPasswordChangedNotification(user.email);
   }
