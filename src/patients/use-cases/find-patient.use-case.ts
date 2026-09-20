@@ -1,27 +1,133 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { accessibleBy } from '@casl/prisma';
-import { PatientRepository } from 'src/patients/patient.repository';
+import { PrismaService } from 'src/infra/database/prisma.service';
 import { PATIENT_MESSAGES } from 'src/patients/patient.messages';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
+import { maskCpf } from '../cpf';
+import { PatientDetailDto, TherapySummaryDto } from '../dtos/patient-read.dto';
 
+/**
+ * Prontuário de leitura do paciente: dados demográficos e o resumo de cada
+ * tratamento, com prescrição fixada e próxima previsão. O CPF completo só é
+ * entregue a quem pode editar o cadastro; os demais recebem a máscara.
+ */
 @Injectable()
 export class FindPatientUseCase {
   constructor(
-    private patientRepository: PatientRepository,
-    private abilityFactory: AbilityFactory,
+    private readonly prisma: PrismaService,
+    private readonly abilityFactory: AbilityFactory,
   ) {}
 
-  async execute(id: string, currentUser: AuthenticatedUserPayload) {
+  async execute(
+    id: string,
+    currentUser: AuthenticatedUserPayload,
+  ): Promise<PatientDetailDto> {
     const ability = this.abilityFactory.createForUser(currentUser);
-    const where = accessibleBy(ability, 'read').ofType('Patient');
+    const scope = accessibleBy(ability, 'read').ofType('Patient');
 
-    const patient = await this.patientRepository.findByIdAccessible(id, where);
+    const patient = await this.prisma.patient.findFirst({
+      where: { AND: [{ id }, scope] },
+      select: {
+        id: true,
+        fullName: true,
+        cpf: true,
+        birthDate: true,
+        phoneNumber: true,
+        weightInKg: true,
+        isActive: true,
+        organizationId: true,
+        responsiblePhysicianId: true,
+        createdAt: true,
+        updatedAt: true,
+        responsiblePhysician: {
+          select: {
+            id: true,
+            fullName: true,
+            councilNumber: true,
+            councilUf: true,
+          },
+        },
+        immunotherapies: {
+          where: { isArchived: false },
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          select: {
+            id: true,
+            immunoType: true,
+            administrationRoute: true,
+            extract: true,
+            status: true,
+            revision: true,
+            inductionStartDate: true,
+            maintenanceStartDate: true,
+            createdAt: true,
+            prescription: { select: { versionId: true, revision: true } },
+            doses: {
+              where: { status: 'SCHEDULED', isArchived: false },
+              orderBy: { scheduledAt: 'asc' },
+              take: 1,
+              select: { id: true, scheduledAt: true, status: true },
+            },
+          },
+        },
+      },
+    });
 
     if (!patient) {
       throw new NotFoundException(PATIENT_MESSAGES.notFound(id));
     }
 
-    return patient;
+    // A capacidade de edição sobre ESTE paciente decide se o documento completo
+    // aparece. A checagem usa a mesma consulta escopada do update. A ability é
+    // verificada antes porque, sem nenhuma regra de update, `accessibleBy`
+    // devolve `{OR: []}` — e o Prisma ignora um OR vazio dentro de AND, o que
+    // faria o filtro desaparecer em vez de negar.
+    const canUpdate =
+      ability.can('update', 'Patient') &&
+      (await this.prisma.patient.count({
+        where: {
+          AND: [{ id }, accessibleBy(ability, 'update').ofType('Patient')],
+        },
+      })) > 0;
+
+    const therapies: TherapySummaryDto[] = patient.immunotherapies.map(
+      (therapy) => ({
+        id: therapy.id,
+        immunoType: therapy.immunoType,
+        administrationRoute: therapy.administrationRoute,
+        extract: therapy.extract,
+        status: therapy.status,
+        revision: therapy.revision,
+        inductionStartDate: therapy.inductionStartDate,
+        maintenanceStartDate: therapy.maintenanceStartDate,
+        prescription: therapy.prescription
+          ? {
+              versionId: therapy.prescription.versionId,
+              revision: therapy.prescription.revision,
+            }
+          : null,
+        nextDose: therapy.doses[0] ?? null,
+        createdAt: therapy.createdAt,
+      }),
+    );
+
+    return {
+      id: patient.id,
+      fullName: patient.fullName,
+      cpfMasked: patient.cpf ? maskCpf(patient.cpf) : null,
+      // O documento completo é dado protegido: aparece apenas para quem tem
+      // capacidade de edição sobre este paciente.
+      ...(canUpdate ? { cpf: patient.cpf } : {}),
+      birthDate: patient.birthDate,
+      phoneNumber: patient.phoneNumber,
+      weightInKg: patient.weightInKg,
+      isActive: patient.isActive,
+      responsiblePhysician: patient.responsiblePhysician,
+      therapyCount: therapies.length,
+      therapyStatuses: therapies.map((therapy) => therapy.status),
+      therapies,
+      createdAt: patient.createdAt,
+      updatedAt: patient.updatedAt,
+    };
   }
 }
