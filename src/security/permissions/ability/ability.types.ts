@@ -1,5 +1,6 @@
 import { PrismaAbility, Subjects } from '@casl/prisma';
 import {
+  Appointment,
   AuditLog,
   TreatmentProtocol,
   Dose,
@@ -27,6 +28,7 @@ export type AppSubjects =
       ProfessionalRole: ProfessionalRole;
       AuditLog: AuditLog;
       TreatmentProtocol: TreatmentProtocol;
+      Appointment: Appointment;
     }>;
 
 export type AppAbility = PrismaAbility<[AppAction, AppSubjects]>;
