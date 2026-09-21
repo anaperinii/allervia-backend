@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -119,11 +119,12 @@ export class ConfiguredDoseService {
     action: 'read' | 'update' = 'update',
   ) {
     await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR SHARE`;
-    const where = accessibleBy(
-      this.abilities.createForUser(user),
-      action,
-    ).ofType('Immunotherapy');
-    // Nurses can update doses, but not the therapy itself. Dose commands use their own authorization below.
+    const ability = this.abilities.createForUser(user);
+    // Nurses can update doses, but not the therapy itself. Sem NENHUMA regra o
+    // CASL devolve `{OR: []}` e o Prisma o ignora dentro de AND — o pre-check
+    // impede que a ausência de permissão vire acesso total.
+    if (!ability.can(action, 'Immunotherapy')) throw new NotFoundException();
+    const where = accessibleBy(ability, action).ofType('Immunotherapy');
     const therapy = await tx.immunotherapy.findFirst({
       where: {
         AND: [{ id, patient: { organizationId: user.organizationId } }, where],
@@ -136,7 +137,10 @@ export class ConfiguredDoseService {
       where: {
         AND: [{ id, patient: { organizationId: user.organizationId } }, where],
       },
-      include: { patient: true, prescription: { include: { version: true } } },
+      include: {
+        patient: true,
+        currentPrescription: { include: { version: true } },
+      },
     });
     if (!current) throw new NotFoundException();
     return current;
@@ -173,7 +177,7 @@ export class ConfiguredDoseService {
         immunotherapy: {
           include: {
             patient: true,
-            prescription: { include: { version: true } },
+            currentPrescription: { include: { version: true } },
           },
         },
       },
@@ -184,18 +188,19 @@ export class ConfiguredDoseService {
     });
     const therapy = dose.immunotherapy;
     if (
-      !therapy.prescription ||
+      !therapy.currentPrescription ||
       !dose.prescriptionId ||
-      dose.prescriptionId !== therapy.prescription.id
+      dose.prescriptionId !== therapy.currentPrescription.id
     )
       throw new ConflictException('PROTOCOL_MIGRATION_REQUIRED');
-    const protocol = persistenceDefinition(therapy.prescription.version);
+    const protocol = persistenceDefinition(therapy.currentPrescription.version);
     const prescription = prescriptionFromJson(
-      therapy.prescription.resolved,
+      therapy.currentPrescription.resolved,
       protocol,
     );
-    const timeZone = (therapy.prescription.resolved as Record<string, unknown>)
-      .timeZone;
+    const timeZone = (
+      therapy.currentPrescription.resolved as Record<string, unknown>
+    ).timeZone;
     if (typeof timeZone !== 'string')
       throw new ConflictException('PRESCRIPTION_TIME_ZONE_REQUIRED');
     return { dose, therapy, organization, protocol, prescription, timeZone };
@@ -307,12 +312,14 @@ export class ConfiguredDoseService {
       },
       include: {
         immunotherapy: {
-          include: { prescription: { include: { version: true } } },
+          include: { currentPrescription: { include: { version: true } } },
         },
+        observations: true,
+        observationAddenda: { orderBy: { observedAt: 'asc' } },
       },
     });
     if (!dose) throw new NotFoundException();
-    const saved = dose.immunotherapy.prescription;
+    const saved = dose.immunotherapy.currentPrescription;
     const protocol = saved ? persistenceDefinition(saved.version) : null;
     const prescription =
       saved && protocol ? prescriptionFromJson(saved.resolved, protocol) : null;
@@ -356,7 +363,7 @@ export class ConfiguredDoseService {
             : null,
         expectedRevision: context.dose.revision,
         expectedTherapyRevision: context.therapy.revision,
-        prescriptionRevision: context.therapy.prescription!.revision,
+        prescriptionRevision: context.therapy.currentPrescription!.revision,
         protocolVersionId: context.protocol.versionId,
       };
     });

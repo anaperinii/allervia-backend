@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   Injectable,
@@ -36,7 +36,7 @@ export class ProtocolMigrationService {
       where: { patient: { organizationId: user.organizationId } },
       include: {
         doses: true,
-        prescription: true,
+        currentPrescription: true,
         patient: { select: { id: true, fullName: true, isActive: true } },
       },
     });
@@ -61,7 +61,7 @@ export class ProtocolMigrationService {
       const issues: string[] = [];
       if (therapy.administrationRoute !== 'SUBCUTANEOUS')
         issues.push('UNSUPPORTED_ROUTE');
-      if (!therapy.prescription) issues.push('PROTOCOL_NOT_BOUND');
+      if (!therapy.currentPrescription) issues.push('PROTOCOL_NOT_BOUND');
       if (pending.length > 1) issues.push('MULTIPLE_PENDING_DOSES');
       if (!pending.length) issues.push('NO_PENDING_DOSE_REQUIRES_REVIEW');
       const decimals = therapy.doses.map((dose) => {
@@ -91,7 +91,7 @@ export class ProtocolMigrationService {
       return {
         therapyId: therapy.id,
         revision: therapy.revision,
-        prescriptionId: therapy.prescription?.id ?? null,
+        prescriptionId: therapy.currentPrescription?.id ?? null,
         // Identificação mínima para a revisão assistida: quem é o registro.
         patient: therapy.patient,
         immunoType: therapy.immunoType,
@@ -198,21 +198,24 @@ export class ProtocolMigrationService {
     requireClinicalAuthor(user);
     return this.prisma.$transaction(async (tx) => {
       const therapy = await this.clinical.lockTherapy(tx, id, user);
-      if (therapy.prescription) {
+      if (therapy.currentPrescription) {
         if (
-          therapy.prescription.versionId !== versionId ||
+          therapy.currentPrescription.versionId !== versionId ||
           !isDeepStrictEqual(
-            therapy.prescription.resolved,
+            therapy.currentPrescription.resolved,
             json({
               ...resolvedInput,
               timeZone: (
-                therapy.prescription.resolved as Record<string, unknown>
+                therapy.currentPrescription.resolved as Record<string, unknown>
               ).timeZone,
             }),
           )
         )
           throw new ConflictException('PRESCRIPTION_ALREADY_BOUND');
-        return { alreadyBound: true, prescriptionId: therapy.prescription.id };
+        return {
+          alreadyBound: true,
+          prescriptionId: therapy.currentPrescription.id,
+        };
       }
       if (therapy.revision !== expectedRevision)
         throw new ConflictException('STALE_CLINICAL_REVISION');
@@ -299,6 +302,7 @@ export class ProtocolMigrationService {
       await tx.immunotherapy.update({
         where: { id },
         data: {
+          currentPrescriptionId: snapshot.id,
           targetVolumeExact: new Prisma.Decimal(target.volume),
           revision: { increment: 1 },
           updatedById: user.id,

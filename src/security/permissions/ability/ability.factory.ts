@@ -42,6 +42,7 @@ export class AbilityFactory {
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can('read', 'Dose', doseInOrg);
+        can('read', 'Appointment', inOrg);
         can('manage', 'Professional', inOrg);
         can('manage', 'User', userInOrg);
         can('manage', 'InternalUserInvite', inOrg);
@@ -62,6 +63,7 @@ export class AbilityFactory {
           can(['read', 'create', 'update'], 'Dose', {
             immunotherapy: { patient: ownPatient },
           });
+          can('manage', 'Appointment', { patient: ownPatient });
         }
         can('read', 'Professional', inOrg);
         break;
@@ -71,11 +73,14 @@ export class AbilityFactory {
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can(['read', 'create', 'update', 'archive'], 'Dose', doseInOrg);
+        can('manage', 'Appointment', inOrg);
         can('read', 'Professional', inOrg);
         break;
 
       case Role.RECEPTIONIST:
         can(['read', 'create', 'update'], 'Patient', inOrg);
+        // Agenda operacional é trabalho de recepção; a decisão clínica não.
+        can('manage', 'Appointment', inOrg);
         can('read', 'Professional', inOrg);
         break;
     }

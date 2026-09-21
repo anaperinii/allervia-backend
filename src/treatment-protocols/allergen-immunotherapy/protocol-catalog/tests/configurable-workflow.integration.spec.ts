@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
   ValidationPipe,
@@ -797,8 +797,9 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     expect(preview.nextScheduledAt?.toISOString()).toBe(
       '2026-03-14T13:00:00.000Z',
     );
-    const stored = await prisma.protocolPrescription.findUniqueOrThrow({
+    const stored = await prisma.protocolPrescription.findFirstOrThrow({
       where: { immunotherapyId: result.immunotherapy.id },
+      orderBy: { createdAt: 'desc' },
     });
     expect(stored.resolved).toMatchObject({ timeZone: 'America/Sao_Paulo' });
   });
@@ -825,8 +826,9 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     expect(await prisma.dose.count()).toBe(2);
     expect(
       (
-        await prisma.protocolPrescription.findUniqueOrThrow({
+        await prisma.protocolPrescription.findFirstOrThrow({
           where: { immunotherapyId: result.immunotherapy.id },
+          orderBy: { createdAt: 'desc' },
         })
       ).versionId,
     ).toBe(versionId);

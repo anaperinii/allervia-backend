@@ -64,6 +64,12 @@ export const CAPABILITY_MATRIX: ReadonlyArray<{
     action: 'manage',
     subject: 'ProfessionalRole',
   },
+  { capability: 'appointments:read', action: 'read', subject: 'Appointment' },
+  {
+    capability: 'appointments:manage',
+    action: 'manage',
+    subject: 'Appointment',
+  },
   { capability: 'organization:read', action: 'read', subject: 'Organization' },
   { capability: 'auditLogs:read', action: 'read', subject: 'AuditLog' },
 ];

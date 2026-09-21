@@ -164,6 +164,10 @@ export class CreateImmunotherapyUseCase {
           createdById: user.id,
         },
       });
+      await tx.immunotherapy.update({
+        where: { id: therapy.id },
+        data: { currentPrescriptionId: prescription.id },
+      });
       const dose = await tx.dose.create({
         data: plannedDoseData(
           first,

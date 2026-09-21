@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  GoneException,
   Param,
   Patch,
   Post,
@@ -19,10 +20,12 @@ import { ImmunotherapyResponseDto } from 'src/treatment-protocols/allergen-immun
 import { ReadImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/read-immunotherapy.use-case';
 import { ListImmunotherapiesByTypeUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-immunotherapies-by-type.use-case';
 import { ListImmunotherapiesForPatientUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-immunotherapies-for-patient.use-case';
-import { UpdateImmunotherapyStatusUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/update-immunotherapy-status.use-case';
 import { UpdateImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/update-immunotherapy.use-case';
+import { TherapyLifecycleService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/therapy-lifecycle.service';
+import { PrescriptionRevisionService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/prescription-revision.service';
+import { PrescriptionRevisionDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/prescription-revision.dto';
 import { CreateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/create-immunotherapy.dto';
-import { UpdateImmunotherapyStatusDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy-status.dto';
+import { TherapyLifecycleDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/therapy-lifecycle.dto';
 import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
 import { ListAllImmunotherapiesUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
 import { PageDto } from 'src/infra/http/pagination';
@@ -41,7 +44,8 @@ export class ImmunotherapiesController {
     private listImmunotherapiesForPatientUseCase: ListImmunotherapiesForPatientUseCase,
     private listImmunotherapiesByTypeUseCase: ListImmunotherapiesByTypeUseCase,
     private updateImmunotherapyUseCase: UpdateImmunotherapyUseCase,
-    private updateImmunotherapyStatusUseCase: UpdateImmunotherapyStatusUseCase,
+    private lifecycle: TherapyLifecycleService,
+    private revision: PrescriptionRevisionService,
     private listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
     private listAllImmunotherapies: ListAllImmunotherapiesUseCase,
   ) {}
@@ -109,18 +113,43 @@ export class ImmunotherapiesController {
     return this.updateImmunotherapyUseCase.execute(immunoId, dto, currentUser);
   }
 
-  @ApiBody({ type: UpdateImmunotherapyStatusDto })
+  @ApiBody({ type: TherapyLifecycleDto })
+  @Post(':id/lifecycle')
+  @CheckPolicies({ action: 'update', subject: 'Immunotherapy' })
+  async lifecycleCommand(
+    @Param('id') immunoId: string,
+    @Body() dto: TherapyLifecycleDto,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ) {
+    return this.lifecycle.execute(immunoId, dto, currentUser);
+  }
+
+  @Get(':id/lifecycle')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
+  async lifecycleHistory(
+    @Param('id') immunoId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ) {
+    return this.lifecycle.history(immunoId, currentUser);
+  }
+
+  @ApiBody({ type: PrescriptionRevisionDto })
+  @Post(':id/prescription/revision')
+  @CheckPolicies({ action: 'update', subject: 'Immunotherapy' })
+  async revisePrescription(
+    @Param('id') immunoId: string,
+    @Body() dto: PrescriptionRevisionDto,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ) {
+    return this.revision.revise(immunoId, dto, currentUser);
+  }
+
   @Patch(':id/status')
   @CheckPolicies({ action: 'update', subject: 'Immunotherapy' })
-  async updateImmunotherapyStatus(
-    @Param('id') immunoId: string,
-    @Body() dto: UpdateImmunotherapyStatusDto,
-    @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ): Promise<ImmunotherapyResponseDto> {
-    return this.updateImmunotherapyStatusUseCase.execute(
-      immunoId,
-      dto,
-      currentUser,
+  legacyStatus(): never {
+    // Status sem motivo/autoria não descreve uma decisão clínica.
+    throw new GoneException(
+      'Use the lifecycle command with reason and authorship.',
     );
   }
 

@@ -15,11 +15,13 @@ import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import { ConfiguredDoseService } from './configured-dose.service';
 import { ClinicalScheduleService } from './clinical-schedule.service';
+import { DoseCorrectionService } from './dose-correction.service';
 import {
   AdministerDoseDto,
   DosePreviewDto,
   UpdateScheduledDoseDto,
 } from './dtos/configured-dose.dto';
+import { LateObservationDto, RetractDoseDto } from './dtos/dose-correction.dto';
 import {
   SchedulePeriodDto,
   ScheduleQueryDto,
@@ -45,6 +47,7 @@ export class DosesController {
   constructor(
     private readonly clinical: ConfiguredDoseService,
     private readonly schedule: ClinicalScheduleService,
+    private readonly correction: DoseCorrectionService,
   ) {}
   @Get()
   @CheckPolicies({ action: 'read', subject: 'Dose' })
@@ -94,6 +97,24 @@ export class DosesController {
     @CurrentUser() user: AuthenticatedUserPayload,
   ) {
     return this.clinical.administer(id, dto, user);
+  }
+  @Post(':id/retract')
+  @CheckPolicies({ action: 'update', subject: 'Dose' })
+  retract(
+    @Param('id') id: string,
+    @Body() dto: RetractDoseDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.correction.retract(id, dto, user);
+  }
+  @Post(':id/observations')
+  @CheckPolicies({ action: 'update', subject: 'Dose' })
+  addObservation(
+    @Param('id') id: string,
+    @Body() dto: LateObservationDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.correction.addLateObservation(id, dto, user);
   }
   @Patch(':id')
   @ApiOperation({ deprecated: true })
