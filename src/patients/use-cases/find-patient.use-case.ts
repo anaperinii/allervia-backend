@@ -61,7 +61,9 @@ export class FindPatientUseCase {
             inductionStartDate: true,
             maintenanceStartDate: true,
             createdAt: true,
-            prescription: { select: { versionId: true, revision: true } },
+            currentPrescription: {
+              select: { versionId: true, revision: true },
+            },
             doses: {
               where: { status: 'SCHEDULED', isArchived: false },
               orderBy: { scheduledAt: 'asc' },
@@ -100,10 +102,10 @@ export class FindPatientUseCase {
         revision: therapy.revision,
         inductionStartDate: therapy.inductionStartDate,
         maintenanceStartDate: therapy.maintenanceStartDate,
-        prescription: therapy.prescription
+        prescription: therapy.currentPrescription
           ? {
-              versionId: therapy.prescription.versionId,
-              revision: therapy.prescription.revision,
+              versionId: therapy.currentPrescription.versionId,
+              revision: therapy.currentPrescription.revision,
             }
           : null,
         nextDose: therapy.doses[0] ?? null,

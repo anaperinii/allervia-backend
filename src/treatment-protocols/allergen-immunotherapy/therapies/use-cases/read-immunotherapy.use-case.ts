@@ -47,7 +47,7 @@ export class ReadImmunotherapyUseCase {
             responsiblePhysician: { select: { id: true, fullName: true } },
           },
         },
-        prescription: {
+        currentPrescription: {
           select: { versionId: true, revision: true, resolved: true },
         },
         _count: {
@@ -82,11 +82,11 @@ export class ReadImmunotherapyUseCase {
         isActive: therapy.patient.isActive,
       },
       responsiblePhysician: therapy.patient.responsiblePhysician,
-      prescription: therapy.prescription
+      prescription: therapy.currentPrescription
         ? {
-            versionId: therapy.prescription.versionId,
-            revision: therapy.prescription.revision,
-            resolved: therapy.prescription.resolved,
+            versionId: therapy.currentPrescription.versionId,
+            revision: therapy.currentPrescription.revision,
+            resolved: therapy.currentPrescription.resolved,
           }
         : null,
       nextDose,

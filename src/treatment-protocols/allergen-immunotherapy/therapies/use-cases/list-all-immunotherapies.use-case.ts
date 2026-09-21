@@ -28,7 +28,7 @@ const LIST_SELECT = {
       responsiblePhysician: { select: { id: true, fullName: true } },
     },
   },
-  prescription: { select: { versionId: true, revision: true } },
+  currentPrescription: { select: { versionId: true, revision: true } },
   doses: {
     where: { status: 'SCHEDULED' as const, isArchived: false },
     orderBy: { scheduledAt: 'asc' as const },
@@ -55,10 +55,10 @@ export function toListItem(row: ListRow): ImmunotherapyListItemDto {
       isActive: row.patient.isActive,
     },
     responsiblePhysician: row.patient.responsiblePhysician,
-    prescription: row.prescription
+    prescription: row.currentPrescription
       ? {
-          versionId: row.prescription.versionId,
-          revision: row.prescription.revision,
+          versionId: row.currentPrescription.versionId,
+          revision: row.currentPrescription.revision,
         }
       : null,
     nextDose: row.doses[0] ?? null,

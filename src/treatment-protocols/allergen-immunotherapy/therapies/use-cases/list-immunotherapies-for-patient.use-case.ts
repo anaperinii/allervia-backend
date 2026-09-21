@@ -51,7 +51,7 @@ export class ListImmunotherapiesForPatientUseCase {
             responsiblePhysician: { select: { id: true, fullName: true } },
           },
         },
-        prescription: { select: { versionId: true, revision: true } },
+        currentPrescription: { select: { versionId: true, revision: true } },
         doses: {
           where: { status: 'SCHEDULED', isArchived: false },
           orderBy: { scheduledAt: 'asc' },
