@@ -34,7 +34,11 @@ export class ProtocolMigrationService {
     requireClinicalAuthor(user);
     const therapies = await this.prisma.immunotherapy.findMany({
       where: { patient: { organizationId: user.organizationId } },
-      include: { doses: true, prescription: true },
+      include: {
+        doses: true,
+        prescription: true,
+        patient: { select: { id: true, fullName: true, isActive: true } },
+      },
     });
     const stored = await this.prisma.$queryRaw<
       { id: string; volumeText: string }[]
@@ -88,10 +92,24 @@ export class ProtocolMigrationService {
         therapyId: therapy.id,
         revision: therapy.revision,
         prescriptionId: therapy.prescription?.id ?? null,
+        // Identificação mínima para a revisão assistida: quem é o registro.
+        patient: therapy.patient,
+        immunoType: therapy.immunoType,
+        extract: therapy.extract,
+        status: therapy.status,
+        administrationRoute: therapy.administrationRoute,
+        inductionStartDate: therapy.inductionStartDate,
         target: {
           concentration: String(therapy.targetConcentration),
           volume: exactTargets.get(therapy.id),
         },
+        pendingDoses: pending.map((dose) => ({
+          id: dose.id,
+          scheduledAt: dose.scheduledAt,
+          concentration: String(dose.concentration),
+          volume: exactVolumes.get(dose.id)!,
+          intervalDays: dose.nextIntervalInDays,
+        })),
         pendingDoseIds: pending.map((dose) => dose.id),
         issues,
         decimals,
@@ -162,7 +180,11 @@ export class ProtocolMigrationService {
         },
         tx,
       );
-      return protocol;
+      // Mesmo shape do caminho idempotente: o cliente sempre recebe as versões.
+      return tx.treatmentProtocol.findUniqueOrThrow({
+        where: { id: protocol.id },
+        include: { versions: true },
+      });
     });
   }
   async bind(
