@@ -23,6 +23,9 @@ import { ListImmunotherapiesForPatientUseCase } from 'src/treatment-protocols/al
 import { UpdateImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/update-immunotherapy.use-case';
 import { TherapyLifecycleService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/therapy-lifecycle.service';
 import { PrescriptionRevisionService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/prescription-revision.service';
+import { ClinicalExportService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/clinical-export.service';
+import { ClinicalHistoryService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/clinical-history.service';
+import { ClinicalExportQueryDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/clinical-export.dto';
 import { PrescriptionRevisionDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/prescription-revision.dto';
 import { CreateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/create-immunotherapy.dto';
 import { TherapyLifecycleDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/therapy-lifecycle.dto';
@@ -46,6 +49,8 @@ export class ImmunotherapiesController {
     private updateImmunotherapyUseCase: UpdateImmunotherapyUseCase,
     private lifecycle: TherapyLifecycleService,
     private revision: PrescriptionRevisionService,
+    private exporter: ClinicalExportService,
+    private history: ClinicalHistoryService,
     private listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
     private listAllImmunotherapies: ListAllImmunotherapiesUseCase,
   ) {}
@@ -57,6 +62,17 @@ export class ImmunotherapiesController {
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
     return this.createImmunotherapyUseCase.execute(dto, currentUser);
+  }
+
+  @Get('export')
+  @CheckPolicies({ action: 'read', subject: 'Dose' })
+  async exportClinical(
+    @Query() query: ClinicalExportQueryDto,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    response.setHeader('Cache-Control', 'no-store');
+    return this.exporter.export(query, currentUser);
   }
 
   @Get('list')
@@ -131,6 +147,15 @@ export class ImmunotherapiesController {
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
     return this.lifecycle.history(immunoId, currentUser);
+  }
+
+  @Get(':id/history')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
+  async clinicalHistory(
+    @Param('id') immunoId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ) {
+    return this.history.history(immunoId, currentUser);
   }
 
   @ApiBody({ type: PrescriptionRevisionDto })

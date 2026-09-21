@@ -5,6 +5,8 @@ import { ConfiguredDoseService } from './allergen-immunotherapy/dosing/configure
 import { ClinicalScheduleService } from './allergen-immunotherapy/dosing/clinical-schedule.service';
 import { TherapyLifecycleService } from './allergen-immunotherapy/therapies/therapy-lifecycle.service';
 import { PrescriptionRevisionService } from './allergen-immunotherapy/therapies/prescription-revision.service';
+import { ClinicalExportService } from './allergen-immunotherapy/therapies/clinical-export.service';
+import { ClinicalHistoryService } from './allergen-immunotherapy/therapies/clinical-history.service';
 import { DoseCorrectionService } from './allergen-immunotherapy/dosing/dose-correction.service';
 import { UpdateScheduledDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/update-scheduled-dose.use-case';
 import { Module } from '@nestjs/common';
@@ -39,6 +41,8 @@ import { PermissionsModule } from 'src/security/permissions/permissions.module';
     ClinicalScheduleService,
     TherapyLifecycleService,
     PrescriptionRevisionService,
+    ClinicalExportService,
+    ClinicalHistoryService,
     DoseCorrectionService,
     UpdateScheduledDoseUseCase,
     ReadDoseUseCase,
