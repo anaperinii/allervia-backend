@@ -62,6 +62,19 @@ enum DoseImmediateConduct {
   SUSPEND_TREATMENT
 }
 
+enum LifecycleEventType {
+  SUSPENSION
+  RESUMPTION
+  COMPLETION
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  MISSED
+}
+
 model Organization {
   id    String @id @default(ulid())
   name  String @unique
@@ -78,6 +91,7 @@ model Organization {
   auditLogs           AuditLog[]
   treatmentProtocols TreatmentProtocol[]
   protocolDefaults OrganizationProtocolDefault[]
+  appointments Appointment[]
   automationEnabled Boolean @default(false)
   timeZone String @default("America/Sao_Paulo")
 }
@@ -167,6 +181,7 @@ model Patient {
   archivedBy   User?     @relation("PatientArchivedBy", fields: [archivedById], references: [id])
 
   immunotherapies Immunotherapy[]
+  appointments    Appointment[]
 
   @@unique([organizationId, cpf])
   @@index([organizationId, isActive, isArchived])
@@ -208,6 +223,11 @@ model User {
   dosesUpdated   Dose[]               @relation("DoseUpdatedBy")
   dosesArchived  Dose[]               @relation("DoseArchivedBy")
   invitesCreated InternalUserInvite[] @relation("InviteCreatedBy")
+
+  lifecycleEventsCreated TherapyLifecycleEvent[]   @relation("LifecycleCreatedBy")
+  addendaCreated         DoseObservationAddendum[] @relation("AddendumCreatedBy")
+  appointmentsCreated    Appointment[]             @relation("AppointmentCreatedBy")
+  appointmentsUpdated    Appointment[]             @relation("AppointmentUpdatedBy")
 
   auditLogs          AuditLog[]
   usersCreated       User[]              @relation("UserCreatedBy")
@@ -268,12 +288,107 @@ model Immunotherapy {
   archivedBy   User?     @relation("ImmunotherapyArchivedBy", fields: [archivedById], references: [id])
 
   doses Dose[]
-  prescription ProtocolPrescription?
+
+  /// Todas as prescrições já fixadas (imutáveis); a vigente é apontada por
+  /// currentPrescriptionId. Revisão clínica cria snapshot novo e move o
+  /// ponteiro — nada é editado nem apagado.
+  prescriptions ProtocolPrescription[] @relation("TherapyPrescriptions")
+  currentPrescriptionId String? @unique
+  currentPrescription ProtocolPrescription? @relation("CurrentPrescription", fields: [currentPrescriptionId], references: [id])
+
+  lifecycleEvents TherapyLifecycleEvent[]
   revision Int @default(0)
   targetVolumeExact Decimal? @db.Decimal(65, 30)
 
   @@index([patientId, status, isArchived])
   @@index([administrationRoute])
+}
+
+/// Ciclo de vida clínico com motivo, autoria e efeito explícito: suspensão,
+/// retomada e encerramento nunca se reduzem ao campo status.
+model TherapyLifecycleEvent {
+  id String @id @default(ulid())
+
+  immunotherapyId String
+  immunotherapy   Immunotherapy @relation(fields: [immunotherapyId], references: [id])
+
+  type     LifecycleEventType
+  category String?
+  reason   String
+
+  /// Suspensão: previsão de retorno para a equipe reavaliar.
+  expectedReturnAt DateTime?
+
+  /// Encerramento: recomendações finais estruturadas do wizard.
+  recommendations Json?
+
+  /// Previsões arquivadas pelo evento (encerramento); trilha explícita.
+  archivedDoseIds String[] @default([])
+
+  createdAt   DateTime @default(now())
+  createdById String
+  createdBy   User     @relation("LifecycleCreatedBy", fields: [createdById], references: [id])
+
+  @@index([immunotherapyId, createdAt])
+}
+
+/// Observação pós-aplicação tardia: registro adicional imutável com autoria e
+/// instante próprios; nunca reescreve as observações da administração.
+model DoseObservationAddendum {
+  id String @id @default(ulid())
+
+  doseId String
+  dose   Dose   @relation(fields: [doseId], references: [id])
+
+  reportedSideEffects     String[] @default([])
+  administeredMedications String[] @default([])
+  notes                   String?
+  observedAt              DateTime
+
+  conduct              DoseImmediateConduct?
+  conductJustification String?
+
+  createdAt   DateTime @default(now())
+  createdById String
+  createdBy   User     @relation("AddendumCreatedBy", fields: [createdById], references: [id])
+
+  @@index([doseId, observedAt])
+}
+
+/// Compromisso de agenda: entidade própria, relacionada e distinta da dose.
+/// Cancelamento e falta pertencem ao compromisso; a dose clínica não ganha
+/// status de agenda.
+model Appointment {
+  id String @id @default(ulid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id])
+
+  /// Vínculo opcional e único com a previsão clínica que o compromisso agenda.
+  doseId String? @unique
+  dose   Dose?   @relation(fields: [doseId], references: [id])
+
+  title    String?
+  startsAt DateTime
+  endsAt   DateTime
+  status   AppointmentStatus @default(SCHEDULED)
+
+  notes        String?
+  statusReason String?
+  revision     Int     @default(0)
+
+  createdAt   DateTime @default(now())
+  createdById String
+  createdBy   User     @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+
+  updatedAt   DateTime @default(now()) @updatedAt
+  updatedById String
+  updatedBy   User     @relation("AppointmentUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([organizationId, startsAt])
+  @@index([patientId, startsAt])
 }
 
 model Dose {
@@ -333,6 +448,8 @@ model Dose {
   recommendation Json?
   revision Int @default(0)
   observations DoseObservation[]
+  observationAddenda DoseObservationAddendum[]
+  appointment Appointment?
 
   @@index([immunotherapyId, scheduledAt])
   @@index([concentration, volume])
@@ -463,16 +580,21 @@ model OrganizationProtocolDefault {
 
 model ProtocolPrescription {
   id String @id @default(ulid())
-  immunotherapyId String @unique
-  immunotherapy Immunotherapy @relation(fields: [immunotherapyId], references: [id])
+  immunotherapyId String
+  immunotherapy Immunotherapy @relation("TherapyPrescriptions", fields: [immunotherapyId], references: [id])
   organizationId String
   versionId String
   version ProtocolVersion @relation(fields: [versionId, organizationId], references: [id, organizationId])
   resolved Json
   revision Int @default(1)
+  /// Motivo da revisão clínica quando este snapshot substituiu outro.
+  revisionReason String?
   createdById String
   createdAt DateTime @default(now())
   doses Dose[]
+  currentOf Immunotherapy? @relation("CurrentPrescription")
+
+  @@index([immunotherapyId, createdAt])
 }
 
 /// Idempotência do cadastro de prescrição: mesma chave e corpo devolvem o

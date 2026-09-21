@@ -9,6 +9,9 @@ const { assertTestDatabase } = environment as {
 };
 
 const TABLES = [
+  'Appointment',
+  'DoseObservationAddendum',
+  'TherapyLifecycleEvent',
   'AuthAttempt',
   'PreAuthChallenge',
   'MfaRecoveryCode',
