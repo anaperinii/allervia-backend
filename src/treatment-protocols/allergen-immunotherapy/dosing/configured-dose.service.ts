@@ -1,13 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   GoneException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { accessibleBy } from '@casl/prisma';
 import { createHash } from 'node:crypto';
-import { Prisma, TherapyStatus } from '@prisma/client';
+import { Prisma, Role, TherapyStatus } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
@@ -260,6 +261,35 @@ export class ConfiguredDoseService {
       throw new BadRequestException('SCHEDULE_REQUIRES_CALENDAR_REVIEW');
     }
   }
+  /**
+   * Executor da aplicação. O registrador é sempre o usuário autenticado
+   * (administeredById); registrar em nome de terceiro exige vínculo ativo com a
+   * organização e papel clínico — nome livre não identifica ninguém.
+   */
+  private async resolvePerformer(
+    tx: Prisma.TransactionClient,
+    requested: string | undefined,
+    user: AuthenticatedUserPayload,
+  ) {
+    if (!requested || requested === user.professionalId) {
+      if (!user.professionalId)
+        throw new BadRequestException('PERFORMER_REQUIRED');
+      return user.professionalId;
+    }
+    const performer = await tx.professional.findFirst({
+      where: {
+        id: requested,
+        organizationId: user.organizationId,
+        user: { isActive: true, isArchived: false },
+        professionalRoles: {
+          some: { role: { in: [Role.PHYSICIAN, Role.NURSE] }, revokedAt: null },
+        },
+      },
+      select: { id: true },
+    });
+    if (!performer) throw new BadRequestException('PERFORMER_NOT_AUTHORIZED');
+    return performer.id;
+  }
   async read(id: string, user: AuthenticatedUserPayload) {
     const where = accessibleBy(
       this.abilities.createForUser(user),
@@ -433,6 +463,44 @@ export class ConfiguredDoseService {
           throw new ConflictException('INVALID_ADMINISTRATION_CHRONOLOGY');
         if (context.dose.plannedStepId !== step.id && !dto.reason?.trim())
           throw new BadRequestException('ADJUSTMENT_REASON_REQUIRED');
+        const administrationEndedAt = dto.administrationEndedAt
+          ? this.date(dto.administrationEndedAt)
+          : null;
+        if (administrationEndedAt) {
+          if (administrationEndedAt.getTime() > Date.now())
+            throw new BadRequestException('ADMINISTRATION_IN_FUTURE');
+          if (administrationEndedAt < administeredAt)
+            throw new BadRequestException('INVALID_ADMINISTRATION_WINDOW');
+        }
+        const performerId = await this.resolvePerformer(
+          tx,
+          dto.performedById,
+          user,
+        );
+        const conduct = dto.immediateConduct ?? null;
+        if (
+          conduct &&
+          conduct.type !== 'MAINTAIN' &&
+          !conduct.justification?.trim()
+        )
+          throw new BadRequestException('CONDUCT_JUSTIFICATION_REQUIRED');
+        if (conduct?.type === 'SUSPEND_TREATMENT') {
+          // Suspender é decisão sobre o tratamento, não sobre a dose: quem não
+          // pode revisar a terapia solicita avaliação médica em vez de suspender.
+          const ability = this.abilities.createForUser(user);
+          const allowed =
+            ability.can('update', 'Immunotherapy') &&
+            (await tx.immunotherapy.count({
+              where: {
+                AND: [
+                  { id: context.therapy.id },
+                  accessibleBy(ability, 'update').ofType('Immunotherapy'),
+                ],
+              },
+            })) > 0;
+          if (!allowed)
+            throw new ForbiddenException('CONDUCT_REQUIRES_PHYSICIAN');
+        }
         const recommendation = recommendNextDose(input);
         if (recommendation.kind === 'UNRESOLVED')
           throw new BadRequestException(recommendation);
@@ -440,7 +508,11 @@ export class ConfiguredDoseService {
           where: { id },
           data: {
             administeredAt,
+            administrationEndedAt,
             administeredById: user.id,
+            performedById: performerId,
+            immediateConduct: conduct?.type ?? null,
+            immediateConductJustification: conduct?.justification ?? null,
             administeredStepId: step.id,
             administeredValues: json(configuredValues(step, context.protocol)),
             administeredVolumeExact: new Prisma.Decimal(step.volume),
@@ -495,8 +567,28 @@ export class ConfiguredDoseService {
             !context.therapy.maintenanceStartDate
               ? { maintenanceStartDate: administeredAt }
               : {}),
+            ...(conduct?.type === 'SUSPEND_TREATMENT'
+              ? { status: TherapyStatus.SUSPENDED }
+              : {}),
           },
         });
+        if (conduct?.type === 'SUSPEND_TREATMENT')
+          await this.audit.record(
+            {
+              userId: user.id,
+              organizationId: user.organizationId,
+              entityType: 'Immunotherapy',
+              entityId: context.therapy.id,
+              action: 'IMMUNOTHERAPY_STATUS_CHANGED',
+              oldValues: { status: context.therapy.status },
+              newValues: {
+                status: TherapyStatus.SUSPENDED,
+                reason: conduct.justification,
+              },
+              changedFields: ['status'],
+            },
+            tx,
+          );
         await this.audit.record(
           {
             userId: user.id,
@@ -507,6 +599,10 @@ export class ConfiguredDoseService {
             newValues: {
               administered: updated.administeredValues,
               administeredAt: administeredAt.toISOString(),
+              administrationEndedAt:
+                administrationEndedAt?.toISOString() ?? null,
+              performedById: performerId,
+              immediateConduct: conduct?.type ?? null,
               reason: dto.reason ?? null,
               recommendation,
               successorId: successor?.id ?? null,

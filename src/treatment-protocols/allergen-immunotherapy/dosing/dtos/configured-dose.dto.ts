@@ -14,7 +14,7 @@ import {
   ValidateNested,
   ArrayMaxSize,
 } from 'class-validator';
-import { DoseObservationPhase } from '@prisma/client';
+import { DoseImmediateConduct, DoseObservationPhase } from '@prisma/client';
 
 export class ConfiguredDoseValuesDto {
   @ApiProperty({
@@ -84,6 +84,18 @@ export class DoseObservationDto {
   administeredMedications: string[];
   @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
 }
+export class DoseImmediateConductDto {
+  @ApiProperty({ enum: DoseImmediateConduct })
+  @IsEnum(DoseImmediateConduct)
+  type: DoseImmediateConduct;
+  @ApiPropertyOptional({
+    description: 'Required for any conduct other than MAINTAIN',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  justification?: string;
+}
 export class AdministerDoseDto extends DosePreviewDto {
   @ApiProperty({
     description: 'Stable key reused for retries of this exact command',
@@ -105,4 +117,25 @@ export class AdministerDoseDto extends DosePreviewDto {
   @ValidateNested({ each: true })
   @Type(() => DoseObservationDto)
   observations?: DoseObservationDto[];
+  @ApiPropertyOptional({
+    description:
+      'End of the administration window; administeredAt is the start',
+  })
+  @IsOptional()
+  @IsDateString()
+  @Matches(/T.*(?:Z|[+-]\d{2}:\d{2})$/)
+  administrationEndedAt?: string;
+  @ApiPropertyOptional({
+    description:
+      'Professional who performed the application. Defaults to the authenticated professional; must belong to the organization and hold a clinical role.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  performedById?: string;
+  @ApiPropertyOptional({ type: DoseImmediateConductDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DoseImmediateConductDto)
+  immediateConduct?: DoseImmediateConductDto;
 }
