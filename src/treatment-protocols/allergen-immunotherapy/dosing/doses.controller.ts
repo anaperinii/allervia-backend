@@ -7,17 +7,23 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import { ConfiguredDoseService } from './configured-dose.service';
+import { ClinicalScheduleService } from './clinical-schedule.service';
 import {
   AdministerDoseDto,
   DosePreviewDto,
   UpdateScheduledDoseDto,
 } from './dtos/configured-dose.dto';
+import {
+  SchedulePeriodDto,
+  ScheduleQueryDto,
+} from './dtos/clinical-schedule.dto';
 @ApiTags('doses')
 @ApiResponse({
   status: 400,
@@ -36,7 +42,26 @@ import {
 })
 @Controller('doses')
 export class DosesController {
-  constructor(private readonly clinical: ConfiguredDoseService) {}
+  constructor(
+    private readonly clinical: ConfiguredDoseService,
+    private readonly schedule: ClinicalScheduleService,
+  ) {}
+  @Get()
+  @CheckPolicies({ action: 'read', subject: 'Dose' })
+  list(
+    @Query() query: ScheduleQueryDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.schedule.list(query, user);
+  }
+  @Get('metrics')
+  @CheckPolicies({ action: 'read', subject: 'Dose' })
+  metrics(
+    @Query() query: SchedulePeriodDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.schedule.metrics(query, user);
+  }
   @Get(':id')
   @CheckPolicies({ action: 'read', subject: 'Dose' })
   read(@Param('id') id: string, @CurrentUser() user: AuthenticatedUserPayload) {

@@ -2,6 +2,7 @@ import { ProtocolMigrationService } from './allergen-immunotherapy/protocol-cata
 import { ProtocolCatalogService } from './allergen-immunotherapy/protocol-catalog/protocol-catalog.service';
 import { ProtocolCatalogController } from './allergen-immunotherapy/protocol-catalog/protocol-catalog.controller';
 import { ConfiguredDoseService } from './allergen-immunotherapy/dosing/configured-dose.service';
+import { ClinicalScheduleService } from './allergen-immunotherapy/dosing/clinical-schedule.service';
 import { UpdateScheduledDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/update-scheduled-dose.use-case';
 import { Module } from '@nestjs/common';
 import { ReadDoseUseCase } from './allergen-immunotherapy/dosing/use-cases/read-dose.use-case';
@@ -32,6 +33,7 @@ import { PermissionsModule } from 'src/security/permissions/permissions.module';
     ProtocolCatalogService,
     ProtocolMigrationService,
     ConfiguredDoseService,
+    ClinicalScheduleService,
     UpdateScheduledDoseUseCase,
     ReadDoseUseCase,
     ListDosesByTherapyUseCase,
