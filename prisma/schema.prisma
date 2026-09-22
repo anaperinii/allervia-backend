@@ -75,6 +75,16 @@ enum AppointmentStatus {
   MISSED
 }
 
+enum NotificationKind {
+  PHYSICIAN_REVIEW_REQUESTED
+  TREATMENT_SUSPENDED
+}
+
+enum ContactRequestStatus {
+  RECEIVED
+  HANDLED
+}
+
 model Organization {
   id    String @id @default(ulid())
   name  String @unique
@@ -228,6 +238,9 @@ model User {
   addendaCreated         DoseObservationAddendum[] @relation("AddendumCreatedBy")
   appointmentsCreated    Appointment[]             @relation("AppointmentCreatedBy")
   appointmentsUpdated    Appointment[]             @relation("AppointmentUpdatedBy")
+  notifications           Notification[]           @relation("NotificationRecipient")
+  notificationPreferences NotificationPreference[] @relation("NotificationPreferenceOwner")
+  supportRequests         SupportRequest[]         @relation("SupportRequestAuthor")
 
   auditLogs          AuditLog[]
   usersCreated       User[]              @relation("UserCreatedBy")
@@ -473,6 +486,103 @@ model DoseObservation {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@unique([doseId, phase])
+}
+
+/// Evento de saída gravado no MESMO commit do fato de origem. O consumidor o
+/// materializa depois (notificação interna hoje; canais externos quando houver
+/// provedor), com tentativas e falha visível — nunca um envio dentro da
+/// transação clínica.
+model OutboxEvent {
+  id String @id @default(ulid())
+
+  organizationId String
+  kind           NotificationKind
+  payload        Json
+
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+  attempts    Int       @default(0)
+  lastError   String?
+
+  notifications Notification[]
+
+  @@index([processedAt, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+/// Notificação interna: destinatário, leitura e paginação. Deriva de um
+/// OutboxEvent — a unicidade por (evento, destinatário) torna o consumidor
+/// idempotente por construção.
+model Notification {
+  id String @id @default(ulid())
+
+  organizationId String
+  userId         String
+  user           User   @relation("NotificationRecipient", fields: [userId], references: [id])
+
+  outboxEventId String
+  outboxEvent   OutboxEvent @relation(fields: [outboxEventId], references: [id])
+
+  kind       NotificationKind
+  title      String
+  body       String
+  entityType String?
+  entityId   String?
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([outboxEventId, userId])
+  @@index([userId, readAt, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+/// Preferência por tipo e destinatário; ausência = habilitado.
+model NotificationPreference {
+  id String @id @default(ulid())
+
+  userId String
+  user   User   @relation("NotificationPreferenceOwner", fields: [userId], references: [id])
+
+  kind    NotificationKind
+  enabled Boolean @default(true)
+
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([userId, kind])
+}
+
+/// Solicitação pública de contato/trial: persistida com confirmação de
+/// recebimento; nenhum envio externo é simulado.
+model ContactRequest {
+  id String @id @default(ulid())
+
+  name         String
+  email        String
+  organization String?
+  message      String
+  status       ContactRequestStatus @default(RECEIVED)
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
+/// Solicitação de suporte autenticada: registro persistido, não um mailto.
+model SupportRequest {
+  id String @id @default(ulid())
+
+  organizationId String
+  userId         String
+  user           User   @relation("SupportRequestAuthor", fields: [userId], references: [id])
+
+  subject String
+  message String
+  status  ContactRequestStatus @default(RECEIVED)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt])
 }
 
 model AuditLog {
