@@ -12,6 +12,7 @@ import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { json } from '../protocol-catalog/protocol-catalog.service';
+import { enqueueOutbox } from 'src/notifications/notifications.service';
 import { LateObservationDto, RetractDoseDto } from './dtos/dose-correction.dto';
 
 /**
@@ -52,7 +53,10 @@ export class DoseCorrectionService {
     await tx.$queryRaw`SELECT id FROM "Immunotherapy" WHERE id = ${initial.immunotherapyId} FOR UPDATE`;
     const dose = await tx.dose.findFirst({
       where: { AND: [{ id }, where] },
-      include: { successor: true, immunotherapy: true },
+      include: {
+        successor: true,
+        immunotherapy: { include: { patient: true } },
+      },
     });
     if (!dose) throw new NotFoundException();
     return dose;
@@ -232,6 +236,22 @@ export class DoseCorrectionService {
           },
         });
       }
+
+      if (conduct?.type === 'REQUEST_PHYSICIAN_REVIEW')
+        await enqueueOutbox(
+          tx,
+          user.organizationId,
+          'PHYSICIAN_REVIEW_REQUESTED',
+          {
+            therapyId: dose.immunotherapyId,
+            patientId: dose.immunotherapy.patient.id,
+            patientName: dose.immunotherapy.patient.fullName,
+            doseId: id,
+            reason: conduct.justification ?? '',
+            recipientProfessionalId:
+              dose.immunotherapy.patient.responsiblePhysicianId,
+          },
+        );
 
       const addendum = await tx.doseObservationAddendum.create({
         data: {

@@ -12,6 +12,7 @@ import { AbilityFactory } from 'src/security/permissions/ability/ability.factory
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { json } from '../protocol-catalog/protocol-catalog.service';
 import { ConfiguredDoseService } from '../dosing/configured-dose.service';
+import { enqueueOutbox } from 'src/notifications/notifications.service';
 import { TherapyLifecycleDto } from './dtos/therapy-lifecycle.dto';
 
 const TRANSITIONS: Record<
@@ -133,6 +134,19 @@ export class TherapyLifecycleService {
         },
         tx,
       );
+      // Suspensão feita por outro ator informa o médico responsável, no mesmo
+      // commit da decisão.
+      if (
+        transition.type === 'SUSPENSION' &&
+        user.professionalId !== therapy.patient.responsiblePhysicianId
+      )
+        await enqueueOutbox(tx, user.organizationId, 'TREATMENT_SUSPENDED', {
+          therapyId: id,
+          patientId: therapy.patient.id,
+          patientName: therapy.patient.fullName,
+          reason: dto.reason,
+          recipientProfessionalId: therapy.patient.responsiblePhysicianId,
+        });
       return {
         event,
         status: updated.status,

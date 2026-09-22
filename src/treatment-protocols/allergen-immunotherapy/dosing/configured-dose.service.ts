@@ -21,6 +21,7 @@ import {
   persistenceDefinition,
   json,
 } from '../protocol-catalog/protocol-catalog.service';
+import { enqueueOutbox } from 'src/notifications/notifications.service';
 import {
   validateResolvedPrescription,
   ProtocolValidationError,
@@ -595,6 +596,23 @@ export class ConfiguredDoseService {
               changedFields: ['status'],
             },
             tx,
+          );
+        // O pedido de avaliação nasce no MESMO commit da aplicação (outbox);
+        // a notificação interna é materializada pelo consumidor.
+        if (conduct?.type === 'REQUEST_PHYSICIAN_REVIEW')
+          await enqueueOutbox(
+            tx,
+            user.organizationId,
+            'PHYSICIAN_REVIEW_REQUESTED',
+            {
+              therapyId: context.therapy.id,
+              patientId: context.therapy.patient.id,
+              patientName: context.therapy.patient.fullName,
+              doseId: id,
+              reason: conduct.justification ?? '',
+              recipientProfessionalId:
+                context.therapy.patient.responsiblePhysicianId,
+            },
           );
         await this.audit.record(
           {
