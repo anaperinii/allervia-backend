@@ -17,6 +17,8 @@ import { ProfessionalsModule } from './professionals/professionals.module';
 import { PermissionsModule } from './security/permissions/permissions.module';
 import { AuditTrailModule } from './audit/audit-trail.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { PublicRequestsModule } from './public-requests/public-requests.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { SchedulingModule } from './scheduling/scheduling.module';
     PermissionsModule,
     AuditTrailModule,
     SchedulingModule,
+    NotificationsModule,
+    PublicRequestsModule,
   ],
   controllers: [],
   providers: [
