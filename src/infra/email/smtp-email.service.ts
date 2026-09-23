@@ -1,7 +1,11 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
-import { IEmailService, InviteEmailParams } from './email.service';
+import {
+  DemoEmailParams,
+  IEmailService,
+  InviteEmailParams,
+} from './email.service';
 
 /**
  * Entrega real por SMTP. A mensagem carrega apenas o necessário para a ação:
@@ -29,8 +33,51 @@ export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
       host,
       port,
       secure: port === 465,
+      requireTLS: port !== 465,
+      connectionTimeout: 15_000,
+      greetingTimeout: 15_000,
+      socketTimeout: 30_000,
       ...(user && pass ? { auth: { user, pass } } : {}),
     });
+  }
+
+  async sendDemoRequest(params: DemoEmailParams): Promise<void> {
+    const roles: Record<string, string> = {
+      doctor: 'Médico(a)',
+      clinic_manager: 'Gestor(a) de clínica',
+      pharmacist: 'Farmacêutico(a)',
+      nurse: 'Enfermeiro(a)',
+      other: 'Outro',
+    };
+    const solutions: Record<string, string> = {
+      self: 'Uso próprio',
+      single_clinic: 'Uma clínica',
+      clinic_network: 'Rede de clínicas',
+    };
+    const result = await this.transporter.sendMail({
+      from: this.sender,
+      to: params.to,
+      replyTo: params.email,
+      messageId: `<demo-${params.id}@allervia.local>`,
+      subject: 'Nova solicitação de demonstração — Allervia',
+      text: [
+        'Uma solicitação de demonstração foi registrada no Allervia.',
+        '',
+        `Protocolo: ${params.id}`,
+        `Nome: ${params.name} ${params.lastName}`,
+        `E-mail: ${params.email}`,
+        `Telefone: ${params.phone}`,
+        `Atuação: ${roles[params.role] ?? params.role}`,
+        `Uso pretendido: ${solutions[params.solution] ?? params.solution}`,
+        `Especialidade: ${params.specialty}`,
+        `Número de profissionais: ${params.professionals}`,
+        '',
+        'Responda a este e-mail para entrar em contato com a pessoa interessada.',
+      ].join('\n'),
+    });
+    if (result.rejected?.length || !result.accepted?.length) {
+      throw new Error('SMTP_RECIPIENT_REJECTED');
+    }
   }
 
   async sendPasswordResetLink(email: string, token: string): Promise<void> {

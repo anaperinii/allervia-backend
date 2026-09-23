@@ -554,6 +554,31 @@ model NotificationPreference {
 
 /// Solicitação pública de contato/trial: persistida com confirmação de
 /// recebimento; nenhum envio externo é simulado.
+model DemoRequest {
+  id String @id @default(ulid())
+  requestId String @unique @db.Uuid
+  name String
+  lastName String
+  email String
+  phone String
+  role String
+  solution String
+  specialty String
+  professionals Int
+  sourceHash String
+  createdAt DateTime @default(now())
+  emailAttempts Int @default(0)
+  emailNextAttemptAt DateTime? @default(now())
+  emailLeaseUntil DateTime?
+  emailAcceptedAt DateTime?
+  emailErrorCode String?
+
+  @@index([emailNextAttemptAt, emailLeaseUntil])
+  @@index([sourceHash, createdAt])
+  @@index([email, createdAt])
+  @@index([createdAt])
+}
+
 model ContactRequest {
   id String @id @default(ulid())
 

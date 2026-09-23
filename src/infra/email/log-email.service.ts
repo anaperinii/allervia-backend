@@ -7,6 +7,11 @@ import { IEmailService, InviteEmailParams } from './email.service';
  */
 @Injectable()
 export class LogEmailService extends IEmailService {
+  sendDemoRequest(): Promise<void> {
+    // Never mark a durable job delivered through the development logger.
+    return Promise.reject(new Error('SMTP_REQUIRED'));
+  }
+
   private readonly logger = new Logger('EmailService');
 
   sendPasswordResetLink(email: string, token: string): Promise<void> {
