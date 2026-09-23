@@ -9,6 +9,7 @@ const { assertTestDatabase } = environment as {
 };
 
 const TABLES = [
+  'DemoRequest',
   'Notification',
   'NotificationPreference',
   'OutboxEvent',

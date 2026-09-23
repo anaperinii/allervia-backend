@@ -5,8 +5,17 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
 } from '@nestjs/common';
-import { ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+import {
+  ApiAcceptedResponse,
+  ApiProperty,
+  ApiPropertyOptional,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { Request } from 'express';
+import { DemoRequestDto, DemoRequestReceiptDto } from './demo-request.dto';
+import { DemoRequestsService } from './demo-requests.service';
 import {
   IsEmail,
   IsNotEmpty,
@@ -39,7 +48,21 @@ class SupportRequestDto {
 @ApiTags('requests')
 @Controller()
 export class PublicRequestsController {
-  constructor(private readonly requests: PublicRequestsService) {}
+  constructor(
+    private readonly requests: PublicRequestsService,
+    private readonly demos: DemoRequestsService,
+  ) {}
+
+  @Public()
+  @Post('demo-requests')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiAcceptedResponse({ type: DemoRequestReceiptDto })
+  demo(@Body() dto: DemoRequestDto, @Req() request: Request) {
+    return this.demos.create(
+      dto,
+      request.ip ?? request.socket.remoteAddress ?? 'unknown',
+    );
+  }
 
   /** Solicitação de contato/trial: pública, persistida, com confirmação. */
   @Public()
