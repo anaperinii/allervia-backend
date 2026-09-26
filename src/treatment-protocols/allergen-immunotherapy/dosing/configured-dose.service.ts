@@ -277,24 +277,19 @@ export class ConfiguredDoseService {
     requested: string | undefined,
     user: AuthenticatedUserPayload,
   ) {
-    if (!requested || requested === user.professionalId) {
-      if (!user.professionalId)
-        throw new BadRequestException('PERFORMER_REQUIRED');
-      return user.professionalId;
-    }
     const performer = await tx.professional.findFirst({
       where: {
-        id: requested,
+        userId: requested ?? user.id,
         organizationId: user.organizationId,
         user: { isActive: true, isArchived: false },
         professionalRoles: {
           some: { role: { in: [Role.PHYSICIAN, Role.NURSE] }, revokedAt: null },
         },
       },
-      select: { id: true },
+      select: { userId: true },
     });
     if (!performer) throw new BadRequestException('PERFORMER_NOT_AUTHORIZED');
-    return performer.id;
+    return performer.userId;
   }
   async read(id: string, user: AuthenticatedUserPayload) {
     const where = accessibleBy(
@@ -482,7 +477,7 @@ export class ConfiguredDoseService {
         }
         const performerId = await this.resolvePerformer(
           tx,
-          dto.performedById,
+          dto.administeredById,
           user,
         );
         const conduct = dto.immediateConduct ?? null;
@@ -517,8 +512,7 @@ export class ConfiguredDoseService {
           data: {
             administeredAt,
             administrationEndedAt,
-            administeredById: user.id,
-            performedById: performerId,
+            administeredById: performerId,
             immediateConduct: conduct?.type ?? null,
             immediateConductJustification: conduct?.justification ?? null,
             administeredStepId: step.id,
@@ -626,7 +620,7 @@ export class ConfiguredDoseService {
               administeredAt: administeredAt.toISOString(),
               administrationEndedAt:
                 administrationEndedAt?.toISOString() ?? null,
-              performedById: performerId,
+              administeredById: performerId,
               immediateConduct: conduct?.type ?? null,
               reason: dto.reason ?? null,
               recommendation,

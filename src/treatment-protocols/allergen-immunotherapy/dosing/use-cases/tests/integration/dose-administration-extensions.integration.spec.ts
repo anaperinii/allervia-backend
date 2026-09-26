@@ -116,7 +116,7 @@ describe('Dose administration extensions - Integration', () => {
       doseId,
       command({
         administrationEndedAt: '2026-01-01T13:30:00Z',
-        performedById: nurse.professionalId!,
+        administeredById: nurse.id,
         immediateConduct: { type: 'MAINTAIN' },
         observations: [
           {
@@ -141,8 +141,12 @@ describe('Dose administration extensions - Integration', () => {
     expect(dose.administrationEndedAt?.toISOString()).toBe(
       '2026-01-01T13:30:00.000Z',
     );
-    expect(dose.performedById).toBe(nurse.professionalId);
-    expect(dose.administeredById).toBe(physician.id);
+    expect(dose.administeredById).toBe(nurse.id);
+    const audit = await prisma.auditLog.findFirstOrThrow({
+      where: { entityId: doseId, action: 'DOSE_ADMINISTERED' },
+    });
+    expect(audit.userId).toBe(physician.id);
+    expect(audit.newValues).toMatchObject({ administeredById: nurse.id });
     expect(dose.immediateConduct).toBe('MAINTAIN');
     expect(dose.observations).toHaveLength(2);
     expect(
@@ -155,7 +159,7 @@ describe('Dose administration extensions - Integration', () => {
     const doseId = await firstDoseId();
     await clinical.administer(doseId, command(), physician);
     const dose = await prisma.dose.findUniqueOrThrow({ where: { id: doseId } });
-    expect(dose.performedById).toBe(physician.professionalId);
+    expect(dose.administeredById).toBe(physician.id);
     expect(dose.immediateConduct).toBeNull();
     expect(dose.administrationEndedAt).toBeNull();
   });
@@ -182,13 +186,13 @@ describe('Dose administration extensions - Integration', () => {
     const outsider =
       await factories.users.createAuthenticatedPhysicianProfessional();
     const doseId = await firstDoseId();
-    for (const performedById of [
-      receptionist.professionalId!,
-      outsider.professionalId!,
+    for (const administeredById of [
+      receptionist.id,
+      outsider.id,
       'unknown-professional',
     ]) {
       await expect(
-        clinical.administer(doseId, command({ performedById }), physician),
+        clinical.administer(doseId, command({ administeredById }), physician),
       ).rejects.toThrow('PERFORMER_NOT_AUTHORIZED');
     }
     const dose = await prisma.dose.findUniqueOrThrow({ where: { id: doseId } });

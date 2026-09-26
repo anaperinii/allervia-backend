@@ -24,7 +24,9 @@ const EXPORT_SELECT = {
   administeredValues: true,
   immediateConduct: true,
   createdAt: true,
-  performedBy: { select: { id: true, fullName: true } },
+  administeredBy: {
+    select: { id: true, professional: { select: { fullName: true } } },
+  },
   prescription: {
     select: {
       id: true,
@@ -147,7 +149,12 @@ export class ClinicalExportService {
         planned: dose.plannedValues,
         administered: dose.administeredValues,
         immediateConduct: dose.immediateConduct,
-        performedBy: dose.performedBy,
+        administeredBy: dose.administeredBy
+          ? {
+              id: dose.administeredBy.id,
+              fullName: dose.administeredBy.professional?.fullName ?? null,
+            }
+          : null,
         prescription: dose.prescription
           ? {
               versionId: dose.prescription.versionId,

@@ -149,7 +149,6 @@ model Professional {
   professionalRolesRevoked ProfessionalRole[]   @relation("RoleRevokedById")
   patientsResponsible      Patient[]            @relation("ResponsiblePhysician")
   internalUserInvites      InternalUserInvite[]
-  dosesPerformed           Dose[]               @relation("DosePerformedBy")
 
   @@index([organizationId, profession])
 }
@@ -409,6 +408,7 @@ model Dose {
 
   immunotherapyId  String
   immunotherapy    Immunotherapy @relation(fields: [immunotherapyId], references: [id])
+  /// Conta do profissional que executou a aplicação; o registrador fica no AuditLog.
   administeredById String?
   administeredBy   User?         @relation("AdministeredBy", fields: [administeredById], references: [id])
 
@@ -423,11 +423,6 @@ model Dose {
   /// pertence ao registro clínico, não à agenda.
   administrationEndedAt DateTime?
 
-  /// Profissional que executou a aplicação. `administeredById` permanece como o
-  /// usuário autenticado que registrou o comando; os dois podem divergir quando
-  /// se registra em nome de terceiro vinculado e habilitado.
-  performedById String?
-  performedBy   Professional? @relation("DosePerformedBy", fields: [performedById], references: [id])
 
   immediateConduct              DoseImmediateConduct?
   immediateConductJustification String?
@@ -467,7 +462,6 @@ model Dose {
   @@index([immunotherapyId, scheduledAt])
   @@index([concentration, volume])
   @@index([administeredById])
-  @@index([performedById])
   @@index([scheduledAt])
 }
 
