@@ -40,11 +40,6 @@ export class ListImmunotherapiesQueryDto extends PageQueryDto {
   includeArchived?: boolean;
 }
 
-/**
- * Tratamento como a listagem e o prontuário o veem. `patientId`,
- * `immunotherapyId` e `doseId` são identidades distintas: o item carrega o
- * paciente por referência, nunca funde os dois.
- */
 export class ImmunotherapyListItemDto {
   @ApiProperty()
   id: string;

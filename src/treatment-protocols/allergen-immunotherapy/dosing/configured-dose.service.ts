@@ -121,9 +121,6 @@ export class ConfiguredDoseService {
   ) {
     await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR SHARE`;
     const ability = this.abilities.createForUser(user);
-    // Nurses can update doses, but not the therapy itself. Sem NENHUMA regra o
-    // CASL devolve `{OR: []}` e o Prisma o ignora dentro de AND — o pre-check
-    // impede que a ausência de permissão vire acesso total.
     if (!ability.can(action, 'Immunotherapy')) throw new NotFoundException();
     const where = accessibleBy(ability, action).ofType('Immunotherapy');
     const therapy = await tx.immunotherapy.findFirst({
@@ -267,11 +264,6 @@ export class ConfiguredDoseService {
       throw new BadRequestException('SCHEDULE_REQUIRES_CALENDAR_REVIEW');
     }
   }
-  /**
-   * Executor da aplicação. O registrador é sempre o usuário autenticado
-   * (administeredById); registrar em nome de terceiro exige vínculo ativo com a
-   * organização e papel clínico — nome livre não identifica ninguém.
-   */
   private async resolvePerformer(
     tx: Prisma.TransactionClient,
     requested: string | undefined,
@@ -488,8 +480,6 @@ export class ConfiguredDoseService {
         )
           throw new BadRequestException('CONDUCT_JUSTIFICATION_REQUIRED');
         if (conduct?.type === 'SUSPEND_TREATMENT') {
-          // Suspender é decisão sobre o tratamento, não sobre a dose: quem não
-          // pode revisar a terapia solicita avaliação médica em vez de suspender.
           const ability = this.abilities.createForUser(user);
           const allowed =
             ability.can('update', 'Immunotherapy') &&
@@ -591,8 +581,6 @@ export class ConfiguredDoseService {
             },
             tx,
           );
-        // O pedido de avaliação nasce no MESMO commit da aplicação (outbox);
-        // a notificação interna é materializada pelo consumidor.
         if (conduct?.type === 'REQUEST_PHYSICIAN_REVIEW')
           await enqueueOutbox(
             tx,

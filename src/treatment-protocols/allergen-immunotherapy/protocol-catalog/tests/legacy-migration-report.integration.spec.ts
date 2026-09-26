@@ -84,7 +84,6 @@ describe('Legacy migration report for the assisted UI - Integration', () => {
         intervalDays: 7,
       },
     ]);
-    // Somente leitura: nada foi criado.
     expect(await prisma.protocolPrescription.count()).toBe(0);
     expect(await prisma.treatmentProtocol.count()).toBe(0);
   });

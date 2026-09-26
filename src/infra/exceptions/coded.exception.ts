@@ -11,11 +11,6 @@ export interface CodedExceptionPayload {
   fieldErrors?: Record<string, string[]>;
 }
 
-/**
- * Exceções com código estável de erro. Elas mantêm a hierarquia do Nest — um
- * 401 continua sendo `UnauthorizedException` — e apenas acrescentam o `code`
- * que a UI usa para ramificar sem depender do texto traduzido.
- */
 export class CodedHttpException extends HttpException {
   constructor(
     status: HttpStatus,

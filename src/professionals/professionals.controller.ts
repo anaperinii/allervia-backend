@@ -27,10 +27,6 @@ import { UpdateMemberAccessUseCase } from './use-cases/update-member-access.use-
 import { UpdateTeamMemberUseCase } from './use-cases/update-team-member.use-case';
 import { FindProfessionalByIdUseCase } from './use-cases/find-professional-by-id.use-case';
 
-/**
- * Equipe e perfil profissional. O escopo é sempre a organização do ator; o
- * identificador na rota não amplia acesso por si só.
- */
 @ApiTags('professionals')
 @Controller('professionals')
 export class ProfessionalsController {
@@ -65,7 +61,6 @@ export class ProfessionalsController {
     return this.findProfessionalById.execute(currentUser.professionalId);
   }
 
-  /** Atualização do próprio cadastro; não muda profissão, papéis nem organização. */
   @Patch('me')
   @AuthenticatedOnly()
   @ApiOkResponse({ type: ProfessionalResponseDto })

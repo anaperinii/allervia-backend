@@ -33,8 +33,6 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
         'Install allervia-web dependencies and set ALLERVIA_WEB_ROOT if not a sibling checkout.',
       );
     }
-    // Sem HTTPS no servidor efêmero, os atributos do cookie são exercitados em
-    // modo de desenvolvimento explícito.
     process.env.AUTH_INSECURE_COOKIES = 'true';
     process.env.AUTH_MFA_ENFORCEMENT = 'optional';
     process.env.AUTH_LEGACY_BEARER = 'enabled';
@@ -46,8 +44,6 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
       .useValue(TestDatabaseManager.getInstance())
       .compile();
     app = module.createNestApplication();
-    // O consumidor real roda atrás do mesmo transporte da aplicação: cookies
-    // analisados, validação com erros por campo e envelope único de erro.
     app.use(cookieParser());
     app.useGlobalPipes(buildValidationPipe());
     app.useGlobalFilters(new DomainExceptionFilter());
@@ -113,7 +109,6 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
       roles: user.roles,
       tokenVersion: 0,
     });
-    // Do not pass credentials on argv or serialize the parent environment into reports.
     const childEnv: NodeJS.ProcessEnv = {
       PATH: process.env.PATH,
       SystemRoot: process.env.SystemRoot,

@@ -5,11 +5,6 @@ import { buildPage, PageDto, resolvePage } from 'src/infra/http/pagination';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { ListTeamQueryDto, TeamMemberDto } from '../dtos/team-member.dto';
 
-/**
- * Equipe da organização do ator, paginada no banco. Papéis vêm dos vínculos
- * vigentes, não de um campo denormalizado: revogar um papel some da lista na
- * consulta seguinte.
- */
 @Injectable()
 export class ListTeamMembersUseCase {
   constructor(private readonly prisma: PrismaService) {}

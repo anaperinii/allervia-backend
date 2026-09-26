@@ -22,14 +22,9 @@ export interface VerifyMfaInput {
 export interface VerifyMfaResult {
   issued: IssuedSession;
   context: AuthContext;
-  /** Presente apenas quando a verificação também concluiu um cadastro. */
   recoveryCodes?: string[];
 }
 
-/**
- * Consome o desafio de segundo fator e cria a sessão clínica. A identidade de
- * pré-login não vira sessão: o desafio é consumido e uma sessão nova é emitida.
- */
 @Injectable()
 export class VerifyMfaChallengeUseCase {
   constructor(

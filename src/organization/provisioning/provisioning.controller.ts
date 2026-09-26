@@ -16,11 +16,6 @@ import {
 import { ProvisionOrganizationUseCase } from './provision-organization.use-case';
 import { PROVISIONING_HEADER, ProvisioningGuard } from './provisioning.guard';
 
-/**
- * Superfície administrativa da plataforma. Não é acessada pelo navegador nem
- * pelo onboarding do produto: a chave de provisionamento nunca chega ao bundle
- * do web.
- */
 @ApiTags('provisioning')
 @Controller('admin/provisioning')
 @Public()

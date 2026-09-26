@@ -118,7 +118,7 @@ describe('Clinical export and authorized history - Integration', () => {
     );
     const beforeAnything = new Date(Date.now() - 60_000).toISOString();
     const afterFirstDose = new Date().toISOString();
-    await administerFirst(result.firstDose.id); // cria a sucessora DEPOIS do corte
+    await administerFirst(result.firstDose.id);
 
     const empty = await exporter.export(
       { asOf: beforeAnything, page: 1, pageSize: 50 },
@@ -130,7 +130,6 @@ describe('Clinical export and authorized history - Integration', () => {
       { asOf: afterFirstDose, page: 1, pageSize: 50 },
       physician,
     );
-    // Só a primeira dose pertence ao conjunto; a sucessora nasceu após o corte.
     expect(cut.total).toBe(1);
     const row = cut.items[0];
     expect(row.planned).toMatchObject({ volume: '0.1' });
@@ -216,7 +215,6 @@ describe('Clinical export and authorized history - Integration', () => {
     expect(actions).toContain('DOSE_ADMINISTERED');
     expect(trail.entries[0].user.professional?.fullName).toBeDefined();
 
-    // Enfermagem lê pelo escopo clínico; outro médico sem vínculo, não.
     expect((await history.history(therapyId, nurse)).entries.length).toBe(
       trail.entries.length,
     );
@@ -224,7 +222,6 @@ describe('Clinical export and authorized history - Integration', () => {
       NotFoundException,
     );
 
-    // A auditoria administrativa continua fechada ao médico, mesmo por dentro.
     await expect(auditList.execute({}, physician)).rejects.toThrow(
       NotFoundException,
     );

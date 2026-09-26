@@ -124,7 +124,6 @@ describe('configured protocol acceptance fixtures (stage 1)', () => {
       );
       return;
     }
-    // Histories belong to this harness, never to the engine's input contract.
     for (const length of test.historyLengthsForTestHarness ?? [1]) {
       const history = Array.from({ length }, () => base.administered);
       const result = recommendNextDose({

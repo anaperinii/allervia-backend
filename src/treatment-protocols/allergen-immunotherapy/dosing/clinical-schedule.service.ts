@@ -11,7 +11,6 @@ import {
   SchedulePeriodDto,
 } from './dtos/clinical-schedule.dto';
 
-/** Dia local `yyyy-MM-dd` no fuso clínico. */
 function localDay(date: Date, zone: string): string {
   const [year, month, day] = localCalendarDay(date, zone).split('-');
   return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -61,11 +60,6 @@ const SCHEDULE_SELECT = {
   },
 } satisfies Prisma.DoseSelect;
 
-/**
- * Leitura agregada para agenda e indicadores: uma consulta por período em vez
- * de um histórico por tratamento. A autorização por objeto é a mesma dos
- * comandos (CASL sobre Dose/Immunotherapy) e o total respeita o escopo.
- */
 @Injectable()
 export class ClinicalScheduleService {
   constructor(
@@ -75,13 +69,10 @@ export class ClinicalScheduleService {
 
   private doseScope(user: AuthenticatedUserPayload) {
     const ability = this.abilities.createForUser(user);
-    // Guard de rota já exigiu a capacidade; sem regra alguma o escopo vazio do
-    // CASL viraria `{OR: []}` e o Prisma o ignoraria dentro de AND.
     if (!ability.can('read', 'Dose')) return null;
     return accessibleBy(ability, 'read').ofType('Dose');
   }
 
-  /** Doses do período: administradas pelo instante real, pendentes pelo previsto. */
   async list(query: ScheduleQueryDto, user: AuthenticatedUserPayload) {
     const scope = this.doseScope(user);
     const bounds = resolvePage(query);
@@ -139,16 +130,6 @@ export class ClinicalScheduleService {
     return buildPage(items, total, bounds);
   }
 
-  /**
-   * Indicadores oficiais do período, agregados no fuso clínico da organização.
-   * Denominadores documentados:
-   * - aplicações: doses com `administeredAt` dentro do período;
-   * - adesão: aplicações ON_SCHEDULE ÷ total de aplicações do período
-   *   (razão nula sem aplicações — nunca um número inventado);
-   * - atrasos: previstas (SCHEDULED) do período com `scheduledAt` já vencido;
-   * - fases: tratamentos IN_PROGRESS acessíveis, por `maintenanceStartDate`.
-   * Taxa de falta não existe: não há registro próprio de falta.
-   */
   async metrics(dto: SchedulePeriodDto, user: AuthenticatedUserPayload) {
     const scope = this.doseScope(user);
     const { from, to } = period(dto);

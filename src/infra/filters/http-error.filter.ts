@@ -23,11 +23,6 @@ interface NestErrorBody {
   fieldErrors?: Record<string, string[]>;
 }
 
-/**
- * Envelope único de erro: `{statusCode, code, message, fieldErrors?, requestId?}`.
- * Detalhes internos não atravessam a fronteira HTTP — 5xx responde mensagem
- * genérica e o diagnóstico fica no log correlacionado por requestId.
- */
 @Catch()
 export class HttpErrorFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpErrorFilter.name);
@@ -79,9 +74,6 @@ export class HttpErrorFilter implements ExceptionFilter {
         typeof raw === 'string' ? { message: raw } : (raw as NestErrorBody);
 
       const message = this.flatten(body.message) ?? exception.message;
-      // Módulos que lançam `new ConflictException('STALE_PROTOCOL_REVISION')`
-      // carregam o código na mensagem. Promovê-lo ao campo `code` permite à UI
-      // ramificar sem depender do texto.
       const messageIsCode = /^[A-Z][A-Z0-9_]{2,}$/.test(message);
 
       return {

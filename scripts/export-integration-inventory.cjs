@@ -1,4 +1,3 @@
-/* Read source only: no application bootstrap, environment loading or database access. */
 const fs = require('node:fs');
 const path = require('node:path');
 const cp = require('node:child_process');

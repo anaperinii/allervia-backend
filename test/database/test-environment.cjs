@@ -20,7 +20,6 @@ function assertTestDatabase(env, developmentUrl) {
   }
   if (developmentUrl) {
     const development = new URL(developmentUrl);
-    // Treat loopback aliases as the same server; schema/user differences do not isolate data.
     const isLocal = (host) =>
       ['localhost', '127.0.0.1', '[::1]'].includes(host);
     const sameHost =
@@ -55,9 +54,7 @@ function loadTestEnvironment() {
     throw new Error('Inherited DATABASE_URL differs from .env.test.local.');
   }
   Object.assign(process.env, testEnv);
-  // Database suites must never inherit the real SMTP transport from development.
   process.env.EMAIL_TRANSPORT = 'log';
-  // Test-only defaults prevent AppModule from inheriting application JWT credentials.
   process.env.JWT_SECRET = testEnv.JWT_SECRET || 'allervia-local-test-secret';
   process.env.JWT_EXPIRES_IN = testEnv.JWT_EXPIRES_IN || '1h';
 }

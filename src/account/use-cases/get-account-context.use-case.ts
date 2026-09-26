@@ -7,16 +7,10 @@ import { USER_MESSAGES } from 'src/account/user.messages';
 
 export interface AccountContextRequest {
   userId: string;
-  /** Verdadeiro quando a requisição chegou pela sessão do navegador. */
   sessionBased: boolean;
   mfaRequired: boolean;
 }
 
-/**
- * Identidade, contexto organizacional e capacidades do usuário autenticado.
- * Monta a resposta a partir de uma seleção pública explícita — o registro cru
- * do banco nunca é devolvido.
- */
 @Injectable()
 export class GetAccountContextUseCase {
   constructor(

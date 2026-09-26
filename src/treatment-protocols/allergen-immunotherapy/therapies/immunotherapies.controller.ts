@@ -172,7 +172,6 @@ export class ImmunotherapiesController {
   @Patch(':id/status')
   @CheckPolicies({ action: 'update', subject: 'Immunotherapy' })
   legacyStatus(): never {
-    // Status sem motivo/autoria não descreve uma decisão clínica.
     throw new GoneException(
       'Use the lifecycle command with reason and authorship.',
     );

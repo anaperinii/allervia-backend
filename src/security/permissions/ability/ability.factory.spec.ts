@@ -16,8 +16,6 @@ describe('AbilityFactory', () => {
     ...overrides,
   });
 
-  // Helpers: só preenchemos os campos que as conditions olham; o cast mantém o
-  // teste tipado (sem `any`). `immuno` usa forma aninhada (posse via paciente).
   const patient = (data: Partial<Patient>) =>
     subject('Patient', data as Patient);
 
@@ -106,10 +104,6 @@ describe('AbilityFactory', () => {
       expect(ability.can('create', 'Immunotherapy')).toBe(true);
     });
 
-    // Posse de imunoterapia é derivada (patient.responsiblePhysicianId). O
-    // matcher de instância do @casl/prisma não avalia relação aninhada, então
-    // a posse é escopada na query via accessibleBy (Fase 4) — validada lá.
-    // No nível da rota (tipo), o médico pode atualizar imunoterapia.
     it('pode atualizar imunoterapia (nível de tipo)', () => {
       expect(ability.can('update', 'Immunotherapy')).toBe(true);
     });

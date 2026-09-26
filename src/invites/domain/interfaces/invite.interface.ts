@@ -23,11 +23,9 @@ export interface FindInvitesFilters {
   role?: Role;
   onlyActive?: boolean;
   includeExpired?: boolean;
-  /** Busca por nome ou e-mail, sem diferenciar maiúsculas. */
   search?: string;
 }
 
-/** Convite com o autor resolvido, para a listagem da equipe. */
 export interface InviteWithAuthor {
   id: string;
   email: string;

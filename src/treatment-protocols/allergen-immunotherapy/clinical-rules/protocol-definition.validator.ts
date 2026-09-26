@@ -119,7 +119,6 @@ export function validateProtocolDefinition(
   };
 }
 
-/** Validate the resolved selection; never derive a sequence from target arithmetic. */
 export function validateResolvedPrescription(
   input: unknown,
   protocol: PublishedProtocolDefinition,

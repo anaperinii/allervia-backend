@@ -63,9 +63,6 @@ export class ChangePasswordUseCase {
       );
     });
 
-    // Senha trocada encerra os acessos abertos em outros dispositivos. A
-    // versão de autorização já invalida a credencial antiga; a revogação
-    // explícita também limpa a lista de dispositivos do usuário.
     await this.sessionService.revokeAllForUser(
       userId,
       AuthSessionRevokeReason.PASSWORD_CHANGED,

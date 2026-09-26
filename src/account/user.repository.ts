@@ -16,7 +16,6 @@ export interface AccountProfileRow {
 }
 
 export abstract class IUserRepository {
-  /** Seleção pública do perfil; nunca devolve senha, tokenVersion ou segredos. */
   abstract findAccountProfile(
     userId: string,
   ): Promise<AccountProfileRow | null>;

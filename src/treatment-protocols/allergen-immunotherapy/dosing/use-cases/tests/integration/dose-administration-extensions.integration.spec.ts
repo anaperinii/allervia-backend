@@ -271,7 +271,6 @@ describe('Dose administration extensions - Integration', () => {
     });
     expect(dose.status).toBe('ADMINISTERED_ON_SCHEDULE');
     expect(therapy.status).toBe('SUSPENDED');
-    // A sucessora fica planejada para a retomada; a terapia suspensa bloqueia comandos.
     expect(result.successor).not.toBeNull();
     expect(
       await prisma.auditLog.count({

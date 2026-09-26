@@ -14,10 +14,6 @@ import { TestFactories } from 'test/factories';
 import { syntheticProtocolDefinition } from 'test/fixtures/configured-protocol';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
-/**
- * Cadastro de prescrição: atomicidade, idempotência e tratamento novo para
- * paciente existente sem duplicação.
- */
 describe('Cadastro de prescrição - idempotência e paciente existente', () => {
   let module: TestingModule;
   let prisma: PrismaService;
@@ -137,7 +133,6 @@ describe('Cadastro de prescrição - idempotência e paciente existente', () => 
     expect(await prisma.patient.count()).toBe(1);
     expect(await prisma.immunotherapy.count()).toBe(2);
 
-    // Cada tratamento tem a própria primeira dose; nada se mistura.
     const doses = await prisma.dose.groupBy({
       by: ['immunotherapyId'],
       _count: true,
@@ -181,7 +176,6 @@ describe('Cadastro de prescrição - idempotência e paciente existente', () => 
     const stranger =
       await factories.users.createAuthenticatedPhysicianProfessional();
 
-    // Paciente de outra organização não existe para este prescritor.
     await expect(
       create.execute(
         input({
@@ -199,10 +193,8 @@ describe('Cadastro de prescrição - idempotência e paciente existente', () => 
   it('troca do padrão durante o formulário não muda a versão selecionada', async () => {
     const catalog = module.get(ProtocolCatalogService);
 
-    // Formulário aberto com a versão atual explícita…
     const chosenVersionId = versionId;
 
-    // …enquanto isso, outra pessoa publica uma v2 e a torna padrão.
     const protocolId = (
       await prisma.protocolVersion.findUniqueOrThrow({
         where: { id: versionId },

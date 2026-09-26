@@ -13,10 +13,6 @@ import { UpdateOrganizationDto } from '../dtos/update-organization.dto';
 import { OrganizationResponseDto } from '../dtos/organization-response.dto';
 import { ORGANIZATION_MESSAGES } from '../organization.messages';
 
-/**
- * Atualiza a própria organização. O alvo vem do vínculo do ator, nunca de um
- * identificador livre no corpo ou na rota.
- */
 @Injectable()
 export class UpdateOrganizationUseCase {
   constructor(

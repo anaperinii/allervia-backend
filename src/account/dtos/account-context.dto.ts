@@ -65,10 +65,6 @@ export class AccountSecurityDto {
   sessionBased: boolean;
 }
 
-/**
- * Identidade pública consumida pela aplicação. Não inclui hash de senha, versão
- * de token, segredos de MFA nem relações internas não solicitadas.
- */
 export class AccountContextDto {
   @ApiProperty({ type: AccountUserDto })
   user: AccountUserDto;

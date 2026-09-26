@@ -14,11 +14,9 @@ export interface OutboxPayload {
   patientName: string;
   doseId?: string;
   reason: string;
-  /** Destinatário resolvido no commit de origem: o médico responsável. */
   recipientProfessionalId: string;
 }
 
-/** Grava o evento de saída DENTRO da transação do fato de origem. */
 export function enqueueOutbox(
   tx: Prisma.TransactionClient,
   organizationId: string,
@@ -41,17 +39,10 @@ const TITLES: Record<NotificationKind, string> = {
 
 const MAX_ATTEMPTS = 5;
 
-/**
- * Notificações internas derivadas de eventos persistidos. O consumidor é
- * idempotente por construção (unicidade evento+destinatário) e registra
- * tentativas/falhas visíveis; canais externos entram aqui quando houver
- * provedor definido — nunca um envio simulado.
- */
 @Injectable()
 export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Processa eventos pendentes; seguro para reexecução e concorrência. */
   async processPending(
     limit = 20,
   ): Promise<{ processed: number; failed: number }> {
@@ -80,7 +71,6 @@ export class NotificationsService {
               },
             });
             if (preference?.enabled !== false) {
-              // Idempotente: replay do mesmo evento não duplica a notificação.
               await tx.notification.upsert({
                 where: {
                   outboxEventId_userId: {
@@ -200,7 +190,6 @@ export class NotificationsService {
     return this.preferences(user);
   }
 
-  /** Status do outbox para administração: pendências e falhas visíveis. */
   async outboxStatus(user: AuthenticatedUserPayload) {
     const where = { organizationId: user.organizationId };
     const [pending, failing, lastFailures] = await this.prisma.$transaction([

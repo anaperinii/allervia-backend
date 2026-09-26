@@ -66,10 +66,6 @@ export function toListItem(row: ListRow): ImmunotherapyListItemDto {
   };
 }
 
-/**
- * Listagem paginada de tratamentos. O escopo CASL entra na consulta e no total;
- * o item traz paciente e médico por referência, sem fundir identidades.
- */
 @Injectable()
 export class ListAllImmunotherapiesUseCase {
   constructor(

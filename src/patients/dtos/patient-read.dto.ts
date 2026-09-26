@@ -38,11 +38,6 @@ export class ResponsiblePhysicianDto {
   councilUf: string | null;
 }
 
-/**
- * Resumo de um tratamento dentro do prontuário. `nextDose` é a previsão em
- * aberto mais próxima; ausência significa que não há dose prescrita pendente,
- * não que o tratamento terminou.
- */
 export class TherapySummaryDto {
   @ApiProperty()
   id: string;
@@ -88,10 +83,6 @@ export class TherapySummaryDto {
   createdAt: Date;
 }
 
-/**
- * Item da listagem de pacientes. O CPF aparece mascarado; o valor completo é
- * entregue apenas no detalhe, a quem pode editar o cadastro.
- */
 export class PatientListItemDto {
   @ApiProperty()
   id: string;

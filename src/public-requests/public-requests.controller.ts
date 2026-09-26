@@ -64,7 +64,6 @@ export class PublicRequestsController {
     );
   }
 
-  /** Solicitação de contato/trial: pública, persistida, com confirmação. */
   @Public()
   @Post('contact-requests')
   @HttpCode(HttpStatus.ACCEPTED)

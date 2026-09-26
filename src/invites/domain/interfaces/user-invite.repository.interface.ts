@@ -33,17 +33,12 @@ export abstract class IUserInviteRepository {
     filters?: FindInvitesFilters,
   ): Promise<UserInvite[]>;
 
-  /** Página de convites da organização, com o autor já resolvido. */
   abstract findPageByOrganization(
     organizationId: string,
     filters: FindInvitesFilters,
     bounds: PageBounds,
   ): Promise<{ items: InviteWithAuthor[]; total: number }>;
 
-  /**
-   * Contexto mínimo do convite para quem abre o link. Não revela nada além do
-   * necessário para completar o cadastro.
-   */
   abstract findContextByToken(token: string): Promise<InviteContext | null>;
 
   abstract findActiveInvite(

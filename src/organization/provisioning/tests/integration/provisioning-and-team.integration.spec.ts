@@ -47,11 +47,6 @@ interface TeamPageBody {
   total: number;
 }
 
-/**
- * Provisionamento administrativo e gestão de equipe sobre HTTP real. O foco é o
- * que a I2 exige: organização nasce com administrador, o escopo organizacional
- * é respeitado e desativar alguém não apaga o histórico.
- */
 describe('Provisionamento e equipe - Integração HTTP', () => {
   let app: INestApplication<App>;
   let module: TestingModule;
@@ -151,7 +146,6 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
     expect(provisioned.administrator.roles).toEqual(['ADMINISTRATOR']);
     expect(JSON.stringify(provisioned)).not.toContain(PASSWORD);
 
-    // O administrador provisionado entra pelo fluxo normal de sessão.
     const session = await login(provisioned.administrator.email);
     const me = await server()
       .get('/account/me')
@@ -257,7 +251,6 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       .send({ isActive: false })
       .expect(200);
 
-    // A sessão aberta cai, mas o profissional continua existindo.
     await server()
       .get('/account/me')
       .set('Cookie', colleagueSession.cookie)

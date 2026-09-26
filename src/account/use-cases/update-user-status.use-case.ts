@@ -36,7 +36,6 @@ export class UpdateUserStatusUseCase {
     }
 
     if (!dto.isActive) {
-      // Desativar a conta encerra os acessos abertos, não apenas impede novos.
       await this.sessionService.revokeAllForUser(
         id,
         AuthSessionRevokeReason.ACCOUNT_DISABLED,

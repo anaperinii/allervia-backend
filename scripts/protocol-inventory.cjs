@@ -1,4 +1,3 @@
-// Read-only inventory through the authenticated API; never connects directly to clinical storage.
 (async () => {
   const base = process.argv[2];
   const token = process.env.ALLERVIA_INVENTORY_TOKEN;

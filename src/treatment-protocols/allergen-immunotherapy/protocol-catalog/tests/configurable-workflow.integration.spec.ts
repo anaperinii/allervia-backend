@@ -578,8 +578,6 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     expect(await prisma.dose.count()).toBe(1);
   });
   it('denies nurse publication through HTTP and cross-organization dose access', async () => {
-    // O papel vem do vínculo gravado, não do token: um enfermeiro de verdade da
-    // mesma organização é quem prova a negação.
     const nurse = await factories.users.createColleagueWithRoles(
       user.organizationId,
       ['NURSE'],

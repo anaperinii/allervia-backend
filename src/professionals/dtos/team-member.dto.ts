@@ -12,7 +12,6 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from 'src/infra/http/pagination';
 
-/** Membro da equipe como a administração o vê. */
 export class TeamMemberDto {
   @ApiProperty({ description: 'Identificador do profissional' })
   professionalId: string;
@@ -76,10 +75,6 @@ export class ListTeamQueryDto extends PageQueryDto {
   isActive?: boolean;
 }
 
-/**
- * Perfil que o próprio profissional edita. Profissão, papéis e organização não
- * entram aqui: quem se descreve não se autoriza.
- */
 export class UpdateOwnProfileDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -108,7 +103,6 @@ export class UpdateOwnProfileDto {
   councilUf?: string;
 }
 
-/** Campos que a administração pode corrigir no cadastro de um membro. */
 export class UpdateTeamMemberDto extends UpdateOwnProfileDto {
   @ApiPropertyOptional({ enum: Profession })
   @IsOptional()

@@ -43,9 +43,6 @@ export class UpdatePatientUseCase {
     const cpf = dto.cpf === undefined ? undefined : normalizeCpf(dto.cpf);
 
     if (cpf) {
-      // Unicidade por organização: CPF pertence a uma pessoa, não a dois
-      // cadastros. A restrição do banco cobre a corrida; a consulta produz o
-      // erro legível.
       const holder = await this.prisma.patient.findFirst({
         where: {
           organizationId: patient.organizationId,
@@ -61,8 +58,6 @@ export class UpdatePatientUseCase {
     }
 
     if (dto.responsiblePhysicianId) {
-      // O novo responsável precisa ser um médico da mesma organização; o
-      // identificador vindo do cliente não prova o vínculo.
       const physician = await this.prisma.professional.findFirst({
         where: {
           id: dto.responsiblePhysicianId,

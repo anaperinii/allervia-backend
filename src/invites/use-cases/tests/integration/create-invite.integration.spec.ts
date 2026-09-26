@@ -94,7 +94,6 @@ describe('CreateInviteUseCase - Integration', () => {
     expect(result.role).toBe(dto.userRole);
     expect(result.status).toBe('ACTIVE');
     expect(result.createdBy?.id).toBe(authenticatedUser.id);
-    // O token do convite é credencial: ele não volta para quem convidou.
     expect(result).not.toHaveProperty('token');
   });
 

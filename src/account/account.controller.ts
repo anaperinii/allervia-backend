@@ -45,11 +45,6 @@ export class AccountController {
     return { message: 'Senha alterada com sucesso.' };
   }
 
-  /**
-   * Identidade pública, contexto organizacional e capacidades gerais. A
-   * resposta não é cacheável: ela reflete papéis e política de segundo fator
-   * vigentes agora.
-   */
   @Get('me')
   @AuthenticatedOnly()
   @ApiOkResponse({ type: AccountContextDto })
@@ -79,9 +74,4 @@ export class AccountController {
     return this.updateUserStatusUseCase.execute(id, dto, currentUser);
   }
 
-  /**
-   * O cadastro profissional tem contrato próprio em `PATCH /professionals/me` e
-   * `PATCH /professionals/:id`: nome, telefone e conselho não são campos de um
-   * PATCH genérico de usuário.
-   */
 }

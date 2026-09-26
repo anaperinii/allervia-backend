@@ -7,10 +7,6 @@ import {
   InviteEmailParams,
 } from './email.service';
 
-/**
- * Entrega real por SMTP. A mensagem carrega apenas o necessário para a ação:
- * nenhum dado clínico e nenhum token em log.
- */
 @Injectable()
 export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
   private readonly logger = new Logger('EmailService');
@@ -98,7 +94,6 @@ export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
       ].join('\n'),
     });
 
-    // O token nunca entra em log; apenas o fato do envio.
     this.logger.log('Password reset link dispatched.');
   }
 

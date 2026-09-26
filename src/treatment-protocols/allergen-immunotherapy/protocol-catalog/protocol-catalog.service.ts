@@ -53,7 +53,6 @@ export function persistenceDefinition(
       status: 'PUBLISHED',
     });
     for (const step of result.steps) {
-      // Current relational compatibility columns use Int; exact volume is authoritative.
       if (
         !/^\d+$/.test(step.concentration) ||
         BigInt(step.concentration) > 2147483647n

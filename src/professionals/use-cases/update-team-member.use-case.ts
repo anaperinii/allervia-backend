@@ -20,11 +20,6 @@ const AUDITED_FIELDS = [
   'councilUf',
 ] as const;
 
-/**
- * Atualiza o cadastro profissional — o próprio ou, com capacidade
- * administrativa, o de um colega da mesma organização. Profissão descreve a
- * pessoa e não concede acesso: papéis continuam sendo concedidos à parte.
- */
 @Injectable()
 export class UpdateTeamMemberUseCase {
   constructor(

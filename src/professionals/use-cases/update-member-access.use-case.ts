@@ -11,11 +11,6 @@ import { SessionService } from 'src/security/session/session.service';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { PROFESSIONAL_MESSAGES } from '../professional.messages';
 
-/**
- * Encerra ou devolve o acesso de um membro. A conta é desativada, nunca
- * apagada: autoria de prescrições, aplicações e auditoria continua apontando
- * para a pessoa que praticou o ato.
- */
 @Injectable()
 export class UpdateMemberAccessUseCase {
   constructor(
@@ -40,7 +35,6 @@ export class UpdateMemberAccessUseCase {
       );
     }
 
-    // Uma organização não pode ficar sem ninguém capaz de conceder acesso.
     if (professional.id === currentUser.professionalId && !isActive) {
       throw new ForbiddenException(PROFESSIONAL_MESSAGES.cannotDisableSelf);
     }
@@ -56,8 +50,6 @@ export class UpdateMemberAccessUseCase {
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: professional.userId },
-        // A versão de autorização sobe junto: credenciais emitidas antes da
-        // desativação deixam de valer.
         data: { isActive, tokenVersion: { increment: 1 } },
       });
 

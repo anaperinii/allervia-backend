@@ -8,11 +8,6 @@ import { NotificationsService } from './notifications.service';
 
 const INTERVAL_MS = 15_000;
 
-/**
- * Consumidor do outbox: roda em intervalo dentro do processo da API (sem
- * broker, conforme a decisão de arquitetura para o fluxo síncrono). Fica
- * desligado em testes — os specs chamam `processPending()` diretamente.
- */
 @Injectable()
 export class NotificationsDispatcher implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(NotificationsDispatcher.name);

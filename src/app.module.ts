@@ -23,7 +23,7 @@ import { PublicRequestsModule } from './public-requests/public-requests.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // torna as variáveis de ambiente disponíveis globalmente
+      isGlobal: true,
     }),
     AuthModule,
     SessionModule,
@@ -45,8 +45,6 @@ import { PublicRequestsModule } from './public-requests/public-requests.module';
       provide: APP_FILTER,
       useClass: HttpErrorFilter,
     },
-    // A ordem importa: identidade primeiro, depois CSRF (que precisa saber se a
-    // credencial veio de cookie), e só então autorização.
     {
       provide: APP_GUARD,
       useClass: SessionAuthGuard,

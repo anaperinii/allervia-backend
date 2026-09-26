@@ -89,7 +89,6 @@ describe('Notifications outbox and persisted requests - Integration', () => {
       targetStepId: 'high',
     };
     const result = await create.execute(input, physician);
-    // Enfermagem administra e solicita avaliação médica: outbox no mesmo commit.
     await clinical.administer(
       result.firstDose.id,
       {
@@ -123,7 +122,6 @@ describe('Notifications outbox and persisted requests - Integration', () => {
 
     const first = await notifications.processPending();
     expect(first).toEqual({ processed: 1, failed: 0 });
-    // Reexecução não duplica nada.
     const second = await notifications.processPending();
     expect(second).toEqual({ processed: 0, failed: 0 });
     expect(await prisma.notification.count()).toBe(1);
@@ -133,7 +131,6 @@ describe('Notifications outbox and persisted requests - Integration', () => {
     expect(inbox.unread).toBe(1);
     expect(inbox.items[0].title).toBe('Avaliação médica solicitada');
     expect(inbox.items[0].entityId).toBe(result.immunotherapy.id);
-    // A enfermeira que solicitou não recebe a própria notificação.
     expect((await notifications.list({}, nurse)).total).toBe(0);
   });
 
@@ -172,8 +169,6 @@ describe('Notifications outbox and persisted requests - Integration', () => {
 
   it('exposes outbox status with attempts and failures to administration', async () => {
     await administeredWithReviewRequest();
-    // Um evento venenoso: destinatário inexistente não falha, é processado sem
-    // notificação; falha real fica visível em attempts/lastError.
     await prisma.outboxEvent.create({
       data: {
         organizationId: physician.organizationId,
@@ -209,7 +204,6 @@ describe('Notifications outbox and persisted requests - Integration', () => {
     const mine = await requests.listSupportRequests(physician);
     expect(mine).toHaveLength(1);
     expect(mine[0].subject).toBe('Dúvida na agenda');
-    // Outro usuário não vê a solicitação alheia.
     expect(await requests.listSupportRequests(nurse)).toHaveLength(0);
   });
 });

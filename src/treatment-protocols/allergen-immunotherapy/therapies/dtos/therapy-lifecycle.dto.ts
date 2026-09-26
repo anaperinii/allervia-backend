@@ -18,7 +18,6 @@ import {
 export const LIFECYCLE_ACTIONS = ['SUSPEND', 'RESUME', 'COMPLETE'] as const;
 export type LifecycleAction = (typeof LIFECYCLE_ACTIONS)[number];
 
-/** Recomendações finais estruturadas do encerramento; nada vira texto perdido. */
 export class LifecycleRecommendationsDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() retesting?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() rescueMedication?: boolean;

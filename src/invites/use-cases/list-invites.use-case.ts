@@ -8,10 +8,6 @@ import {
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
 import { buildPage, PageDto, resolvePage } from 'src/infra/http/pagination';
 
-/**
- * Convites da organização do ator, paginados no banco. O escopo entra na
- * consulta e no total: nenhuma outra organização aparece na contagem.
- */
 @Injectable()
 export class ListInvitesUseCase {
   constructor(private readonly inviteRepository: IUserInviteRepository) {}

@@ -1,4 +1,3 @@
-/** Versioned, resolved data only: no counters, persistence or clinical defaults. */
 export type DoseValues = Readonly<{
   concentration: string;
   volume: string;

@@ -83,10 +83,6 @@ export class GrantRoleUseCase {
     return granted;
   }
 
-  /**
-   * O papel só pode ser concedido dentro da organização do ator. Conhecer o
-   * identificador de um profissional de outra clínica não autoriza nada.
-   */
   private async resolveActor(
     params: GrantRoleParams,
     tx: Prisma.TransactionClient,
@@ -124,7 +120,6 @@ export class GrantRoleUseCase {
       };
     }
 
-    // Concessão interna (registro por convite): a autoria acompanha o vínculo.
     return {
       userId: target.userId,
       organizationId: target.organizationId,

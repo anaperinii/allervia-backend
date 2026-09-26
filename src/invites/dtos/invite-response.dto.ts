@@ -10,10 +10,6 @@ export const INVITE_STATUS = {
 
 export type InviteStatus = (typeof INVITE_STATUS)[keyof typeof INVITE_STATUS];
 
-/**
- * Convite como a equipe o vê. O token é credencial de acesso: ele chega ao
- * convidado por e-mail e nunca aparece em listagem, resposta ou log.
- */
 export class InviteResponseDto {
   @ApiProperty()
   id: string;
@@ -43,7 +39,6 @@ export class InviteResponseDto {
   createdBy?: { id: string; email: string };
 }
 
-/** Contexto mínimo devolvido a quem abre o link do convite. */
 export class InviteContextDto {
   @ApiProperty()
   email: string;

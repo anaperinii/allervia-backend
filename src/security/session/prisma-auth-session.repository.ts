@@ -39,7 +39,6 @@ const credentialSelection = {
   lastUsedCounter: true,
 } satisfies Prisma.MfaCredentialSelect;
 
-/** Seleção pública do contexto: nunca inclui hash de senha ou segredo de MFA. */
 const contextSelection = {
   id: true,
   email: true,
@@ -123,11 +122,6 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     return users.length === 1 ? this.toContext(users[0]) : null;
   }
 
-  /**
-   * E-mail é comparado sem diferenciar maiúsculas: o usuário digita como
-   * quiser. Quando o caso é o único diferencial entre duas contas, nenhuma é
-   * escolhida — ambiguidade não autentica.
-   */
   async findPasswordHashByEmail(
     email: string,
   ): Promise<{ userId: string; passwordHash: string } | null> {

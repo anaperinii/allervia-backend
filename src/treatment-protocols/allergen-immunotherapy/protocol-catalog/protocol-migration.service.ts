@@ -92,7 +92,6 @@ export class ProtocolMigrationService {
         therapyId: therapy.id,
         revision: therapy.revision,
         prescriptionId: therapy.currentPrescription?.id ?? null,
-        // Identificação mínima para a revisão assistida: quem é o registro.
         patient: therapy.patient,
         immunoType: therapy.immunoType,
         extract: therapy.extract,
@@ -141,7 +140,6 @@ export class ProtocolMigrationService {
   }
   async createOriginDraft(user: AuthenticatedUserPayload) {
     const inventory = await this.inventory(user);
-    // Creation is explicit; inventory never writes and no transition is inferred from counters.
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR NO KEY UPDATE`;
       const existing = await tx.treatmentProtocol.findFirst({
@@ -180,7 +178,6 @@ export class ProtocolMigrationService {
         },
         tx,
       );
-      // Mesmo shape do caminho idempotente: o cliente sempre recebe as versões.
       return tx.treatmentProtocol.findUniqueOrThrow({
         where: { id: protocol.id },
         include: { versions: true },

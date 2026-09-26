@@ -59,7 +59,6 @@ export class CreateInviteUseCase {
       throw new ConflictException(INVITE_MESSAGES.alreadyInvited(email));
     }
 
-    // Token com entropia de CSPRNG: ele é a credencial que autoriza o cadastro.
     const token = randomBytes(32).toString('base64url');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + INVITE_TTL_DAYS);
@@ -101,8 +100,6 @@ export class CreateInviteUseCase {
       select: { name: true },
     });
 
-    // O token vai por e-mail ao convidado. Quem convidou não o recebe de volta:
-    // a resposta descreve o convite, não dá acesso a ele.
     await this.emailService.sendInviteLink({
       email,
       fullName: dto.fullName,

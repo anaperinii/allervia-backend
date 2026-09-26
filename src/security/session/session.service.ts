@@ -21,13 +21,10 @@ import {
 
 export interface IssuedSession {
   session: StoredSession;
-  /** Valor do cookie; devolvido uma única vez, nunca relido do banco. */
   sessionSecret: string;
-  /** Token CSRF sincronizador entregue à aplicação. */
   csrfToken: string;
 }
 
-/** Evita uma escrita por requisição só para atualizar a última interação. */
 const TOUCH_THRESHOLD_MS = 60_000;
 
 @Injectable()
@@ -59,11 +56,6 @@ export class SessionService {
     return { session, sessionSecret, csrfToken };
   }
 
-  /**
-   * Validação central de cada requisição: sessão viva, usuário e organização
-   * ativos, versão de autorização e segundo fator conforme a política. Sem
-   * cache: revogação tem efeito na requisição seguinte.
-   */
   async validate(sessionSecret: string): Promise<SessionWithContext> {
     const found = await this.repository.findSessionBySecretHash(
       hashOpaqueSecret(sessionSecret),
@@ -134,10 +126,6 @@ export class SessionService {
     return { session, context };
   }
 
-  /**
-   * Atividade real renova a inatividade, sempre dentro do teto absoluto.
-   * Nenhum polling de notificação deve chamar isto.
-   */
   async registerActivity(session: StoredSession): Promise<void> {
     const now = Date.now();
     if (now - session.lastInteractiveAt.getTime() < TOUCH_THRESHOLD_MS) return;
@@ -149,10 +137,6 @@ export class SessionService {
     return safeEquals(session.csrfTokenHash, hashOpaqueSecret(presented));
   }
 
-  /**
-   * Um token CSRF novo é emitido junto do estado da sessão restaurada. O hash
-   * antigo é substituído para que o token só valha enquanto a aplicação o tiver.
-   */
   async rotateCsrfToken(sessionId: string): Promise<string> {
     const csrfToken = generateOpaqueSecret();
     await this.repository.rotateCsrfToken(
@@ -169,7 +153,6 @@ export class SessionService {
     await this.repository.revokeSession(sessionId, reason);
   }
 
-  /** Sessões do próprio usuário; a lista já exclui expiradas e revogadas. */
   async listDevices(userId: string): Promise<StoredSession[]> {
     const sessions = await this.repository.listActiveSessions(userId);
     const idleLimit = Date.now() - this.config.idleTimeoutMs;
@@ -189,7 +172,6 @@ export class SessionService {
     await this.repository.markMfaVerified(sessionId, new Date());
   }
 
-  /** Ações sensíveis exigem prova de identidade recente nesta sessão. */
   assertRecentReauthentication(session: StoredSession): void {
     const at = session.reauthenticatedAt?.getTime();
     if (
@@ -217,11 +199,6 @@ export class SessionService {
     );
   }
 
-  /**
-   * Política: contas com vínculo profissional operam dados clínicos ou
-   * administrativos e exigem segundo fator. Profissão sozinha não concede
-   * acesso, mas qualquer conta profissional entra na política.
-   */
   requiresSecondFactor(context: AuthContext): boolean {
     if (this.config.mfaEnforcement === 'optional') {
       return context.hasConfirmedMfa;

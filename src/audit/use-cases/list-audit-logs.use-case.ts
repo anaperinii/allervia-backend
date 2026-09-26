@@ -23,8 +23,6 @@ export class ListAuditLogsUseCase {
     currentUser: AuthenticatedUserPayload,
   ): Promise<AuditLog[]> {
     const ability = this.abilityFactory.createForUser(currentUser);
-    // Sem regra alguma o CASL devolve `{OR: []}` e o Prisma o ignora dentro de
-    // AND; o pre-check impede que a ausência de permissão vire acesso total.
     if (!ability.can('read', 'AuditLog')) throw new NotFoundException();
     const where = accessibleBy(ability, 'read').ofType('AuditLog');
 

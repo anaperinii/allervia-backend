@@ -1,19 +1,13 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
-/** 256 bits de CSPRNG codificados em base64url; nunca persistidos em claro. */
 export function generateOpaqueSecret(): string {
   return randomBytes(32).toString('base64url');
 }
 
-/**
- * Hash do segredo guardado no banco. SHA-256 é suficiente aqui porque o valor
- * tem entropia total de CSPRNG: não há espaço de busca a proteger como em senha.
- */
 export function hashOpaqueSecret(secret: string): string {
   return createHash('sha256').update(secret, 'utf8').digest('hex');
 }
 
-/** Comparação em tempo constante entre valores já normalizados. */
 export function safeEquals(left: string, right: string): boolean {
   const a = Buffer.from(left, 'utf8');
   const b = Buffer.from(right, 'utf8');
@@ -21,12 +15,10 @@ export function safeEquals(left: string, right: string): boolean {
   return timingSafeEqual(a, b);
 }
 
-/** Hash de identificadores usados em limite de tentativa, sem guardar o valor. */
 export function hashIdentifier(value: string): string {
   return createHash('sha256').update(value.trim().toLowerCase()).digest('hex');
 }
 
-/** Códigos de recuperação legíveis, exibidos uma vez e guardados por hash. */
 export function generateRecoveryCode(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const bytes = randomBytes(10);

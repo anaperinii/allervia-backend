@@ -52,8 +52,6 @@ export class PasswordResetConfirmUseCase {
         tx,
       );
 
-      // Redefinir a senha encerra as sessões abertas na mesma transação: não
-      // existe janela em que a credencial antiga continue válida.
       await tx.authSession.updateMany({
         where: { userId: token.userId, revokedAt: null },
         data: {
