@@ -14,13 +14,11 @@ const RECOVERY_CODE_COUNT = 10;
 
 export interface EnrollmentStart {
   credentialId: string;
-  /** Segredo exibido uma vez para o aplicativo autenticador. */
   secret: string;
   keyUri: string;
 }
 
 export interface EnrollmentConfirmation {
-  /** Códigos exibidos uma única vez; o banco guarda apenas o hash. */
   recoveryCodes: string[];
 }
 
@@ -60,10 +58,6 @@ export class MfaService {
     };
   }
 
-  /**
-   * Confirma a credencial com um código válido e emite novos códigos de
-   * recuperação, invalidando os anteriores.
-   */
   async confirmEnrollment(
     userId: string,
     credentialId: string,
@@ -124,10 +118,6 @@ export class MfaService {
     return codes;
   }
 
-  /**
-   * Verifica um código de qualquer credencial confirmada; se nenhuma aceitar,
-   * tenta consumir um código de recuperação. O consumo é atômico.
-   */
   async verifyCode(userId: string, code: string): Promise<boolean> {
     const credentials = await this.repository.listMfaCredentials(userId);
     const confirmed = credentials.filter((item) => item.confirmedAt !== null);

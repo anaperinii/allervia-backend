@@ -15,11 +15,6 @@ import { json } from '../protocol-catalog/protocol-catalog.service';
 import { enqueueOutbox } from 'src/notifications/notifications.service';
 import { LateObservationDto, RetractDoseDto } from './dtos/dose-correction.dto';
 
-/**
- * Correções clínicas sobre doses administradas: retratação auditada com
- * conciliação de sucessora e observação pós-aplicação tardia como registro
- * adicional imutável. Nada é apagado; a cadeia permanece reconstruível.
- */
 @Injectable()
 export class DoseCorrectionService {
   constructor(
@@ -62,12 +57,6 @@ export class DoseCorrectionService {
     return dose;
   }
 
-  /**
-   * Retratação: a aplicação registrada em erro vira ENTERED_IN_ERROR com todos
-   * os valores preservados; a sucessora pendente criada por ela é arquivada e a
-   * previsão original é reemitida. Sucessora já aplicada exige análise
-   * explícita — nenhuma cadeia é apagada automaticamente.
-   */
   async retract(
     id: string,
     dto: RetractDoseDto,
@@ -116,8 +105,6 @@ export class DoseCorrectionService {
         },
       });
 
-      // A previsão original volta a existir como estava planejada; a decisão
-      // clínica seguinte (editar/administrar) usa os comandos normais.
       const reissued = await tx.dose.create({
         data: {
           immunotherapyId: dose.immunotherapyId,
@@ -166,11 +153,6 @@ export class DoseCorrectionService {
     });
   }
 
-  /**
-   * Observação pós-aplicação tardia: registro adicional com autoria e instante
-   * próprios. Conduta SUSPEND_TREATMENT executa a suspensão na MESMA transação
-   * (comando composto) e exige poder de revisão sobre a terapia.
-   */
   async addLateObservation(
     id: string,
     dto: LateObservationDto,

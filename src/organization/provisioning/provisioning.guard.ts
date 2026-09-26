@@ -12,14 +12,8 @@ import { ORGANIZATION_MESSAGES } from '../organization.messages';
 
 export const PROVISIONING_HEADER = 'x-provisioning-key';
 
-/** Chave curta demais não protege nada; recusar é melhor que fingir controle. */
 const MINIMUM_KEY_LENGTH = 24;
 
-/**
- * Provisionamento é operação administrativa da plataforma, não uma jornada do
- * produto. A chave viaja em header — nunca no corpo, na URL ou no bundle do
- * navegador — e a rota fica indisponível enquanto não estiver configurada.
- */
 @Injectable()
 export class ProvisioningGuard implements CanActivate {
   constructor(private readonly config: ConfigService) {}

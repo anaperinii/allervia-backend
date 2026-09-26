@@ -60,7 +60,6 @@ export class SessionController {
     private readonly config: SessionConfig,
   ) {}
 
-  /** Prepara o formulário de login: pré-sessão curta e desafio anti-CSRF. */
   @Get('csrf')
   @Public()
   @ApiOkResponse({ type: CsrfTokenResponseDto })
@@ -137,7 +136,6 @@ export class SessionController {
     };
   }
 
-  /** Restaura o estado após reload; nunca devolve o segredo do cookie. */
   @Get('session')
   @AuthenticatedOnly()
   async readSession(
@@ -149,7 +147,6 @@ export class SessionController {
     return this.envelope(session, csrfToken);
   }
 
-  /** Renova a inatividade por atividade real, sem estender o teto absoluto. */
   @Post('session/activity')
   @AuthenticatedOnly()
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -308,8 +305,6 @@ export class SessionController {
       dto.code,
     );
 
-    // A sessão que cadastrou o fator passa a contar como verificada; as demais
-    // são encerradas para que a nova política valha em todos os dispositivos.
     await this.sessionService.markMfaVerified(session.id);
     await this.sessionService.revokeAllForUser(
       context.userId,
@@ -320,10 +315,6 @@ export class SessionController {
     return confirmation;
   }
 
-  /**
-   * Remover um fator exige reautenticação recente: senão um acesso já aberto
-   * enfraqueceria a conta sem prova de identidade.
-   */
   @Delete('mfa/factors/:id')
   @AuthenticatedOnly()
   @HttpCode(HttpStatus.NO_CONTENT)

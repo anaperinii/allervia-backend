@@ -127,12 +127,12 @@ export class AdministerDoseDto extends DosePreviewDto {
   administrationEndedAt?: string;
   @ApiPropertyOptional({
     description:
-      'Professional who performed the application. Defaults to the authenticated professional; must belong to the organization and hold a clinical role.',
+      'User ID of the professional who executed the application. Defaults to the authenticated professional; must belong to the organization and hold a clinical role.',
   })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  performedById?: string;
+  administeredById?: string;
   @ApiPropertyOptional({ type: DoseImmediateConductDto })
   @IsOptional()
   @ValidateNested()

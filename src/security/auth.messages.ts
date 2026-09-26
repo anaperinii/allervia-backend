@@ -30,10 +30,6 @@ export const AUTH_MESSAGES = {
   reauthenticationRequired: 'Confirme sua identidade para continuar.',
 } as const;
 
-/**
- * Códigos estáveis do envelope de erro. A UI ramifica por estes valores, nunca
- * pelo texto traduzido.
- */
 export const AUTH_ERROR_CODES = {
   invalidCredentials: 'INVALID_CREDENTIALS',
   sessionExpired: 'SESSION_EXPIRED',

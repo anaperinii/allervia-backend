@@ -7,11 +7,6 @@ import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.
 import { ImmunotherapyListItemDto } from '../dtos/immunotherapy-read.dto';
 import { toListItem } from './list-all-immunotherapies.use-case';
 
-/**
- * Tratamentos de um paciente, para o seletor do prontuário. Um paciente pode
- * ter vários tratamentos; a lista nunca mistura doses entre eles — cada item
- * carrega a própria previsão.
- */
 @Injectable()
 export class ListImmunotherapiesForPatientUseCase {
   constructor(

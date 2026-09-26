@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-/** Resposta pública da organização; campos internos não entram aqui. */
 export class OrganizationResponseDto {
   @ApiProperty()
   id: string;

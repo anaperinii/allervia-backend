@@ -6,11 +6,6 @@ import { AbilityFactory } from 'src/security/permissions/ability/ability.factory
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { ImmunotherapyDetailDto } from '../dtos/immunotherapy-read.dto';
 
-/**
- * Detalhe do tratamento para o prontuário. A prescrição devolvida é o snapshot
- * imutável fixado no cadastro: histórico antigo é lido como foi prescrito, sem
- * reinterpretação pela versão padrão vigente da organização.
- */
 @Injectable()
 export class ReadImmunotherapyUseCase {
   constructor(

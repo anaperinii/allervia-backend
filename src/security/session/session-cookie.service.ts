@@ -3,10 +3,6 @@ import type { CookieOptions, Request, Response } from 'express';
 import { createHash } from 'node:crypto';
 import { SessionConfig } from './session.config';
 
-/**
- * Transporte do cookie de sessão. O valor é apenas o segredo opaco; nenhum dado
- * de identidade, permissão ou clínica trafega aqui.
- */
 @Injectable()
 export class SessionCookieService {
   constructor(private readonly config: SessionConfig) {}
@@ -24,7 +20,6 @@ export class SessionCookieService {
     response.cookie(this.config.cookieName, secret, this.baseOptions());
   }
 
-  /** Expira com os mesmos atributos, senão o navegador mantém o cookie antigo. */
   clear(response: Response): void {
     response.clearCookie(this.config.cookieName, this.baseOptions());
   }
@@ -34,7 +29,6 @@ export class SessionCookieService {
     return cookies?.[this.config.cookieName] ?? null;
   }
 
-  /** Metadados mínimos do dispositivo, sem localização inferida. */
   describeDevice(request: Request): {
     userAgent: string | null;
     ipAddressHash: string | null;

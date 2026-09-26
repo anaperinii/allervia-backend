@@ -29,11 +29,6 @@ const ORIGIN = 'http://127.0.0.1';
 const SESSION_COOKIE = 'allervia_session';
 const PERIOD_SECONDS = 30;
 
-/**
- * Segundo fator obrigatório e limites do bearer legado. O ponto central é que o
- * caminho antigo não vira uma porta paralela: conta com MFA confirmado não
- * recebe token, e o token existente perde acesso.
- */
 describe('Segundo fator e bearer legado - Integração HTTP', () => {
   let app: INestApplication<App>;
   let module: TestingModule;
@@ -112,10 +107,6 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     });
   }
 
-  /**
-   * Código TOTP de um passo específico. A credencial rejeita reuso do mesmo
-   * passo, então cada verificação usa um passo à frente do anterior.
-   */
   function totpCode(secret: string, stepsAhead = 0): string {
     return generateSync({
       secret,
@@ -124,7 +115,6 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     });
   }
 
-  /** Cadastra e confirma um fator TOTP, devolvendo o segredo e os códigos. */
   async function enrollTotp(cookie: string, csrfToken: string) {
     const enrollment = await server()
       .post('/auth/mfa/enroll')

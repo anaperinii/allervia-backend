@@ -36,7 +36,6 @@ import { ProfessionalsModule } from 'src/professionals/professionals.module';
     ProfessionalsModule,
   ],
   providers: [
-    // Use Cases
     CreateInviteUseCase,
     CancelInviteUseCase,
     ListInvitesUseCase,
@@ -47,7 +46,6 @@ import { ProfessionalsModule } from 'src/professionals/professionals.module';
     FindActiveInviteUseCase,
     FindInviteContextUseCase,
 
-    // Strategies
     InviteStrategyContext,
     InviteStrategyFactory,
     RegisterStrategyContext,

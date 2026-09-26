@@ -1,6 +1,5 @@
 import type { Response } from 'supertest';
 
-/** Envelope público de erro, para asserções tipadas nos testes HTTP. */
 export interface ErrorBody {
   statusCode: number;
   code: string;
@@ -68,12 +67,10 @@ export interface CsrfBody {
   csrfToken: string;
 }
 
-/** O corpo do supertest é `any`; ler por aqui mantém as asserções tipadas. */
 export function readBody<T>(response: Response): T {
   return response.body as T;
 }
 
-/** `set-cookie` chega como lista; o tipo do supertest declara string. */
 export function setCookies(response: Response): string[] {
   const raw: unknown = response.headers['set-cookie'];
   if (Array.isArray(raw)) return raw as string[];

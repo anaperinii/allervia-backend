@@ -15,12 +15,6 @@ import { RequestWithSession } from './session-auth.guard';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const ACCEPTED_CONTENT_TYPES = ['application/json'];
 
-/**
- * Proteção de comandos contra requisições forjadas. Cookies são enviados pelo
- * navegador automaticamente, então todo método mutante autenticado por cookie
- * precisa apresentar o token sincronizador e uma origem aceitável. CORS não
- * substitui esta verificação.
- */
 @Injectable()
 export class CsrfGuard implements CanActivate {
   constructor(
@@ -62,10 +56,6 @@ export class CsrfGuard implements CanActivate {
       return true;
     }
 
-    // Sem nenhum cookie a credencial não é ambiente: um consumidor de API com
-    // bearer, ou uma operação administrativa por chave, não pode ser disparado
-    // por um site terceiro em nome da vítima. Nesses casos a defesa é a
-    // verificação de origem acima.
     if (!this.csrfCookiePresent(request)) return true;
 
     if (!this.csrf.validate(request, presented)) {
@@ -83,10 +73,6 @@ export class CsrfGuard implements CanActivate {
     return Boolean(cookies?.[this.csrf.cookieName]);
   }
 
-  /**
-   * Comandos JSON não aceitam tipos que um formulário entre origens consegue
-   * enviar sem preflight.
-   */
   private assertContentType(request: RequestWithSession): void {
     const contentType = request.get('content-type');
     if (!contentType) return;
@@ -101,10 +87,6 @@ export class CsrfGuard implements CanActivate {
     );
   }
 
-  /**
-   * `Origin` ausente é tratado por classe de cliente: cliente com cookie
-   * precisa declarar origem; consumidor de API por bearer não envia o header.
-   */
   private assertOrigin(request: RequestWithSession): void {
     const origin = request.get('origin');
 
@@ -136,7 +118,6 @@ export class CsrfGuard implements CanActivate {
     const host = request.get('host');
     if (!host) return false;
 
-    // Mesma origem: UI e API ficam atrás do mesmo gateway.
     const sameOrigin = [`https://${host}`, `http://${host}`];
     return sameOrigin.includes(origin);
   }

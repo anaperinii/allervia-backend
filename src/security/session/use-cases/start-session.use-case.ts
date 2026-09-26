@@ -37,11 +37,6 @@ export type StartSessionResult =
       keyUri: string;
     };
 
-/**
- * Entrada por senha. A resposta nunca distingue e-mail inexistente de senha
- * incorreta, e conta sem acesso válido recebe o mesmo erro, para não enumerar
- * contas. Quando o segundo fator é exigido, esta etapa não cria sessão clínica.
- */
 @Injectable()
 export class StartSessionUseCase {
   constructor(

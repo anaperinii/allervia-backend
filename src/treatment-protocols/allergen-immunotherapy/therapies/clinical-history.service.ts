@@ -4,11 +4,6 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
-/**
- * Histórico clínico do tratamento: a trilha de auditoria da terapia e das suas
- * doses, autorizada pelo ESCOPO CLÍNICO (quem lê o tratamento lê seu
- * histórico) — sem abrir a auditoria administrativa da organização inteira.
- */
 @Injectable()
 export class ClinicalHistoryService {
   constructor(

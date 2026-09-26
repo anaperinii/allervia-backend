@@ -11,11 +11,6 @@ import {
   PatientListItemDto,
 } from '../dtos/patient-read.dto';
 
-/**
- * Listagem paginada de pacientes. O escopo CASL entra na própria consulta e no
- * total: um médico responsável enxerga apenas os seus pacientes, inclusive na
- * contagem. Filtros e busca são resolvidos no banco.
- */
 @Injectable()
 export class ListPatientsUseCase {
   constructor(

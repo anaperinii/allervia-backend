@@ -121,9 +121,6 @@ export class ConfiguredDoseService {
   ) {
     await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR SHARE`;
     const ability = this.abilities.createForUser(user);
-    // Nurses can update doses, but not the therapy itself. Sem NENHUMA regra o
-    // CASL devolve `{OR: []}` e o Prisma o ignora dentro de AND — o pre-check
-    // impede que a ausência de permissão vire acesso total.
     if (!ability.can(action, 'Immunotherapy')) throw new NotFoundException();
     const where = accessibleBy(ability, action).ofType('Immunotherapy');
     const therapy = await tx.immunotherapy.findFirst({
@@ -267,34 +264,24 @@ export class ConfiguredDoseService {
       throw new BadRequestException('SCHEDULE_REQUIRES_CALENDAR_REVIEW');
     }
   }
-  /**
-   * Executor da aplicação. O registrador é sempre o usuário autenticado
-   * (administeredById); registrar em nome de terceiro exige vínculo ativo com a
-   * organização e papel clínico — nome livre não identifica ninguém.
-   */
   private async resolvePerformer(
     tx: Prisma.TransactionClient,
     requested: string | undefined,
     user: AuthenticatedUserPayload,
   ) {
-    if (!requested || requested === user.professionalId) {
-      if (!user.professionalId)
-        throw new BadRequestException('PERFORMER_REQUIRED');
-      return user.professionalId;
-    }
     const performer = await tx.professional.findFirst({
       where: {
-        id: requested,
+        userId: requested ?? user.id,
         organizationId: user.organizationId,
         user: { isActive: true, isArchived: false },
         professionalRoles: {
           some: { role: { in: [Role.PHYSICIAN, Role.NURSE] }, revokedAt: null },
         },
       },
-      select: { id: true },
+      select: { userId: true },
     });
     if (!performer) throw new BadRequestException('PERFORMER_NOT_AUTHORIZED');
-    return performer.id;
+    return performer.userId;
   }
   async read(id: string, user: AuthenticatedUserPayload) {
     const where = accessibleBy(
@@ -482,7 +469,7 @@ export class ConfiguredDoseService {
         }
         const performerId = await this.resolvePerformer(
           tx,
-          dto.performedById,
+          dto.administeredById,
           user,
         );
         const conduct = dto.immediateConduct ?? null;
@@ -493,8 +480,6 @@ export class ConfiguredDoseService {
         )
           throw new BadRequestException('CONDUCT_JUSTIFICATION_REQUIRED');
         if (conduct?.type === 'SUSPEND_TREATMENT') {
-          // Suspender é decisão sobre o tratamento, não sobre a dose: quem não
-          // pode revisar a terapia solicita avaliação médica em vez de suspender.
           const ability = this.abilities.createForUser(user);
           const allowed =
             ability.can('update', 'Immunotherapy') &&
@@ -517,8 +502,7 @@ export class ConfiguredDoseService {
           data: {
             administeredAt,
             administrationEndedAt,
-            administeredById: user.id,
-            performedById: performerId,
+            administeredById: performerId,
             immediateConduct: conduct?.type ?? null,
             immediateConductJustification: conduct?.justification ?? null,
             administeredStepId: step.id,
@@ -597,8 +581,6 @@ export class ConfiguredDoseService {
             },
             tx,
           );
-        // O pedido de avaliação nasce no MESMO commit da aplicação (outbox);
-        // a notificação interna é materializada pelo consumidor.
         if (conduct?.type === 'REQUEST_PHYSICIAN_REVIEW')
           await enqueueOutbox(
             tx,
@@ -626,7 +608,7 @@ export class ConfiguredDoseService {
               administeredAt: administeredAt.toISOString(),
               administrationEndedAt:
                 administrationEndedAt?.toISOString() ?? null,
-              performedById: performerId,
+              administeredById: performerId,
               immediateConduct: conduct?.type ?? null,
               reason: dto.reason ?? null,
               recommendation,

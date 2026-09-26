@@ -36,10 +36,6 @@ export class InviteController {
     private findInviteContextUseCase: FindInviteContextUseCase,
   ) {}
 
-  /**
-   * Contexto do convite para a tela de cadastro. É público porque quem abre o
-   * link ainda não tem conta; a resposta não revela nada além do necessário.
-   */
   @Get('context/:token')
   @Public()
   @ApiOkResponse({ type: InviteContextDto })

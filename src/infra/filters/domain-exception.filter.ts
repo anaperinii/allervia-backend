@@ -12,10 +12,6 @@ import {
   readRequestId,
 } from './error-envelope';
 
-/**
- * Exceções de domínio no mesmo envelope público dos demais erros. O nome da
- * exceção vira o código estável consumido pela UI.
- */
 @Catch(DomainException)
 export class DomainExceptionFilter implements ExceptionFilter {
   catch(exception: DomainException, host: ArgumentsHost): void {

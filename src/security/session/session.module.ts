@@ -19,11 +19,6 @@ import { ReauthenticateUseCase } from './use-cases/reauthenticate.use-case';
 import { StartSessionUseCase } from './use-cases/start-session.use-case';
 import { VerifyMfaChallengeUseCase } from './use-cases/verify-mfa-challenge.use-case';
 
-/**
- * Sessão opaca do navegador, CSRF e segundo fator. O módulo de autenticação
- * legado continua existindo para o bearer mapeado; os dois compartilham o mesmo
- * guard, que aplica as mesmas verificações de revogação e MFA.
- */
 @Module({
   imports: [PrismaModule, ConfigModule, AuthPolicyModule, AuthModule],
   providers: [

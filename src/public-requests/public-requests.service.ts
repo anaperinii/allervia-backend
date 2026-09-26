@@ -2,11 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
-/**
- * Solicitações persistidas: contato/trial (público) e suporte (autenticado).
- * A confirmação devolvida descreve o registro gravado — nenhum e-mail é
- * simulado; o encaminhamento externo entra quando houver canal definido.
- */
 @Injectable()
 export class PublicRequestsService {
   constructor(private readonly prisma: PrismaService) {}

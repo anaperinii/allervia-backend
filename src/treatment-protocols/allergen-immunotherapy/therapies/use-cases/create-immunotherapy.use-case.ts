@@ -27,7 +27,6 @@ export interface RegistrationResult {
     id: string;
     patientId: string;
     prescription: { id: string; versionId: string } & Record<string, unknown>;
-    /** Decimal vivo na resposta original; string quando reidratado do cache. */
     targetVolumeExact?: { toString(): string } | null;
   } & Record<string, unknown>;
   firstDose: {
@@ -74,8 +73,6 @@ export class CreateImmunotherapyUseCase {
       .digest('hex');
 
     return this.prisma.$transaction(async (tx) => {
-      // Perda de resposta exige repetir o MESMO comando: a chave devolve o
-      // resultado original; chave reutilizada com corpo diferente é conflito.
       const commandKey = {
         organizationId: user.organizationId,
         actorId: user.id,
@@ -200,8 +197,6 @@ export class CreateImmunotherapyUseCase {
         firstDose: dose,
       } as unknown as RegistrationResult;
 
-      // O registro do comando participa da transação: ou o cadastro inteiro e
-      // a chave existem, ou nada existe.
       await tx.registrationCommand.create({
         data: {
           ...commandKey,
@@ -214,10 +209,6 @@ export class CreateImmunotherapyUseCase {
     });
   }
 
-  /**
-   * Paciente novo é criado na mesma transação; paciente existente é vinculado
-   * sem duplicação, exigindo que o prescritor seja o responsável atual.
-   */
   private async resolvePatient(
     tx: Prisma.TransactionClient,
     dto: CreateImmunotherapyDto,

@@ -28,8 +28,6 @@ export class RevokeRoleUseCase {
       throw new NotFoundException(ROLE_MESSAGES.notFound(id));
     }
 
-    // Um papel de outra organização não existe para este ator: responder 404
-    // não confirma nem nega que o identificador seja válido em outro lugar.
     const holder = await this.professionalRepository.findById(
       role.professionalId,
     );

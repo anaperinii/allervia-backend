@@ -105,7 +105,6 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
     const [rows, total] = await this.prismaService.$transaction([
       this.prismaService.internalUserInvite.findMany({
         where,
-        // Desempate por id mantém a ordenação estável entre páginas.
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: bounds.skip,
         take: bounds.take,

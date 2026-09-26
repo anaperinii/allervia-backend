@@ -25,7 +25,6 @@ export class DemoRequestsService {
     const data = { ...input, email: input.email.toLowerCase() };
     const sourceHash = createHash('sha256').update(`demo:${ip}`).digest('hex');
     return this.prisma.$transaction(async (tx) => {
-      // Serialize the small public intake across instances, including quota checks and replays.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(73120545)`;
       const previous = await tx.demoRequest.findUnique({
         where: { requestId: input.requestId },
@@ -64,7 +63,6 @@ export class DemoRequestsService {
           'Muitas solicitações. Aguarde antes de tentar novamente.',
         );
       }
-      // The record itself is the durable email job: there is no save/enqueue gap.
       const saved = await tx.demoRequest.create({
         data: { ...data, sourceHash },
       });

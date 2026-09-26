@@ -3,7 +3,6 @@ export interface CreatePatientData {
   birthDate: Date;
   weightInKg: number;
   phoneNumber: string;
-  /** Apenas dígitos; null quando a pessoa não possui CPF conhecido. */
   cpf: string | null;
   organizationId: string;
   responsiblePhysicianId: string;

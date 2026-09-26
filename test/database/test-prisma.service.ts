@@ -62,7 +62,6 @@ export class TestPrismaService extends PrismaClient {
 
   async cleanAll(): Promise<void> {
     assertTestDatabase(process.env);
-    // Static table names only. One statement makes cleanup atomic and fails on schema drift.
     await this.$executeRawUnsafe(
       `TRUNCATE TABLE ${TABLES.map((table) => `"${table}"`).join(', ')} RESTART IDENTITY CASCADE;`,
     );

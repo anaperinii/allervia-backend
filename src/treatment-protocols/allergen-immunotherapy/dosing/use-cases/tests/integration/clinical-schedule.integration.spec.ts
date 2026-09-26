@@ -131,7 +131,6 @@ describe('Clinical schedule and metrics - Integration', () => {
       { ...JAN, page: 1, pageSize: 10 },
       physician,
     );
-    // Administrada (01/01) e sucessora prevista (08/01) na mesma consulta.
     expect(page.total).toBe(2);
     expect(page.items[0].administeredAt).not.toBeNull();
     expect(page.items[1].status).toBe('SCHEDULED');
@@ -199,7 +198,6 @@ describe('Clinical schedule and metrics - Integration', () => {
       createInput(physician, 'Fuso Local'),
       physician,
     );
-    // 02/01 01:00Z = 31/12... não: 2026-01-02T01:00Z = 01/01 22:00 em São Paulo.
     await administerFirst(
       result.firstDose.id,
       physician,
@@ -212,7 +210,6 @@ describe('Clinical schedule and metrics - Integration', () => {
     expect(metrics.applications.byDay).toEqual([
       { day: '2026-01-01', count: 1 },
     ]);
-    // Mesmo dia local do previsto: conta como ON_SCHEDULE.
     expect(metrics.applications.onSchedule).toBe(1);
     expect(metrics.adherence.ratio).toBe(1);
   });
@@ -227,7 +224,6 @@ describe('Clinical schedule and metrics - Integration', () => {
       physician,
       '2026-01-01T13:00:00Z',
     );
-    // Sucessora prevista para 08/01; administrada fora do dia local previsto.
     const successor = (await clinical.read(
       administered.successor!.id,
       physician,
@@ -251,7 +247,6 @@ describe('Clinical schedule and metrics - Integration', () => {
       },
       physician,
     );
-    // Terapia futura: previsão pendente ainda não vencida.
     await create.execute(
       createInput(physician, 'Futuro', '2026-12-01T13:00:00Z'),
       physician,
@@ -269,7 +264,6 @@ describe('Clinical schedule and metrics - Integration', () => {
       denominator: 2,
       ratio: 0.5,
     });
-    // Sucessora de 17/01 está vencida; a previsão de dezembro ainda não.
     expect(year.scheduled.overdue).toBe(1);
     expect(year.scheduled.pending).toBe(1);
     expect(year.therapies.inProgress).toBe(2);

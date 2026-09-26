@@ -47,11 +47,6 @@ function period(from: string, to: string): { from: Date; to: Date } {
   return { from: parsedFrom, to: parsedTo };
 }
 
-/**
- * Agenda operacional: compromissos com duração, cancelamento e falta,
- * relacionados — e distintos — da dose clínica. Faltar a um compromisso é fato
- * de agenda; a previsão clínica permanece pendente até decisão médica.
- */
 @Injectable()
 export class AppointmentsService {
   constructor(
@@ -90,8 +85,6 @@ export class AppointmentsService {
         if (linked && linked.status === 'SCHEDULED')
           throw new ConflictException('DOSE_ALREADY_SCHEDULED');
         if (linked)
-          // O vínculo é único por dose: compromissos encerrados liberam a dose
-          // desvinculando-a explicitamente antes de um novo agendamento.
           throw new ConflictException('DOSE_APPOINTMENT_REQUIRES_REVIEW');
       }
       const appointment = await tx.appointment.create({

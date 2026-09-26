@@ -21,11 +21,6 @@ function collect(
   }, {});
 }
 
-/**
- * Validação de entrada com erros por campo no envelope público. Campos
- * desconhecidos são rejeitados: o cliente não concede papel nem organização
- * enviando propriedades extras.
- */
 export function buildValidationPipe(): ValidationPipe {
   return new ValidationPipe({
     transform: true,

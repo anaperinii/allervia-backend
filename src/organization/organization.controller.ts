@@ -9,10 +9,6 @@ import { UpdateOrganizationDto } from './dtos/update-organization.dto';
 import { FindOrganizationUseCase } from './use-cases/find-organization.use-case';
 import { UpdateOrganizationUseCase } from './use-cases/update-organization.use-case';
 
-/**
- * A organização acessível é sempre a do vínculo do ator. Criar organização não
- * é jornada do produto: ver `admin/provisioning`.
- */
 @ApiTags('organization')
 @Controller('organization')
 export class OrganizationController {

@@ -1,10 +1,5 @@
 import { AppAbility, AppAction, AppSubjects } from './ability.types';
 
-/**
- * Capacidades gerais anunciadas ao cliente. Elas habilitam ou escondem ações na
- * interface; a autorização por objeto continua sendo decidida no servidor a cada
- * comando, inclusive após locks.
- */
 export const CAPABILITY_MATRIX: ReadonlyArray<{
   capability: string;
   action: AppAction;

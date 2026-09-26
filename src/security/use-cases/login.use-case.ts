@@ -11,11 +11,6 @@ import {
   CodedUnauthorizedException,
 } from 'src/infra/exceptions/coded.exception';
 
-/**
- * Login legado por bearer, mantido para consumidores mapeados fora do web.
- * Ele não é um caminho alternativo de acesso: quando o bearer está desabilitado
- * ou a conta exige segundo fator, nenhum token é emitido.
- */
 @Injectable()
 export class LoginUseCase {
   constructor(

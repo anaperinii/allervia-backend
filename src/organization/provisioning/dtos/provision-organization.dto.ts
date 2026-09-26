@@ -47,10 +47,6 @@ export class ProvisionOrganizationAdministratorDto {
   phoneNumber: string;
 }
 
-/**
- * Criar a organização e criar o primeiro administrador são o mesmo ato: uma
- * organização sem administrador não tem quem conceda acesso a ninguém.
- */
 export class ProvisionOrganizationDto {
   @ApiProperty({ type: ProvisionOrganizationOrganizationDto })
   @IsObject()

@@ -67,7 +67,6 @@ export abstract class IAuthSessionRepository {
 
   abstract incrementPreAuthAttempt(challengeId: string): Promise<number>;
 
-  /** Consome o desafio apenas se ainda estiver aberto; evita reuso concorrente. */
   abstract consumePreAuthChallenge(challengeId: string): Promise<boolean>;
 
   abstract listMfaCredentials(userId: string): Promise<StoredMfaCredential[]>;
@@ -103,7 +102,6 @@ export abstract class IAuthSessionRepository {
 
   abstract countAvailableRecoveryCodes(userId: string): Promise<number>;
 
-  /** Consumo atômico: um código de recuperação vale uma única vez. */
   abstract consumeRecoveryCode(
     userId: string,
     codeHash: string,

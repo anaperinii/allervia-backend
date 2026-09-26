@@ -15,7 +15,6 @@ const IMMUNO_INCLUDE = {
   updatedBy: { select: { id: true } },
 };
 
-/** A entidade de dominio continua expondo `prescription` = snapshot vigente. */
 function toEntity(
   row: { currentPrescription?: unknown } & Record<string, unknown>,
 ): Immunotherapy {

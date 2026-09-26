@@ -1,11 +1,9 @@
-/** Normaliza para apenas dígitos; string vazia vira ausência. */
 export function normalizeCpf(value: string | null | undefined): string | null {
   if (!value) return null;
   const digits = value.replace(/\D/g, '');
   return digits.length > 0 ? digits : null;
 }
 
-/** Validação pelos dígitos verificadores; não consulta base externa. */
 export function isValidCpf(value: string): boolean {
   const digits = value.replace(/\D/g, '');
   if (digits.length !== 11) return false;
@@ -28,10 +26,6 @@ export function isValidCpf(value: string): boolean {
   return Number(digits[10]) === check;
 }
 
-/**
- * Apresentação protegida do documento: só os últimos três dígitos aparecem.
- * O valor completo fica restrito a quem tem a capacidade de leitura do CPF.
- */
 export function maskCpf(cpf: string): string {
   const digits = cpf.replace(/\D/g, '');
   if (digits.length !== 11) return '***';

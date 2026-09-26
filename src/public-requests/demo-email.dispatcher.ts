@@ -74,7 +74,6 @@ export class DemoEmailDispatcher implements OnModuleInit, OnModuleDestroy {
         emailLeaseUntil: lease,
         emailAttempts: job.emailAttempts + 1,
       };
-      // A crash during the final attempt still transitions to a visible terminal failure.
       if (job.emailAttempts >= MAX_ATTEMPTS) {
         await this.prisma.demoRequest.updateMany({
           where: owned,
@@ -104,14 +103,11 @@ export class DemoEmailDispatcher implements OnModuleInit, OnModuleDestroy {
             emailErrorCode: exhausted ? 'RETRY_EXHAUSTED' : 'SMTP_SEND_FAILED',
           },
         });
-        // No SMTP response, contact fields or credentials in logs.
         this.logger.warn(
           `Demo notification ${exhausted ? 'exhausted retries' : 'will retry'}: ${job.id}`,
         );
         continue;
       }
-      // SMTP acceptance is not proof of inbox delivery. Delivery is at least once:
-      // a crash between acceptance and this update can cause a duplicate notification.
       await this.prisma.demoRequest.updateMany({
         where: owned,
         data: {

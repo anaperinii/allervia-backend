@@ -7,11 +7,6 @@ import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.
 import { maskCpf } from '../cpf';
 import { PatientDetailDto, TherapySummaryDto } from '../dtos/patient-read.dto';
 
-/**
- * Prontuário de leitura do paciente: dados demográficos e o resumo de cada
- * tratamento, com prescrição fixada e próxima previsão. O CPF completo só é
- * entregue a quem pode editar o cadastro; os demais recebem a máscara.
- */
 @Injectable()
 export class FindPatientUseCase {
   constructor(
@@ -79,11 +74,6 @@ export class FindPatientUseCase {
       throw new NotFoundException(PATIENT_MESSAGES.notFound(id));
     }
 
-    // A capacidade de edição sobre ESTE paciente decide se o documento completo
-    // aparece. A checagem usa a mesma consulta escopada do update. A ability é
-    // verificada antes porque, sem nenhuma regra de update, `accessibleBy`
-    // devolve `{OR: []}` — e o Prisma ignora um OR vazio dentro de AND, o que
-    // faria o filtro desaparecer em vez de negar.
     const canUpdate =
       ability.can('update', 'Patient') &&
       (await this.prisma.patient.count({
@@ -117,8 +107,6 @@ export class FindPatientUseCase {
       id: patient.id,
       fullName: patient.fullName,
       cpfMasked: patient.cpf ? maskCpf(patient.cpf) : null,
-      // O documento completo é dado protegido: aparece apenas para quem tem
-      // capacidade de edição sobre este paciente.
       ...(canUpdate ? { cpf: patient.cpf } : {}),
       birthDate: patient.birthDate,
       phoneNumber: patient.phoneNumber,

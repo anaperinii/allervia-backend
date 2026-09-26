@@ -10,12 +10,6 @@ export interface SealedSecret {
   keyVersion: number;
 }
 
-/**
- * Criptografia autenticada para segredos que precisam ser lidos de volta, como
- * o segredo TOTP. A chave fica fora do banco (`MFA_ENCRYPTION_KEY`, 32 bytes em
- * base64); sem ela o cadastro de segundo fator fica indisponível em vez de
- * gravar material sensível em claro.
- */
 @Injectable()
 export class SecretBoxService {
   constructor(private readonly config: SessionConfig) {}

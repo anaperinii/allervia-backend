@@ -120,7 +120,6 @@ export class Dose {
       const administeredDate = new Date(administeredAt);
       const scheduledDate = new Date(this.scheduledAt);
 
-      // Comparar strings de data no formato YYYY-MM-DD para evitar problemas de timezone
       const administeredDateStr = administeredDate.toISOString().split('T')[0];
       const scheduledDateStr = scheduledDate.toISOString().split('T')[0];
 
@@ -137,7 +136,6 @@ export class Dose {
   changeStatus(props: UpdateDoseStatusDto): void {
     const newStatus = props.status;
 
-    // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
     if (
       String(this.status).startsWith('ADMINISTERED') &&
       newStatus !== 'ENTERED_IN_ERROR'
@@ -159,7 +157,6 @@ export class Dose {
       );
     }
 
-    // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
     if (
       String(this.status).startsWith('ADMINISTERED') &&
       newStatus === 'ENTERED_IN_ERROR'

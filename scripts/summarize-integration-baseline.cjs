@@ -35,6 +35,5 @@ const summary = {
     suiteFiles: [...integrationLog.matchAll(/^PASS\s+([^\r\n]+?)(?: \([\d.]+ s\))?$/gm)].map((m) => m[1]) },
 };
 fs.writeFileSync(path.join(root, 'docs/integration-baseline/initial-results.json'), JSON.stringify(summary, null, 2) + '\n');
-// Preserve useful lint evidence without machine-specific prefixes or ANSI escapes.
 fs.writeFileSync(path.join(root, 'docs/integration-baseline/web-lint-baseline.txt'), webLint.replaceAll('C:\\allervia-web\\', '').replace(/\u001b\[[0-9;]*m/g, ''));
 console.log(JSON.stringify({ backendLint: { errors: summary.backendLint.errors, grouped }, webLint: summary.webLint, integration: summary.integration.passed }));

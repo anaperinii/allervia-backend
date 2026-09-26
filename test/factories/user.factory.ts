@@ -4,7 +4,6 @@ import { faker } from '@faker-js/faker';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
 export class UserFactory extends BaseFactory<User> {
-  // Fornece campos sem default e não opcionais no schema (User = credencial/status)
   protected getDefaultData(): Partial<User> {
     return {
       email: faker.internet.email(),
@@ -101,11 +100,6 @@ export class UserFactory extends BaseFactory<User> {
     return this.createProfessionalUser(['NURSE'], overrides);
   }
 
-  /**
-   * Profissional na mesma organização de um usuário já criado, com os papéis
-   * indicados. Papel forjado apenas no token não vale: a autorização é
-   * recarregada do banco a cada requisição.
-   */
   async createColleagueWithRoles(
     organizationId: string,
     roles: Role[],

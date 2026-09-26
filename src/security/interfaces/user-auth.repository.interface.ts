@@ -10,7 +10,6 @@ export abstract class IUserAuthRepository {
 
   abstract getCurrentTokenVersion(userId: string): Promise<number | null>;
 
-  /** Usado pelo login legado para não emitir token que contorne o segundo fator. */
   abstract hasConfirmedMfaCredential(userId: string): Promise<boolean>;
 
   abstract createVerificationToken(

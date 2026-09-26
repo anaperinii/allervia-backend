@@ -14,10 +14,6 @@ export const AUTH_OPERATIONS = {
 export type AuthOperation =
   (typeof AUTH_OPERATIONS)[keyof typeof AUTH_OPERATIONS];
 
-/**
- * Limite de tentativas por conta e por IP, guardado no PostgreSQL para valer em
- * todas as instâncias. Uma resposta de limite não revela se a conta existe.
- */
 @Injectable()
 export class AuthRateLimitService {
   constructor(

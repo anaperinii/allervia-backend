@@ -9,10 +9,6 @@ export interface ErrorEnvelope {
   requestId?: string;
 }
 
-/**
- * Código estável por status, usado quando a exceção não declara o seu. A UI
- * ramifica por `code`; textos traduzidos nunca são condição de fluxo.
- */
 const CODE_BY_STATUS: Partial<Record<HttpStatus, string>> = {
   [HttpStatus.BAD_REQUEST]: 'BAD_REQUEST',
   [HttpStatus.UNAUTHORIZED]: 'UNAUTHENTICATED',
@@ -31,7 +27,6 @@ export function defaultCodeForStatus(status: number): string {
   return CODE_BY_STATUS[status as HttpStatus] ?? 'INTERNAL_ERROR';
 }
 
-/** Converte o nome de uma exceção de domínio em código estável. */
 export function codeFromExceptionName(name: string): string {
   return name
     .replace(/Exception$/, '')

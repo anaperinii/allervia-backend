@@ -46,11 +46,6 @@ interface InviteContextBody {
   organizationName: string;
 }
 
-/**
- * Ciclo do convite sobre HTTP real: emissão, contexto para quem recebe,
- * cadastro com vínculo correto e recusa de convite expirado, cancelado ou já
- * usado. O token chega apenas por e-mail.
- */
 describe('Ciclo do convite - Integração HTTP', () => {
   let app: INestApplication<App>;
   let module: TestingModule;
@@ -66,8 +61,6 @@ describe('Ciclo do convite - Integração HTTP', () => {
 
     await TestDatabaseManager.connect();
 
-    // O transporte de e-mail é substituído para capturar o token entregue: ele
-    // não aparece em nenhuma resposta HTTP.
     const emailSpy: IEmailService = {
       sendPasswordResetLink: () => Promise.resolve(),
       sendPasswordChangedNotification: () => Promise.resolve(),
@@ -217,7 +210,6 @@ describe('Ciclo do convite - Integração HTTP', () => {
       'NURSE',
     ]);
 
-    // O mesmo convite não serve duas vezes.
     const reused = await server()
       .post(`/onboarding/registration/${token}`)
       .set('Origin', ORIGIN)

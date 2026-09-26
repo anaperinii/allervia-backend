@@ -17,11 +17,6 @@ export interface ReauthenticateInput {
   code?: string;
 }
 
-/**
- * Desafio curto vinculado à sessão atual, exigido por ações sensíveis. Não
- * altera a identidade nem reenfileira comandos: apenas marca a sessão como
- * reautenticada agora.
- */
 @Injectable()
 export class ReauthenticateUseCase {
   constructor(

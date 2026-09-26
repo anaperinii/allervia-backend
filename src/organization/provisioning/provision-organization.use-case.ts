@@ -10,11 +10,6 @@ import {
   ProvisionedOrganizationDto,
 } from './dtos/provision-organization.dto';
 
-/**
- * Provisiona uma organização junto do seu primeiro administrador em uma única
- * transação. Não existe estado intermediário: ou a clínica nasce com alguém
- * capaz de conceder acesso, ou nada é gravado.
- */
 @Injectable()
 export class ProvisionOrganizationUseCase {
   constructor(
@@ -52,15 +47,11 @@ export class ProvisionOrganizationUseCase {
           organizationId: organization.id,
           fullName: dto.administrator.fullName,
           phoneNumber: dto.administrator.phoneNumber,
-          // Profissão declarada do primeiro acesso administrativo; ela não
-          // concede autorização clínica, apenas descreve a pessoa.
           profession: Profession.RECEPTIONIST,
         },
         select: { id: true },
       });
 
-      // O primeiro administrador concede o papel a si mesmo porque não existe
-      // outro profissional na organização para ser o concedente.
       await tx.professionalRole.create({
         data: {
           professionalId: professional.id,

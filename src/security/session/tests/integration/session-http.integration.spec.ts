@@ -27,11 +27,6 @@ const PASSWORD = 'Senha!Forte#2026';
 const ORIGIN = 'http://127.0.0.1';
 const SESSION_COOKIE = 'allervia_session';
 
-/**
- * Exercita a sessão opaca sobre HTTP real: cookie, CSRF, revogação e a fronteira
- * pública das respostas de conta. Roda sem HTTPS, então os atributos do cookie
- * são verificados em modo de desenvolvimento explícito.
- */
 describe('Sessão opaca, CSRF e conta pública - Integração HTTP', () => {
   let app: INestApplication<App>;
   let module: TestingModule;
@@ -42,8 +37,6 @@ describe('Sessão opaca, CSRF e conta pública - Integração HTTP', () => {
     process.env.AUTH_INSECURE_COOKIES = 'true';
     process.env.AUTH_MFA_ENFORCEMENT = 'optional';
     process.env.AUTH_LEGACY_BEARER = 'enabled';
-    // O servidor efêmero do supertest atende em porta variável, então a origem
-    // do teste é declarada explicitamente em vez de inferida do host.
     process.env.AUTH_ALLOWED_ORIGINS = ORIGIN;
     process.env.MFA_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64');
     process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret';
@@ -142,7 +135,6 @@ describe('Sessão opaca, CSRF e conta pública - Integração HTTP', () => {
 
     const createdBody = readBody<SessionBody>(created);
     expect(createdBody.csrfToken).toEqual(expect.any(String));
-    // O corpo não devolve o segredo do cookie nem a credencial do usuário.
     expect(JSON.stringify(createdBody)).not.toContain(PASSWORD);
 
     const restored = await server()

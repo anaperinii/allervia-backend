@@ -12,10 +12,6 @@ import { PageQueryDto } from 'src/infra/http/pagination';
 
 const OFFSET_PATTERN = /T.*(?:Z|[+-]\d{2}:\d{2})$/;
 
-/**
- * Janela de instantes com offset explícito. O dia local pertence ao fuso da
- * prescrição/organização; o cliente converte o dia visível para instantes.
- */
 export class SchedulePeriodDto {
   @ApiProperty({ description: 'ISO instant with explicit offset (inclusive)' })
   @IsDateString()

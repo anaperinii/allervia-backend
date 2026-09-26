@@ -47,8 +47,6 @@ export class AbilityFactory {
         can('manage', 'User', userInOrg);
         can('manage', 'InternalUserInvite', inOrg);
         can('manage', 'ProfessionalRole', roleInOrg);
-        // Administração cuida do cadastro da própria organização; nenhuma
-        // capacidade clínica vem junto.
         can('manage', 'Organization', { id: orgId });
         can('read', 'AuditLog', inOrg);
         break;
@@ -79,7 +77,6 @@ export class AbilityFactory {
 
       case Role.RECEPTIONIST:
         can(['read', 'create', 'update'], 'Patient', inOrg);
-        // Agenda operacional é trabalho de recepção; a decisão clínica não.
         can('manage', 'Appointment', inOrg);
         can('read', 'Professional', inOrg);
         break;

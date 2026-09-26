@@ -6,7 +6,6 @@ import {
   UserType,
 } from '@prisma/client';
 
-/** Contexto de autorização recarregado do banco a cada requisição. */
 export interface AuthContext {
   userId: string;
   email: string;

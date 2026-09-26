@@ -33,11 +33,6 @@ export function toAuthenticatedUser(
   };
 }
 
-/**
- * Autenticação de cada requisição. A sessão opaca por cookie é o caminho do
- * web; o bearer legado continua disponível para consumidores mapeados e é
- * submetido às mesmas verificações de revogação, conta ativa e segundo fator.
- */
 @Injectable()
 export class SessionAuthGuard extends AuthGuard('jwt') {
   constructor(
@@ -63,8 +58,6 @@ export class SessionAuthGuard extends AuthGuard('jwt') {
     const sessionSecret = this.cookies.read(request);
 
     if (sessionSecret) {
-      // Uma rota pública com cookie inválido não deve falhar: ela simplesmente
-      // não recebe identidade.
       try {
         const { session, context } =
           await this.sessionService.validate(sessionSecret);
@@ -105,11 +98,6 @@ export class SessionAuthGuard extends AuthGuard('jwt') {
     return true;
   }
 
-  /**
-   * O token antigo não pode conservar permissões nem contornar segundo fator:
-   * o contexto é recarregado do banco e a conta com MFA confirmado precisa usar
-   * o fluxo de sessão.
-   */
   private async applyLegacyBearerRestrictions(
     request: RequestWithSession,
   ): Promise<void> {

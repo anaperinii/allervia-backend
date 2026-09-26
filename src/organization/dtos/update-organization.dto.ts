@@ -1,10 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
-/**
- * Fusos aceitos hoje. O fuso clínico entra na prescrição, então mudá-lo é
- * decisão organizacional e não um campo livre.
- */
 export const SUPPORTED_TIME_ZONES = [
   'America/Sao_Paulo',
   'America/Manaus',
@@ -20,10 +16,6 @@ export const SUPPORTED_TIME_ZONES = [
   'America/Noronha',
 ] as const;
 
-/**
- * Atualização da organização tem contrato próprio: nome e fuso clínico não são
- * campos de um PATCH genérico de usuário, e `taxId` não muda por aqui.
- */
 export class UpdateOrganizationDto {
   @ApiPropertyOptional({ description: 'Nome exibido da organização' })
   @IsOptional()

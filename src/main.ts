@@ -6,11 +6,6 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { buildValidationPipe } from './infra/http/validation-pipe';
 
-/**
- * UI e API ficam na mesma origem pelo gateway. CORS só é habilitado quando
- * origens são declaradas explicitamente; uma implantação entre origens exige
- * revisão da arquitetura de sessão, não uma flexibilização automática aqui.
- */
 function configuredOrigins(): string[] {
   return (process.env.AUTH_ALLOWED_ORIGINS ?? '')
     .split(',')
@@ -21,14 +16,12 @@ function configuredOrigins(): string[] {
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // O gateway termina o TLS; sem isto o Express não enxerga o protocolo real
-  // e os atributos de cookie ficariam avaliados sobre a conexão interna.
   app.set('trust proxy', 1);
 
   app.use(cookieParser());
   app.use(
     helmet({
-      contentSecurityPolicy: false, // A CSP da UI é servida pelo gateway.
+      contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false,
     }),
   );

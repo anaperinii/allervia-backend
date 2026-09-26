@@ -24,7 +24,9 @@ const EXPORT_SELECT = {
   administeredValues: true,
   immediateConduct: true,
   createdAt: true,
-  performedBy: { select: { id: true, fullName: true } },
+  administeredBy: {
+    select: { id: true, professional: { select: { fullName: true } } },
+  },
   prescription: {
     select: {
       id: true,
@@ -58,13 +60,6 @@ const EXPORT_SELECT = {
   },
 } satisfies Prisma.DoseSelect;
 
-/**
- * Conjunto completo para exportação: linhas por dose com previsto e realizado
- * separados, versão fixada e fuso da prescrição. O corte temporal (`asOf`)
- * congela o CONJUNTO — só registros criados até o instante entram — para que
- * páginas geradas em momentos diferentes descrevam o mesmo universo; os valores
- * exibidos são os vigentes na geração. A solicitação é registrada em auditoria.
- */
 @Injectable()
 export class ClinicalExportService {
   constructor(
@@ -105,8 +100,6 @@ export class ClinicalExportService {
       this.prisma.dose.findMany({
         where,
         select: EXPORT_SELECT,
-        // IDs ULID são monotônicos: ordenação estável garante páginas
-        // disjuntas do mesmo universo congelado.
         orderBy: [{ id: 'asc' }],
         skip: bounds.skip,
         take: bounds.take,
@@ -114,8 +107,6 @@ export class ClinicalExportService {
       this.prisma.dose.count({ where }),
     ]);
 
-    // A solicitação é registrada uma vez, na primeira página, com filtros,
-    // corte e autor — trilha exigida para qualquer exportação clínica.
     if (bounds.page === 1)
       await this.audit.record({
         userId: user.id,
@@ -147,7 +138,12 @@ export class ClinicalExportService {
         planned: dose.plannedValues,
         administered: dose.administeredValues,
         immediateConduct: dose.immediateConduct,
-        performedBy: dose.performedBy,
+        administeredBy: dose.administeredBy
+          ? {
+              id: dose.administeredBy.id,
+              fullName: dose.administeredBy.professional?.fullName ?? null,
+            }
+          : null,
         prescription: dose.prescription
           ? {
               versionId: dose.prescription.versionId,

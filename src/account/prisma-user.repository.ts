@@ -10,10 +10,6 @@ import {
   IUserRepository,
 } from 'src/account/user.repository';
 
-/**
- * Seleção pública do perfil de conta. Enumerar os campos aqui é o que impede
- * que `password`, `tokenVersion` ou relações internas cheguem à resposta.
- */
 const accountProfileSelection = {
   id: true,
   email: true,

@@ -36,11 +36,6 @@ const TRANSITIONS: Record<
   },
 };
 
-/**
- * Ciclo de vida clínico com motivo, autoria e efeitos explícitos. O status é
- * consequência do evento — nunca o contrário: cada transição grava o registro
- * completo e a trilha de auditoria na mesma transação.
- */
 @Injectable()
 export class TherapyLifecycleService {
   constructor(
@@ -67,8 +62,6 @@ export class TherapyLifecycleService {
       if (therapy.status !== transition.from)
         throw new ConflictException('INVALID_LIFECYCLE_TRANSITION');
 
-      // Encerrar arquiva as previsões pendentes de forma explícita e auditada;
-      // suspensão as preserva para a retomada.
       let archivedDoseIds: string[] = [];
       if (dto.action === 'COMPLETE') {
         const pending = await tx.dose.findMany({
@@ -134,8 +127,6 @@ export class TherapyLifecycleService {
         },
         tx,
       );
-      // Suspensão feita por outro ator informa o médico responsável, no mesmo
-      // commit da decisão.
       if (
         transition.type === 'SUSPENSION' &&
         user.professionalId !== therapy.patient.responsiblePhysicianId
@@ -156,7 +147,6 @@ export class TherapyLifecycleService {
     });
   }
 
-  /** Histórico legível do ciclo de vida, do mais recente ao mais antigo. */
   async history(id: string, user: AuthenticatedUserPayload) {
     const ability = this.abilities.createForUser(user);
     if (!ability.can('read', 'Immunotherapy')) throw new NotFoundException();

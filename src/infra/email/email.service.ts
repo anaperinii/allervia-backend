@@ -26,6 +26,5 @@ export abstract class IEmailService {
 
   abstract sendPasswordChangedNotification(email: string): Promise<void>;
 
-  /** Entrega o convite ao destinatário; o token não volta para quem convidou. */
   abstract sendInviteLink(params: InviteEmailParams): Promise<void>;
 }

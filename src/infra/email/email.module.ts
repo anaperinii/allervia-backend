@@ -4,11 +4,6 @@ import { IEmailService } from './email.service';
 import { LogEmailService } from './log-email.service';
 import { SmtpEmailService } from './smtp-email.service';
 
-/**
- * Escolha do transporte de e-mail. O adapter de log existe só para
- * desenvolvimento e teste: em produção a ausência de configuração SMTP falha na
- * inicialização, em vez de simular envio de recuperação de senha.
- */
 @Module({
   imports: [ConfigModule],
   providers: [

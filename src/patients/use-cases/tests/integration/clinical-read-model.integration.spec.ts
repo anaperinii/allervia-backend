@@ -57,11 +57,6 @@ interface TherapyDetail {
   doseCount: number;
 }
 
-/**
- * Prontuário de leitura sobre HTTP real: paginação escopada, CPF protegido,
- * dois tratamentos do mesmo paciente sem mistura de doses e histórico lido do
- * snapshot da prescrição.
- */
 describe('Prontuário de leitura - Integração HTTP', () => {
   let app: INestApplication<App>;
   let module: TestingModule;
@@ -214,8 +209,6 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const first = await createTherapy('Carla Mendes', 'Der p 100%');
     const patientId = first.immunotherapy.patientId;
 
-    // Segundo tratamento para o MESMO paciente, direto no banco: o comando de
-    // prescrição para paciente existente chega na I5.
     const secondTherapy = await factories.immunotherapies.create({
       patientId,
       targetConcentration: 1000,
@@ -277,8 +270,6 @@ describe('Prontuário de leitura - Integração HTTP', () => {
 
     const therapy = readBody<TherapyDetail>(detail);
     expect(therapy.prescription?.versionId).toBe(versionId);
-    // O snapshot resolvido acompanha o detalhe: histórico é lido daqui, não da
-    // versão padrão vigente.
     expect(therapy.prescription?.resolved).toBeDefined();
   });
 
@@ -305,7 +296,6 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     expect(full.cpf).toBe('52998224725');
     expect(full.cpfMasked).toBe('***.***.*47-25');
 
-    // Enfermagem lê o prontuário, mas não edita o cadastro: recebe a máscara.
     const nurse = await factories.users.createColleagueWithRoles(
       physician.organizationId,
       ['NURSE'],
@@ -376,7 +366,6 @@ describe('Prontuário de leitura - Integração HTTP', () => {
       ['NURSE'],
     );
 
-    // Enfermeiro da mesma organização não é médico: também não pode assumir.
     await server()
       .patch(`/patients/update/${created.immunotherapy.patientId}`)
       .set('Origin', ORIGIN)

@@ -1,4 +1,3 @@
-/** Calendar arithmetic in the clinic's IANA time zone; rejects nonexistent DST wall times. */
 function parts(date: Date, timeZone: string): number[] {
   const values = new Intl.DateTimeFormat('en-CA', {
     timeZone,

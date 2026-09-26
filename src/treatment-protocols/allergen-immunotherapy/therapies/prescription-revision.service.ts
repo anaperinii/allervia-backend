@@ -21,12 +21,6 @@ import {
 import type { ResolvedPrescription } from '../clinical-rules/protocol-definition';
 import { PrescriptionRevisionDto } from './dtos/prescription-revision.dto';
 
-/**
- * Revisão individual de prescrição entre versões publicadas: cria um snapshot
- * NOVO e move o ponteiro vigente — o snapshot anterior permanece imutável e as
- * doses históricas continuam apontando para ele. A previsão pendente é
- * reancorada explicitamente na etapa escolhida; a data prevista não muda aqui.
- */
 @Injectable()
 export class PrescriptionRevisionService {
   constructor(

@@ -151,11 +151,9 @@ describe('Clinical lifecycle workflows - Integration', () => {
       '2026-02-01T15:00:00.000Z',
     );
 
-    // Comandos clínicos bloqueados enquanto suspenso.
     await expect(administer(result.firstDose.id)).rejects.toThrow(
       'TREATMENT_NOT_ACTIVE',
     );
-    // Previsão pendente preservada.
     const pending = await prisma.dose.findUniqueOrThrow({
       where: { id: result.firstDose.id },
     });
@@ -244,7 +242,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       retesting: true,
       custom: ['Retorno em 6 meses'],
     });
-    // Recomendações fora do encerramento são rejeitadas.
     await expect(
       lifecycle.execute(
         therapyId,
@@ -267,7 +264,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       where: { id: result.firstDose.id },
     });
 
-    // v2 publicada com os mesmos passos (rótulos revisados).
     const definition = syntheticProtocolDefinition();
     definition.steps = definition.steps.map((step) => ({
       ...step,
@@ -320,7 +316,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       physician,
     )) as { prescriptionId: string; previousPrescriptionId: string };
 
-    // Snapshot novo vigente; o anterior permanece imutável e referenciado.
     expect(await prisma.protocolPrescription.count()).toBe(2);
     const current = await prisma.immunotherapy.findUniqueOrThrow({
       where: { id: therapyId },
@@ -330,14 +325,12 @@ describe('Clinical lifecycle workflows - Integration', () => {
     expect(current.currentPrescription!.versionId).toBe(draft.id);
     expect(current.currentPrescription!.revisionReason).toContain('v2');
 
-    // Dose administrada intocada, ainda apontando o snapshot antigo.
     const untouched = await prisma.dose.findUniqueOrThrow({
       where: { id: result.firstDose.id },
     });
     expect(untouched).toEqual(historicalDose);
     expect(untouched.prescriptionId).toBe(committed.previousPrescriptionId);
 
-    // Pendente reancorada na v2 sem mudar a data prevista.
     const pending = await prisma.dose.findUniqueOrThrow({
       where: { id: administered.successor!.id },
     });
@@ -351,7 +344,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
         : 'unreachable',
     );
 
-    // Administrar a pendente agora recomenda pela v2.
     const applied = await administer(pending.id, {
       administeredAt: '2026-01-08T13:00:00Z',
     });
@@ -361,7 +353,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
     ).recommendation as { protocolVersionId: string };
     expect(recommendation.protocolVersionId).toBe(draft.id);
 
-    // Mesma versão de destino é rejeitada.
     const after = await prisma.immunotherapy.findUniqueOrThrow({
       where: { id: therapyId },
     });
@@ -401,7 +392,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       physician,
     );
     expect(retracted.dose.status).toBe('ENTERED_IN_ERROR');
-    // Valores administrados preservados — nada foi apagado.
     expect(retracted.dose.administeredValues).toEqual(
       doseBefore.administeredValues,
     );
@@ -410,7 +400,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       where: { id: administered.successor!.id },
     });
     expect(successor.isArchived).toBe(true);
-    // Previsão original reemitida como estava.
     expect(retracted.reissuedDose.status).toBe('SCHEDULED');
     expect(retracted.reissuedDose.plannedStepId).toBe(doseBefore.plannedStepId);
     expect(retracted.reissuedDose.scheduledAt).toEqual(doseBefore.scheduledAt);
@@ -455,7 +444,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
     const result = await create.execute(createInput(), physician);
     await administer(result.firstDose.id);
 
-    // Antes da administração é inválido.
     const therapy = await prisma.immunotherapy.findUniqueOrThrow({
       where: { id: result.immunotherapy.id },
     });
@@ -472,7 +460,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       ),
     ).rejects.toThrow('INVALID_OBSERVATION_TIME');
 
-    // Enfermagem registra a observação tardia, mas não suspende.
     await expect(
       correction.addLateObservation(
         result.firstDose.id,
@@ -516,8 +503,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
     });
     expect(addendum.createdById).toBe(physician.id);
     expect(addendum.observedAt.toISOString()).toBe('2026-01-01T20:00:00.000Z');
-    // As observações originais da administração permanecem intactas (registro
-    // adicional, não reescrita).
     expect(
       await prisma.doseObservation.count({
         where: { doseId: result.firstDose.id },
@@ -545,7 +530,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
     );
     expect(created.dose?.id).toBe(result.firstDose.id);
 
-    // Vínculo é único por dose.
     await expect(
       appointments.create(
         {
@@ -558,7 +542,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       ),
     ).rejects.toThrow('DOSE_ALREADY_SCHEDULED');
 
-    // Cancelamento exige motivo.
     await expect(
       appointments.update(
         created.id,
@@ -567,7 +550,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       ),
     ).rejects.toThrow('STATUS_REASON_REQUIRED');
 
-    // Falta registrada após o horário não altera a dose clínica.
     const missed = await appointments.update(
       created.id,
       {
@@ -586,7 +568,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       ).status,
     ).toBe('SCHEDULED');
 
-    // Compromisso encerrado não reagenda; revisão stale conflita.
     await expect(
       appointments.update(
         created.id,
@@ -606,7 +587,6 @@ describe('Clinical lifecycle workflows - Integration', () => {
       ),
     ).rejects.toThrow('STALE_APPOINTMENT_REVISION');
 
-    // Escopo por papel: outro médico não enxerga o compromisso.
     const outsiderPhysician = await factories.users.createColleagueWithRoles(
       physician.organizationId,
       ['PHYSICIAN'],

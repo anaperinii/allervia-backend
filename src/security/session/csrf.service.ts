@@ -8,11 +8,6 @@ const INSECURE_COOKIE_NAME = 'allervia_csrf';
 
 export const CSRF_HEADER = 'x-csrf-token';
 
-/**
- * Desafio anti-CSRF de pré-sessão, para os comandos que ainda não têm sessão
- * clínica (login, MFA, recuperação de senha). Depois do login, o token
- * sincronizador vinculado à sessão assume o papel.
- */
 @Injectable()
 export class CsrfService {
   constructor(private readonly config: SessionConfig) {}
@@ -44,7 +39,6 @@ export class CsrfService {
     response.clearCookie(this.cookieName, options);
   }
 
-  /** Double submit: o header precisa repetir o valor do cookie de pré-sessão. */
   validate(request: Request, presented: string | undefined): boolean {
     if (!presented) return false;
     const cookies = request.cookies as Record<string, string> | undefined;
