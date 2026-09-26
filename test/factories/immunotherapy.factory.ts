@@ -8,7 +8,7 @@ export class ImmunotherapyFactory extends BaseFactory<Immunotherapy> {
       administrationRoute: 'SUBCUTANEOUS' as AdministrationRoute,
       extract: 'Der p 60% + der f 10% + blt 30%',
       targetConcentration: 10,
-      targetVolume: 0.5,
+      targetVolume: new Prisma.Decimal('0.5'),
     };
   }
 

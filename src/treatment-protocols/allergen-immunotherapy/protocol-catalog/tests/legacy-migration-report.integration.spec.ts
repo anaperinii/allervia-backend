@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
@@ -44,7 +45,7 @@ describe('Legacy migration report for the assisted UI - Integration', () => {
     const therapy = await factories.immunotherapies.create({
       patientId: patient.id,
       targetConcentration: 1000,
-      targetVolume: 0.4,
+      targetVolume: new Prisma.Decimal('0.4'),
       inductionStartDate: new Date('2026-01-01T13:00:00Z'),
       createdById: physician.id,
       updatedById: physician.id,

@@ -282,7 +282,7 @@ model Immunotherapy {
   inductionStartDate   DateTime
   maintenanceStartDate DateTime?
   targetConcentration  Int
-  targetVolume         Float
+  targetVolume         Decimal @db.Decimal(65, 30)
 
   status     TherapyStatus @default(IN_PROGRESS)
   isArchived Boolean       @default(false)
@@ -310,7 +310,6 @@ model Immunotherapy {
 
   lifecycleEvents TherapyLifecycleEvent[]
   revision Int @default(0)
-  targetVolumeExact Decimal? @db.Decimal(65, 30)
 
   @@index([patientId, status, isArchived])
   @@index([administrationRoute])

@@ -43,12 +43,6 @@ export class ProtocolMigrationService {
     const stored = await this.prisma.$queryRaw<
       { id: string; volumeText: string }[]
     >`SELECT d.id, d.volume::text AS "volumeText" FROM "Dose" d JOIN "Immunotherapy" i ON i.id = d."immunotherapyId" JOIN "Patient" p ON p.id = i."patientId" WHERE p."organizationId" = ${user.organizationId}`;
-    const targets = await this.prisma.$queryRaw<
-      { id: string; volumeText: string }[]
-    >`SELECT i.id, i."targetVolume"::text AS "volumeText" FROM "Immunotherapy" i JOIN "Patient" p ON p.id = i."patientId" WHERE p."organizationId" = ${user.organizationId}`;
-    const exactTargets = new Map(
-      targets.map((row) => [row.id, row.volumeText]),
-    );
     const exactVolumes = new Map(stored.map((row) => [row.id, row.volumeText]));
     const values = new Map<
       string,
@@ -100,7 +94,7 @@ export class ProtocolMigrationService {
         inductionStartDate: therapy.inductionStartDate,
         target: {
           concentration: String(therapy.targetConcentration),
-          volume: exactTargets.get(therapy.id),
+          volume: therapy.targetVolume.toString(),
         },
         pendingDoses: pending.map((dose) => ({
           id: dose.id,
@@ -229,16 +223,12 @@ export class ProtocolMigrationService {
       if (!version) throw new NotFoundException();
       const protocol = persistenceDefinition(version);
       const resolved = prescriptionFromJson(resolvedInput, protocol);
-      const historicalTarget = await tx.$queryRaw<
-        { volumeText: string }[]
-      >`SELECT "targetVolume"::text AS "volumeText" FROM "Immunotherapy" WHERE id = ${id}`;
       const target = protocol.steps.find(
         (step) => step.id === resolved.targetStepId,
       )!;
       if (
-        new Prisma.Decimal(target.volume).comparedTo(
-          historicalTarget[0].volumeText,
-        ) !== 0 ||
+        new Prisma.Decimal(target.volume).comparedTo(therapy.targetVolume) !==
+          0 ||
         target.concentration !== String(therapy.targetConcentration)
       )
         throw new ConflictException('LEGACY_TARGET_MISMATCH');
@@ -300,7 +290,7 @@ export class ProtocolMigrationService {
         where: { id },
         data: {
           currentPrescriptionId: snapshot.id,
-          targetVolumeExact: new Prisma.Decimal(target.volume),
+          targetVolume: new Prisma.Decimal(target.volume),
           revision: { increment: 1 },
           updatedById: user.id,
         },

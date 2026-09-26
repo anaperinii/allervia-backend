@@ -5,7 +5,6 @@ import { AdministrationRoute, TherapyStatus } from '@prisma/client';
 export interface ImmunotherapyProps {
   prescription?: ProtocolPrescription | null;
   revision?: number;
-  targetVolumeExact?: Prisma.Decimal | string | null;
   id: string;
   immunoType: string;
   administrationRoute: AdministrationRoute;
@@ -13,7 +12,7 @@ export interface ImmunotherapyProps {
   inductionStartDate: Date;
   maintenanceStartDate: Date | null;
   targetConcentration: number;
-  targetVolume: number;
+  targetVolume: Prisma.Decimal | string;
   patientId: string;
   createdById: string;
   isArchived: boolean;
@@ -31,7 +30,7 @@ export interface CreateImmunotherapyProps {
   extract: string;
   inductionStartDate: Date;
   targetConcentration: number;
-  targetVolume: number;
+  targetVolume: string;
   patientId: string;
   createdById: string;
   updatedById: string;
@@ -40,7 +39,6 @@ export interface CreateImmunotherapyProps {
 export class Immunotherapy {
   prescription?: ProtocolPrescription | null;
   revision: number;
-  targetVolumeExact?: string | null;
   id: string;
   immunoType: string;
   administrationRoute: AdministrationRoute;
@@ -48,7 +46,7 @@ export class Immunotherapy {
   inductionStartDate: Date;
   maintenanceStartDate: Date | null;
   targetConcentration: number;
-  targetVolume: number;
+  targetVolume: string;
   patientId: string;
   isArchived: boolean;
   status: TherapyStatus;
@@ -62,7 +60,6 @@ export class Immunotherapy {
   constructor(props: ImmunotherapyProps) {
     this.prescription = props.prescription;
     this.revision = props.revision ?? 0;
-    this.targetVolumeExact = props.targetVolumeExact?.toString() ?? null;
     this.id = props.id;
     this.immunoType = props.immunoType;
     this.administrationRoute = props.administrationRoute;
@@ -70,7 +67,7 @@ export class Immunotherapy {
     this.inductionStartDate = props.inductionStartDate;
     this.maintenanceStartDate = props.maintenanceStartDate;
     this.targetConcentration = props.targetConcentration;
-    this.targetVolume = props.targetVolume;
+    this.targetVolume = props.targetVolume.toString();
     this.patientId = props.patientId;
     this.createdById = props.createdById;
     this.isArchived = props.isArchived;

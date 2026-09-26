@@ -131,7 +131,7 @@ export class PrescriptionRevisionService {
         where: { id },
         data: {
           currentPrescriptionId: snapshot.id,
-          targetVolumeExact: new Prisma.Decimal(target.volume),
+          targetVolume: new Prisma.Decimal(target.volume),
           revision: { increment: 1 },
           updatedById: user.id,
         },

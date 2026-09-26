@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import { hash } from 'bcrypt';
@@ -212,7 +213,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const secondTherapy = await factories.immunotherapies.create({
       patientId,
       targetConcentration: 1000,
-      targetVolume: 0.4,
+      targetVolume: new Prisma.Decimal('0.4'),
       inductionStartDate: new Date('2026-02-01T13:00:00Z'),
       createdById: physician.id,
       updatedById: physician.id,
