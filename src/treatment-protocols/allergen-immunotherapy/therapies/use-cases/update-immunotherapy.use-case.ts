@@ -51,7 +51,7 @@ export class UpdateImmunotherapyUseCase {
         },
         tx,
       );
-      return updated;
+      return { ...updated, targetVolume: updated.targetVolume.toString() };
     });
   }
 }

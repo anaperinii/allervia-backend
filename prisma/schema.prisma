@@ -282,7 +282,7 @@ model Immunotherapy {
   inductionStartDate   DateTime
   maintenanceStartDate DateTime?
   targetConcentration  Int
-  targetVolume         Float
+  targetVolume         Decimal @db.Decimal(65, 30)
 
   status     TherapyStatus @default(IN_PROGRESS)
   isArchived Boolean       @default(false)
@@ -310,7 +310,6 @@ model Immunotherapy {
 
   lifecycleEvents TherapyLifecycleEvent[]
   revision Int @default(0)
-  targetVolumeExact Decimal? @db.Decimal(65, 30)
 
   @@index([patientId, status, isArchived])
   @@index([administrationRoute])
@@ -413,7 +412,7 @@ model Dose {
   administeredBy   User?         @relation("AdministeredBy", fields: [administeredById], references: [id])
 
   concentration      Int
-  volume             Float
+  volume             Decimal @db.Decimal(65, 30)
   scheduledAt        DateTime
   administeredAt     DateTime?
   nextIntervalInDays Int
@@ -448,8 +447,6 @@ model Dose {
   administeredStepId String?
   plannedValues Json?
   administeredValues Json?
-  plannedVolumeExact Decimal? @db.Decimal(65, 30)
-  administeredVolumeExact Decimal? @db.Decimal(65, 30)
   sourceDoseId String? @unique
   sourceDose Dose? @relation("DoseSuccessor", fields: [sourceDoseId], references: [id])
   successor Dose? @relation("DoseSuccessor")

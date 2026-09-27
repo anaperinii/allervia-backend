@@ -84,9 +84,8 @@ export function plannedDoseData(
     immunotherapyId: therapyId,
     plannedStepId: step.id,
     plannedValues: json(configuredValues(step, protocol)),
-    plannedVolumeExact: new Prisma.Decimal(step.volume),
     concentration: Number(step.concentration),
-    volume: Number(step.volume),
+    volume: new Prisma.Decimal(step.volume),
     nextIntervalInDays: step.intervalDays,
     scheduledAt,
     betweenDosesReport: '',
@@ -372,9 +371,8 @@ export class ConfiguredDoseService {
         data: {
           plannedStepId: step.id,
           plannedValues: json(configuredValues(step, context.protocol)),
-          plannedVolumeExact: new Prisma.Decimal(step.volume),
           concentration: Number(step.concentration),
-          volume: Number(step.volume),
+          volume: new Prisma.Decimal(step.volume),
           nextIntervalInDays: step.intervalDays,
           scheduledAt: this.date(dto.scheduledAt),
           revision: { increment: 1 },
@@ -507,7 +505,6 @@ export class ConfiguredDoseService {
             immediateConductJustification: conduct?.justification ?? null,
             administeredStepId: step.id,
             administeredValues: json(configuredValues(step, context.protocol)),
-            administeredVolumeExact: new Prisma.Decimal(step.volume),
             betweenDosesReport: dto.betweenDosesReport,
             status:
               localCalendarDay(context.dose.scheduledAt, context.timeZone) ===

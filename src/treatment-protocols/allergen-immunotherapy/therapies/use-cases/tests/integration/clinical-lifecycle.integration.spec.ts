@@ -101,7 +101,7 @@ describe('Clinical lifecycle workflows - Integration', () => {
     overrides: Record<string, unknown> = {},
   ) {
     sequence += 1;
-    const detail = (await clinical.read(doseId, physician)) as {
+    const detail = (await clinical.read(doseId, physician)) as unknown as {
       revision: number;
       therapyRevision: number;
       plannedStepId: string;

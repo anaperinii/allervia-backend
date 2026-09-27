@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Prisma } from '@prisma/client';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { AppModule } from 'src/app.module';
@@ -152,7 +153,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     const result = await create.execute(createInput(), user);
     expect(result.immunotherapy.prescription.versionId).toBe(versionId);
     expect(result.firstDose.plannedValues).toMatchObject({ volume: '0.1' });
-    expect(result.immunotherapy.targetVolumeExact?.toString()).toBe('0.4');
+    expect(result.immunotherapy.targetVolume?.toString()).toBe('0.4');
     expect(
       await prisma.auditLog.count({
         where: { action: 'PRESCRIPTION_CREATED' },
@@ -571,7 +572,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       .set('Authorization', `Bearer ${token()}`)
       .send({
         ...command(),
-        values: { volume: 0.2, concentration: 1000, intervalDays: 7 },
+        values: { volume: new Prisma.Decimal('0.2'), concentration: 1000, intervalDays: 7 },
         expectedRevision: undefined,
       })
       .expect(400);
@@ -606,7 +607,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     const therapy = await factories.immunotherapies.create({
       patientId: patient.id,
       targetConcentration: 1000,
-      targetVolume: 0.4,
+      targetVolume: new Prisma.Decimal('0.4'),
       inductionStartDate: new Date('2026-01-01T13:00:00Z'),
       createdById: user.id,
       updatedById: user.id,
@@ -614,7 +615,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     const dose = await factories.doses.create({
       immunotherapyId: therapy.id,
       concentration: 1000,
-      volume: 0.2,
+      volume: new Prisma.Decimal('0.2'),
       nextIntervalInDays: 7,
       scheduledAt: new Date('2026-01-08T13:00:00Z'),
       createdById: user.id,
@@ -672,11 +673,14 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
   });
   it('rejects unmatched legacy values instead of rounding them', async () => {
     const { therapy, dose } = await legacy();
-    await prisma.$executeRaw`UPDATE "Dose" SET volume = CAST(${'0.20000000000000004'} AS double precision) WHERE id = ${dose.id}`;
-    const stored = await prisma.$queryRaw<
-      { value: string }[]
-    >`SELECT volume::text AS value FROM "Dose" WHERE id = ${dose.id}`;
-    expect(stored[0].value).toBe('0.20000000000000004');
+    await prisma.dose.update({
+      where: { id: dose.id },
+      data: { volume: new Prisma.Decimal('0.20000000000000004') },
+    });
+    const stored = await prisma.dose.findUniqueOrThrow({
+      where: { id: dose.id },
+    });
+    expect(stored.volume.toString()).toBe('0.20000000000000004');
     await expect(
       migration.bind(therapy.id, versionId, prescription(), 0, user, false),
     ).rejects.toThrow(BadRequestException);
@@ -704,7 +708,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     await expect(
       prisma.immunotherapy.update({
         where: { id: result.immunotherapy.id },
-        data: { targetVolume: 0.9 },
+        data: { targetConcentration: 900 },
       }),
     ).rejects.toThrow();
     await clinical.administer(result.firstDose.id, command(), user);
@@ -750,7 +754,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     const historical = await factories.doses.create({
       immunotherapyId: therapy.id,
       concentration: 1000,
-      volume: 0.1,
+      volume: new Prisma.Decimal('0.1'),
       nextIntervalInDays: 7,
       status: 'ADMINISTERED_ON_SCHEDULE',
       scheduledAt: new Date('2026-01-01T13:00:00Z'),
@@ -769,7 +773,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     await factories.doses.create({
       immunotherapyId: therapy.id,
       concentration: 1000,
-      volume: 0.2,
+      volume: new Prisma.Decimal('0.2'),
       nextIntervalInDays: 7,
       scheduledAt: new Date('2026-01-09T13:00:00Z'),
       createdById: user.id,
@@ -801,9 +805,12 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     });
     expect(stored.resolved).toMatchObject({ timeZone: 'America/Sao_Paulo' });
   });
-  it('compares the legacy target without losing PostgreSQL float precision', async () => {
+  it('compares the legacy target without losing decimal precision', async () => {
     const { therapy } = await legacy();
-    await prisma.$executeRaw`UPDATE "Immunotherapy" SET "targetVolume" = CAST(${'0.4000000000000001'} AS double precision) WHERE id = ${therapy.id}`;
+    await prisma.immunotherapy.update({
+      where: { id: therapy.id },
+      data: { targetVolume: new Prisma.Decimal('0.4000000000000001') },
+    });
     const inventory = await migration.inventory(user);
     expect(inventory.report[0].target.volume).toBe('0.4000000000000001');
     await expect(

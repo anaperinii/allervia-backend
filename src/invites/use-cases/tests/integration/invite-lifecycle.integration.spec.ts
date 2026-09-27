@@ -64,6 +64,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
     const emailSpy: IEmailService = {
       sendPasswordResetLink: () => Promise.resolve(),
       sendPasswordChangedNotification: () => Promise.resolve(),
+      sendDemoRequest: () => Promise.resolve(),
       sendInviteLink: (params: InviteEmailParams) => {
         delivered.push(params);
         return Promise.resolve();

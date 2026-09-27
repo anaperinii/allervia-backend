@@ -40,16 +40,6 @@ export class ProtocolMigrationService {
         patient: { select: { id: true, fullName: true, isActive: true } },
       },
     });
-    const stored = await this.prisma.$queryRaw<
-      { id: string; volumeText: string }[]
-    >`SELECT d.id, d.volume::text AS "volumeText" FROM "Dose" d JOIN "Immunotherapy" i ON i.id = d."immunotherapyId" JOIN "Patient" p ON p.id = i."patientId" WHERE p."organizationId" = ${user.organizationId}`;
-    const targets = await this.prisma.$queryRaw<
-      { id: string; volumeText: string }[]
-    >`SELECT i.id, i."targetVolume"::text AS "volumeText" FROM "Immunotherapy" i JOIN "Patient" p ON p.id = i."patientId" WHERE p."organizationId" = ${user.organizationId}`;
-    const exactTargets = new Map(
-      targets.map((row) => [row.id, row.volumeText]),
-    );
-    const exactVolumes = new Map(stored.map((row) => [row.id, row.volumeText]));
     const values = new Map<
       string,
       { concentration: string; volume: string; intervalDays: number }
@@ -65,7 +55,7 @@ export class ProtocolMigrationService {
       if (pending.length > 1) issues.push('MULTIPLE_PENDING_DOSES');
       if (!pending.length) issues.push('NO_PENDING_DOSE_REQUIRES_REVIEW');
       const decimals = therapy.doses.map((dose) => {
-        const volume = exactVolumes.get(dose.id)!;
+        const volume = dose.volume.toString();
         const value = {
           concentration: String(dose.concentration),
           volume,
@@ -73,7 +63,7 @@ export class ProtocolMigrationService {
         };
         const exact =
           /^\d+(\.\d+)?$/.test(volume) &&
-          dose.volume > 0 &&
+          dose.volume.greaterThan(0) &&
           volume.split('.')[0].length <= 35 &&
           (volume.split('.')[1]?.length ?? 0) <= 30 &&
           dose.concentration > 0 &&
@@ -100,13 +90,13 @@ export class ProtocolMigrationService {
         inductionStartDate: therapy.inductionStartDate,
         target: {
           concentration: String(therapy.targetConcentration),
-          volume: exactTargets.get(therapy.id),
+          volume: therapy.targetVolume.toString(),
         },
         pendingDoses: pending.map((dose) => ({
           id: dose.id,
           scheduledAt: dose.scheduledAt,
           concentration: String(dose.concentration),
-          volume: exactVolumes.get(dose.id)!,
+          volume: dose.volume.toString(),
           intervalDays: dose.nextIntervalInDays,
         })),
         pendingDoseIds: pending.map((dose) => dose.id),
@@ -229,16 +219,12 @@ export class ProtocolMigrationService {
       if (!version) throw new NotFoundException();
       const protocol = persistenceDefinition(version);
       const resolved = prescriptionFromJson(resolvedInput, protocol);
-      const historicalTarget = await tx.$queryRaw<
-        { volumeText: string }[]
-      >`SELECT "targetVolume"::text AS "volumeText" FROM "Immunotherapy" WHERE id = ${id}`;
       const target = protocol.steps.find(
         (step) => step.id === resolved.targetStepId,
       )!;
       if (
-        new Prisma.Decimal(target.volume).comparedTo(
-          historicalTarget[0].volumeText,
-        ) !== 0 ||
+        new Prisma.Decimal(target.volume).comparedTo(therapy.targetVolume) !==
+          0 ||
         target.concentration !== String(therapy.targetConcentration)
       )
         throw new ConflictException('LEGACY_TARGET_MISMATCH');
@@ -248,15 +234,12 @@ export class ProtocolMigrationService {
       if (doses.length !== 1)
         throw new ConflictException('PENDING_DOSE_REQUIRES_REVIEW');
       const dose = doses[0];
-      const historicalDose = await tx.$queryRaw<
-        { volumeText: string }[]
-      >`SELECT volume::text AS "volumeText" FROM "Dose" WHERE id = ${dose.id}`;
       const resolution = resolveProtocolStep({
         protocol,
         prescription: resolved,
         administered: {
           concentration: String(dose.concentration),
-          volume: historicalDose[0].volumeText,
+          volume: dose.volume.toString(),
           intervalDays: dose.nextIntervalInDays,
           route: protocol.route,
           volumeUnit: protocol.volumeUnit,
@@ -291,7 +274,7 @@ export class ProtocolMigrationService {
           prescriptionId: snapshot.id,
           plannedStepId: resolution.step.id,
           plannedValues: json(configuredValues(resolution.step, protocol)),
-          plannedVolumeExact: new Prisma.Decimal(resolution.step.volume),
+          volume: new Prisma.Decimal(resolution.step.volume),
           revision: { increment: 1 },
           updatedById: user.id,
         },
@@ -300,7 +283,7 @@ export class ProtocolMigrationService {
         where: { id },
         data: {
           currentPrescriptionId: snapshot.id,
-          targetVolumeExact: new Prisma.Decimal(target.volume),
+          targetVolume: new Prisma.Decimal(target.volume),
           revision: { increment: 1 },
           updatedById: user.id,
         },

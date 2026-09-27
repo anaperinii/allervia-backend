@@ -27,7 +27,7 @@ export interface RegistrationResult {
     id: string;
     patientId: string;
     prescription: { id: string; versionId: string } & Record<string, unknown>;
-    targetVolumeExact?: { toString(): string } | null;
+    targetVolume?: { toString(): string } | null;
   } & Record<string, unknown>;
   firstDose: {
     id: string;
@@ -146,8 +146,7 @@ export class CreateImmunotherapyUseCase {
           extract: dto.extract,
           inductionStartDate: new Date(dto.inductionStartDate),
           targetConcentration: Number(target.concentration),
-          targetVolume: Number(target.volume),
-          targetVolumeExact: new Prisma.Decimal(target.volume),
+          targetVolume: new Prisma.Decimal(target.volume),
           createdById: user.id,
           updatedById: user.id,
         },

@@ -111,7 +111,6 @@ export class DoseCorrectionService {
           prescriptionId: dose.prescriptionId,
           plannedStepId: dose.plannedStepId,
           plannedValues: dose.plannedValues ?? undefined,
-          plannedVolumeExact: dose.plannedVolumeExact,
           concentration: dose.concentration,
           volume: dose.volume,
           nextIntervalInDays: dose.nextIntervalInDays,

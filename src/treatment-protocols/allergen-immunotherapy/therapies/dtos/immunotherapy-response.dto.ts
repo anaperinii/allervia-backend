@@ -7,13 +7,6 @@ export class ImmunotherapyResponseDto {
   })
   revision?: number;
   @ApiPropertyOptional({
-    type: String,
-    nullable: true,
-    description:
-      'Exact target volume; legacy float is a compatibility projection',
-  })
-  targetVolumeExact?: unknown;
-  @ApiPropertyOptional({
     type: Object,
     nullable: true,
     description:
@@ -41,8 +34,11 @@ export class ImmunotherapyResponseDto {
   @ApiProperty({ description: 'Concentração alvo' })
   targetConcentration: number;
 
-  @ApiProperty({ description: 'Volume alvo' })
-  targetVolume: number;
+  @ApiProperty({
+    type: String,
+    description: 'Volume alvo em decimal exato',
+  })
+  targetVolume: string;
 
   @ApiProperty({ description: 'ID do paciente' })
   patientId: string;
