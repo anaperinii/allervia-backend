@@ -53,7 +53,7 @@ describe('Legacy migration report for the assisted UI - Integration', () => {
     const dose = await factories.doses.create({
       immunotherapyId: therapy.id,
       concentration: 1000,
-      volume: 0.2,
+      volume: new Prisma.Decimal('0.2'),
       nextIntervalInDays: 7,
       scheduledAt: new Date('2026-01-08T13:00:00Z'),
       createdById: physician.id,

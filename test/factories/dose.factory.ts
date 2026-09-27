@@ -5,7 +5,7 @@ export class DoseFactory extends BaseFactory<Dose> {
   protected getDefaultData(): Partial<Dose> {
     return {
       concentration: 10000,
-      volume: 0.1,
+      volume: new Prisma.Decimal('0.1'),
       nextIntervalInDays: 7,
       betweenDosesReport: '',
     };

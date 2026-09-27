@@ -221,7 +221,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const secondDose = await factories.doses.create({
       immunotherapyId: secondTherapy.id,
       concentration: 1000,
-      volume: 0.2,
+      volume: new Prisma.Decimal('0.2'),
       nextIntervalInDays: 7,
       scheduledAt: new Date('2026-02-08T13:00:00Z'),
       createdById: physician.id,

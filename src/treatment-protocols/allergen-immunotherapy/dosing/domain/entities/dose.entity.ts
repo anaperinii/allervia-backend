@@ -14,7 +14,7 @@ export interface DoseProps {
   recommendation?: Prisma.JsonValue;
   id: string;
   concentration: number;
-  volume: number;
+  volume: Prisma.Decimal | string;
   scheduledAt: Date;
   administeredAt: Date | null;
   nextIntervalInDays: number;
@@ -33,7 +33,7 @@ export interface DoseProps {
 
 export interface CreateDoseProps {
   concentration: number;
-  volume: number;
+  volume: string;
   scheduledAt: Date;
   administeredAt?: Date | null;
   nextIntervalInDays: number;
@@ -54,7 +54,7 @@ export class Dose {
   recommendation?: Prisma.JsonValue;
   id: string;
   concentration: number;
-  volume: number;
+  volume: string;
   scheduledAt: Date;
   administeredAt: Date | null;
   nextIntervalInDays: number;
@@ -80,7 +80,7 @@ export class Dose {
     this.recommendation = props.recommendation;
     this.id = props.id;
     this.concentration = props.concentration;
-    this.volume = props.volume;
+    this.volume = props.volume.toString();
     this.scheduledAt = props.scheduledAt;
     this.administeredAt = props.administeredAt;
     this.nextIntervalInDays = props.nextIntervalInDays;
