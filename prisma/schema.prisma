@@ -246,7 +246,6 @@ model User {
   usersUpdated       User[]              @relation("UserUpdatedBy")
   verificationTokens VerificationToken[] @relation("UserVerificationToken")
 
-  refreshFamilies RefreshFamily[]
   authSessions AuthSession[]
   mfaCredentials    MfaCredential[]    @relation("UserMfaCredential")
   mfaRecoveryCodes  MfaRecoveryCode[]  @relation("UserMfaRecoveryCode")
@@ -856,38 +855,7 @@ model AuthAttempt {
   @@index([occurredAt])
 }
 
-model RefreshFamily {
-  id String @id @default(ulid())
-  userId String
-  user User @relation(fields: [userId], references: [id])
-  authVersion Int
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  lastInteractiveAt DateTime @default(now())
-  mfaVerifiedAt DateTime?
-  reauthenticatedAt DateTime?
-  revokedAt DateTime?
-  revokedReason AuthSessionRevokeReason?
-  userAgent String?
-  ipAddressHash String?
-  tokens RefreshToken[]
-  @@index([userId, revokedAt])
-  @@index([expiresAt])
-}
-
-model RefreshToken {
-  id String @id @default(ulid())
-  familyId String
-  family RefreshFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  secretHash String @unique
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  consumedAt DateTime?
-  @@index([familyId, consumedAt])
-  @@index([expiresAt])
-}
-
-// Opaque browser login. Legacy refresh tables are retained only for staged rollback.
+// Opaque browser login; only the credential hash is persisted.
 model AuthSession {
   id String @id @default(ulid())
   secretHash String @unique

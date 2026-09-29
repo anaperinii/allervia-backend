@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { SessionConfig } from './security/session/session.config';
 import { buildValidationPipe } from './infra/http/validation-pipe';
 
 function configuredOrigins(): string[] {
@@ -53,15 +54,11 @@ async function bootstrap() {
     .setTitle('Allervia Server')
     .setDescription('The Allervia API Specification')
     .setVersion('1.0')
-    .addCookieAuth('__Host-allervia_refresh', {
+    .addCookieAuth(app.get(SessionConfig).cookieName, {
       type: 'apiKey',
       in: 'cookie',
-      description: 'Refresh token opaco. Não autentica rotas clínicas.',
+      description: 'Sessão opaca do navegador em cookie HttpOnly.',
     })
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'access-token',
-    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

@@ -38,11 +38,11 @@ A simplificação removeu a renovação e seus caminhos de erro. Acrescentou CSR
 
 ## Limites e etapas operacionais
 
-- As tabelas legadas de refresh foram preservadas para transição e rollback, e suas famílias foram revogadas pela migration. Nenhuma rota as usa para conceder acesso.
+- A limpeza de 29/09 remove os models e as tabelas legadas por uma nova migration. As migrations históricas permanecem versionadas.
 - Não houve push, publicação em produção nem exclusão de dados clínicos.
 - O benchmark A/B de carga, CPU, SQLs e latência descrito no plano ainda não foi executado. Não há alegação de ganho percentual de velocidade.
 - Testes HTTP reais e jsdom não equivalem à homologação de cookies em HTTPS nos navegadores e no domínio de produção.
-- O expurgo de sessões e a remoção física das tabelas de refresh dependem da política de retenção e da janela de observação. Não há job novo de limpeza nesta entrega.
+- O expurgo periódico de sessões opacas depende da política de retenção. Não há job novo de limpeza nesta entrega.
 - Novos logins são necessários após atualizar as duas aplicações. O antigo `/auth/refresh` deixa de existir.
 
 ## Reprodução
@@ -52,3 +52,15 @@ Backend: `npm run test:setup`, `npm run test:unit -- --runInBand`, `npm run test
 Frontend: `npm run build` e `node node_modules/vitest/vitest.mjs run`. O contrato é iniciado pelo backend e cria registros sintéticos exclusivamente no banco de testes isolado; não rodar simultaneamente com a suíte de integração, pois ambas limpam esse banco.
 
 Usar `scripts/configure-session-development.cjs` apenas em desenvolvimento para preparar o segredo CSRF ausente. Para produção, configurar pelo gerenciamento privado de segredos e seguir o corte coordenado descrito na documentação de implementação.
+
+## Limpeza de JWT e refresh em 29/09/2026
+
+Removidos `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt` e `@types/passport-jwt`, com atualização do lockfile (23 pacotes retirados da árvore). O teste de rejeição de bearer assinado usa somente `node:crypto`; ele não mantém autenticação JWT ativa. Removidas as variáveis antigas de JWT/refresh e a flag de bearer dos testes e do ambiente local, sem registrar valores de segredos.
+
+A migration `20260929000000_remove_retired_refresh_tables` foi aplicada nos bancos locais de desenvolvimento e testes. `RefreshToken` e `RefreshFamily` foram excluídas; `AuthSession` permanece. O schema e a limpeza do banco de testes não referenciam mais as tabelas aposentadas. Migrations já aplicadas e documentação explicitamente histórica são preservadas.
+
+Swagger usa o nome efetivo do cookie configurado, sem esquema bearer ou cookie de refresh. A saída limpa somente a credencial atual. O frontend não tinha implementação JWT restante; sua asserção de ausência de `accessToken` foi preservada.
+
+Verificações específicas: build, TypeScript sem emissão e lint passaram; servidor compilado iniciou na porta 3102; `/api-json` publicou somente o esquema de cookie, `/auth/csrf` retornou 200 e `/account/me` sem credencial retornou 401. O processo de smoke foi encerrado. Os 137 testes unitários passaram.
+
+A rodada final de integração passou: 37 suítes e 206 testes. O build foi repetido após excluir `jwt.types.ts` e os métodos de repositório sem chamadas (`getCurrentTokenVersion` e `hasConfirmedMfaCredential`), com sucesso. A primeira rodada foi descartada após uma edição de formatação durante sua execução; os números desta seção correspondem à rodada final.

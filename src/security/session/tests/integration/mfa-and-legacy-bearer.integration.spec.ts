@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { createHmac } from 'node:crypto';
 import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import { hash } from 'bcrypt';
@@ -38,10 +38,8 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
   beforeAll(async () => {
     process.env.AUTH_INSECURE_COOKIES = 'true';
     process.env.AUTH_MFA_ENFORCEMENT = 'optional';
-    process.env.AUTH_LEGACY_BEARER = 'enabled';
     process.env.AUTH_ALLOWED_ORIGINS = ORIGIN;
     process.env.MFA_ENCRYPTION_KEY = Buffer.alloc(32, 3).toString('base64');
-    process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret';
 
     await TestDatabaseManager.connect();
 
@@ -96,15 +94,25 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
   }
 
   function legacyToken(user: AuthenticatedUserPayload): string {
-    return new JwtService({ secret: 'retired-test-key' }).sign({
-      sub: user.id,
-      email: user.email,
-      type: user.type,
-      organizationId: user.organizationId,
-      professionalId: user.professionalId,
-      roles: user.roles,
-      tokenVersion: 0,
-    });
+    const header = Buffer.from(
+      JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+    ).toString('base64url');
+    const payload = Buffer.from(
+      JSON.stringify({
+        sub: user.id,
+        email: user.email,
+        type: user.type,
+        organizationId: user.organizationId,
+        professionalId: user.professionalId,
+        roles: user.roles,
+        tokenVersion: 0,
+      }),
+    ).toString('base64url');
+    const data = `${header}.${payload}`;
+    const signature = createHmac('sha256', 'retired-test-key')
+      .update(data)
+      .digest('base64url');
+    return `${data}.${signature}`;
   }
 
   function totpCode(secret: string, stepsAhead = 0): string {
@@ -289,7 +297,7 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
       .expect(404);
   });
 
-  it('rejects legacy tokens even when the retired environment flag is enabled', async () => {
+  it('rejects signed bearer tokens without a session cookie', async () => {
     const user = await createProfessional();
     const response = await server()
       .get('/patients')
@@ -314,7 +322,7 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     await server().get('/patients').set('Cookie', rotated.cookie).expect(200);
   });
 
-  it('uses the current family for the public account context', async () => {
+  it('uses the current session for the public account context', async () => {
     const user = await createProfessional();
     const first = await login(user.email);
     const response = await server()

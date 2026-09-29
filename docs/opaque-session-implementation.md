@@ -133,7 +133,7 @@ Hash de IP não equivale a anonimização absoluta. Metadados do dispositivo nã
 
 A migration `20260928000000_opaque_browser_sessions` é aditiva: cria a nova tabela e revoga famílias legadas ainda ativas. Não importa credenciais antigas nem altera dados clínicos. Migrations históricas permanecem intactas.
 
-`RefreshFamily` e `RefreshToken` permanecem no schema **somente para transição/rollback**, sem caminho de autenticação ativo. Sua remoção física pertence à etapa posterior de retenção e observação; não foi antecipada. A implementação não acrescenta um agendador de expurgo. Definir retenção operacional de sessões expiradas/revogadas e separar esse prazo do histórico clínico e da auditoria.
+`RefreshFamily` e `RefreshToken` foram removidos do schema. A migration `20260929000000_remove_retired_refresh_tables` exclui as duas tabelas, começando pela tabela filha. As migrations anteriores continuam versionadas para preservar a sequência de instalação. Após aplicar essa limpeza, um rollback para JWT exige uma migration de recriação do schema legado e novos logins; não basta voltar o código. Não restaurar o banco clínico inteiro para recuperar autenticação. `AuthSession`, usuários e registros clínicos não são excluídos. A implementação não acrescenta um agendador de expurgo. Definir retenção operacional de sessões expiradas/revogadas e separar esse prazo do histórico clínico e da auditoria.
 
 ## 9. Arquivos e manutenção
 
@@ -143,8 +143,8 @@ Frontend: `src/shared/api/client.ts` envia cookie, CSRF e contexto e descarta re
 
 ## 10. Implantação e estado de validação
 
-Aplicar migration antes do corte coordenado de backend e frontend. Drenar instâncias antigas, publicar assets compatíveis e exigir novo login. Uma instalação mista não deve oferecer fallback JWT. Os cookies antigos são removidos na limpeza de saída; não autenticam a versão nova.
+Aplicar migration antes do corte coordenado de backend e frontend. Drenar instâncias antigas, publicar assets compatíveis e exigir novo login. Uma instalação mista não deve oferecer fallback JWT. Cookies antigos não são lidos nem autenticam a versão nova. A saída limpa somente o cookie atual.
 
-No desenvolvimento local, o novo segredo CSRF foi provisionado sem imprimir seu conteúdo, e a migration foi aplicada ao banco local e ao banco isolado de testes. Nenhuma publicação, push ou limpeza de tabelas legadas é parte dessa alteração.
+No desenvolvimento local, o novo segredo CSRF foi provisionado sem imprimir seu conteúdo, e a migration foi aplicada ao banco local e ao banco isolado de testes. A limpeza posterior de tabelas legadas é feita pela migration de 29/09. Não houve publicação nem push.
 
 Resultados finais de testes e limitações são registrados no relatório `opaque-session-validation.md`. Os resultados antigos da versão JWT não são contados como evidência desta versão. Homologação de cookies em HTTPS no domínio de produção e benchmark comparativo completo permanecem verificações distintas dos testes funcionais locais.

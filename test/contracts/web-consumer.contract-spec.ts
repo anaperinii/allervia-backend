@@ -36,7 +36,6 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
     }
     process.env.AUTH_INSECURE_COOKIES = 'true';
     process.env.AUTH_MFA_ENFORCEMENT = 'optional';
-    process.env.AUTH_LEGACY_BEARER = 'disabled';
 
     await TestDatabaseManager.connect();
     await TestDatabaseManager.cleanAll();

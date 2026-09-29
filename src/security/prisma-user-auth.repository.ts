@@ -47,23 +47,6 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
     };
   }
 
-  async getCurrentTokenVersion(userId: string): Promise<number | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { tokenVersion: true },
-    });
-
-    return user?.tokenVersion ?? null;
-  }
-
-  async hasConfirmedMfaCredential(userId: string): Promise<boolean> {
-    const count = await this.prisma.mfaCredential.count({
-      where: { userId, revokedAt: null, confirmedAt: { not: null } },
-    });
-
-    return count > 0;
-  }
-
   async createVerificationToken(
     params: CreateVerificationTokenParams,
   ): Promise<void> {

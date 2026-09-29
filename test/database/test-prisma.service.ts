@@ -23,8 +23,6 @@ const TABLES = [
   'MfaRecoveryCode',
   'MfaCredential',
   'AuthSession',
-  'RefreshToken',
-  'RefreshFamily',
   'RegistrationCommand',
   'ClinicalCommand',
   'OrganizationProtocolDefault',

@@ -68,11 +68,9 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
   beforeAll(async () => {
     process.env.AUTH_INSECURE_COOKIES = 'true';
     process.env.AUTH_MFA_ENFORCEMENT = 'optional';
-    process.env.AUTH_LEGACY_BEARER = 'enabled';
     process.env.AUTH_ALLOWED_ORIGINS = ORIGIN;
     process.env.SUPER_ADMIN_REGISTRATION_KEY = PROVISIONING_KEY;
     process.env.SYSTEM_USER_ID = SYSTEM_ACTOR_ID;
-    process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret';
 
     await TestDatabaseManager.connect();
 

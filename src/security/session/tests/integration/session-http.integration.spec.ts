@@ -33,10 +33,8 @@ describe('Sessão opaca, CSRF e conta pública - Integração HTTP', () => {
   beforeAll(async () => {
     process.env.AUTH_INSECURE_COOKIES = 'true';
     process.env.AUTH_MFA_ENFORCEMENT = 'optional';
-    process.env.AUTH_LEGACY_BEARER = 'disabled';
     process.env.AUTH_ALLOWED_ORIGINS = ORIGIN;
     process.env.MFA_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64');
-    process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret';
 
     await TestDatabaseManager.connect();
 
@@ -134,7 +132,6 @@ describe('Sessão opaca, CSRF e conta pública - Integração HTTP', () => {
     expect(response.body).not.toHaveProperty('secretHash');
     expect(response.body).not.toHaveProperty('sessionSecret');
     expect(response.headers['cache-control']).toBe('no-store');
-    expect(await prisma.refreshFamily.count()).toBe(0);
     const c = module.get(SessionConfig);
     expect(c.cookieName).toBe('allervia_session_v2');
   });

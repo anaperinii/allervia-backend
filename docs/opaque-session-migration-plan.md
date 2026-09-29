@@ -1,6 +1,6 @@
 # Allervia — decisão e plano de migração para sessão opaca
 
-Data: 28/09/2026. Atualização: 29/09/2026. Estado: implementação funcional validada localmente; benchmark de carga, homologação HTTPS, publicação e limpeza destrutiva pendentes. Escopo: `allervia-backend` e `allervia-web`.
+Data: 28/09/2026. Atualização: 29/09/2026. Estado: implementação funcional validada localmente; limpeza das tabelas de refresh aplicada localmente em 29/09; benchmark de carga, homologação HTTPS e publicação pendentes. Escopo: `allervia-backend` e `allervia-web`.
 
 ## 1. Nomes, decisão e alcance
 
@@ -8,7 +8,7 @@ Neste documento, **A = JWT + refresh com consulta central em toda rota privada**
 
 Recomendação: migrar a autenticação do web para sessão opaca, preservando MFA, autorização atual, isolamento por organização, revogação, dispositivos, reautenticação e prazos. A razão principal é reduzir mecanismos que não trazem autonomia de validação na arquitetura atual. Não há evidência de que JWT esteja incorreto ou de que a troca produza um ganho percentual de desempenho já conhecido.
 
-A implementação só deve ser considerada concluída após cumprir os critérios funcionais, de segurança, operação e medição deste plano. A execução local é descrita em `opaque-session-implementation.md`; evidências e pendências ficam em `opaque-session-validation.md`. Publicação e limpeza destrutiva continuam separadas.
+A implementação só deve ser considerada concluída após cumprir os critérios funcionais, de segurança, operação e medição deste plano. A execução local é descrita em `opaque-session-implementation.md`; evidências e pendências ficam em `opaque-session-validation.md`. A limpeza local posterior está registrada na documentação de implementação; publicação permanece separada.
 
 ## 2. Evidência disponível e limites da conclusão
 

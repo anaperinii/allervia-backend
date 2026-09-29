@@ -70,7 +70,6 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     process.env.AUTH_INSECURE_COOKIES = 'true';
     process.env.AUTH_MFA_ENFORCEMENT = 'optional';
     process.env.AUTH_ALLOWED_ORIGINS = ORIGIN;
-    process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret';
 
     await TestDatabaseManager.connect();
 

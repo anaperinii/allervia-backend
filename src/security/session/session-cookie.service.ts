@@ -23,16 +23,6 @@ export class SessionCookieService {
 
   clear(response: Response): void {
     response.clearCookie(this.config.cookieName, this.baseOptions());
-    response.clearCookie('__Host-allervia_refresh', {
-      ...this.baseOptions(),
-      secure: true,
-    });
-    response.clearCookie('allervia_refresh', this.baseOptions());
-    response.clearCookie('__Host-allervia_session', {
-      ...this.baseOptions(),
-      secure: true,
-    });
-    response.clearCookie('allervia_session', this.baseOptions());
   }
 
   read(request: Request): string | null {

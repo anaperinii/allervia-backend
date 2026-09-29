@@ -1,6 +1,6 @@
 # Allervia — explicação de cada campo do schema Prisma
 
-> Atualização da autenticação em 29/09/2026: `AuthSession` e `User.authSessions` foram reintroduzidos para a sessão opaca. A definição atual e seu fluxo estão em [opaque-session-implementation.md](opaque-session-implementation.md). `RefreshFamily` e `RefreshToken` permanecem apenas para transição, sem autenticar requisições. A contagem e a descrição abaixo são históricas e não devem ser usadas como inventário do schema atual.
+> Atualização da autenticação em 29/09/2026: `AuthSession` e `User.authSessions` foram reintroduzidos para a sessão opaca. A definição atual e seu fluxo estão em [opaque-session-implementation.md](opaque-session-implementation.md). `RefreshFamily` e `RefreshToken` foram removidos pela limpeza de 29/09; suas migrations históricas permanecem versionadas. A contagem e a descrição abaixo são históricas e não devem ser usadas como inventário do schema atual.
 
 Leitura do código em 24/09/2026. Base: `prisma/schema.prisma`, migrations versionadas e serviços do backend. Este documento explica o estado encontrado; não altera o banco e não comprova que todas as migrations foram aplicadas em um ambiente específico.
 

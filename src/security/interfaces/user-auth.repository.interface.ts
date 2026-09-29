@@ -8,10 +8,6 @@ import {
 export abstract class IUserAuthRepository {
   abstract findByEmailForAuth(email: string): Promise<UserForAuth | null>;
 
-  abstract getCurrentTokenVersion(userId: string): Promise<number | null>;
-
-  abstract hasConfirmedMfaCredential(userId: string): Promise<boolean>;
-
   abstract createVerificationToken(
     params: CreateVerificationTokenParams,
   ): Promise<void>;
