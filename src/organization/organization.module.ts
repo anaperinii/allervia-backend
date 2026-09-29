@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuditModule } from 'src/infra/audit/audit.module';
+import { EmailModule } from 'src/infra/email/email.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { AuthModule } from 'src/security/auth.module';
 import { FindOrganizationUseCase } from './use-cases/find-organization.use-case';
@@ -13,7 +14,7 @@ import { ProvisioningGuard } from './provisioning/provisioning.guard';
 import { ProvisionOrganizationUseCase } from './provisioning/provision-organization.use-case';
 
 @Module({
-  imports: [PrismaModule, ConfigModule, AuditModule, AuthModule],
+  imports: [PrismaModule, ConfigModule, AuditModule, AuthModule, EmailModule],
   providers: [
     FindOrganizationUseCase,
     UpdateOrganizationUseCase,

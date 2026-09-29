@@ -1,21 +1,30 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { Profession, Role } from '@prisma/client';
+import {
+  ConflictException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Prisma, Role } from '@prisma/client';
+import { randomBytes } from 'node:crypto';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
 import { PrismaService } from 'src/infra/database/prisma.service';
-import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
+import { IEmailService } from 'src/infra/email/email.service';
 import { ORGANIZATION_MESSAGES } from '../organization.messages';
 import {
   ProvisionOrganizationDto,
   ProvisionedOrganizationDto,
 } from './dtos/provision-organization.dto';
 
+const INVITE_TTL_DAYS = 7;
+
 @Injectable()
 export class ProvisionOrganizationUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly passwordHashing: IPasswordHashingService,
     private readonly auditLog: IAuditLogService,
+    private readonly emailService: IEmailService,
+    private readonly config: ConfigService,
   ) {}
 
   async execute(
@@ -26,67 +35,88 @@ export class ProvisionOrganizationUseCase {
 
     await this.assertAvailable(dto.organization.name, taxId, email);
 
-    const passwordHash = await this.passwordHashing.hash(
-      dto.administrator.password,
-    );
+    const token = randomBytes(32).toString('base64url');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + INVITE_TTL_DAYS);
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const systemUserId = await this.resolveSystemActor(tx);
       const organization = await tx.organization.create({
         data: { name: dto.organization.name, taxId },
         select: { id: true, name: true, taxId: true },
       });
 
-      const user = await tx.user.create({
-        data: { email, password: passwordHash, type: 'PROFESSIONAL' },
-        select: { id: true, email: true },
-      });
-
-      const professional = await tx.professional.create({
+      const invite = await tx.internalUserInvite.create({
         data: {
-          userId: user.id,
           organizationId: organization.id,
+          email,
           fullName: dto.administrator.fullName,
-          phoneNumber: dto.administrator.phoneNumber,
-          profession: Profession.RECEPTIONIST,
-        },
-        select: { id: true },
-      });
-
-      await tx.professionalRole.create({
-        data: {
-          professionalId: professional.id,
           role: Role.ADMINISTRATOR,
-          grantedById: professional.id,
+          token,
+          expiresAt,
+          createdById: systemUserId,
         },
+        select: { id: true, email: true, role: true, expiresAt: true },
       });
 
       await this.auditLog.record(
         {
-          userId: user.id,
+          userId: systemUserId,
           organizationId: organization.id,
           entityType: AUDIT_ENTITY_TYPES.ORGANIZATION,
           entityId: organization.id,
           action: AUDIT_ACTIONS.ORGANIZATION_PROVISIONED,
           newValues: {
             organizationName: organization.name,
-            administratorUserId: user.id,
-            administratorProfessionalId: professional.id,
+            administratorInviteId: invite.id,
+            administratorEmail: invite.email,
           },
-          changedFields: ['organization', 'administrator'],
+          changedFields: ['organization', 'administratorInvite'],
         },
         tx,
       );
 
-      return {
-        organization,
-        administrator: {
-          userId: user.id,
-          professionalId: professional.id,
-          email: user.email,
-          roles: [Role.ADMINISTRATOR],
-        },
-      };
+      return { organization, invite };
     });
+
+    await this.emailService.sendInviteLink({
+      email,
+      fullName: dto.administrator.fullName,
+      organizationName: result.organization.name,
+      token,
+      expiresAt,
+    });
+
+    return {
+      organization: result.organization,
+      administratorInvite: {
+        id: result.invite.id,
+        email: result.invite.email,
+        role: result.invite.role,
+        expiresAt: result.invite.expiresAt,
+      },
+    };
+  }
+
+  private async resolveSystemActor(
+    tx: Prisma.TransactionClient,
+  ): Promise<string> {
+    const systemUserId = this.config.get<string>('SYSTEM_USER_ID')?.trim();
+    if (!systemUserId) {
+      throw new ServiceUnavailableException(
+        ORGANIZATION_MESSAGES.provisioningUnavailable,
+      );
+    }
+    const actor = await tx.user.findUnique({
+      where: { id: systemUserId },
+      select: { id: true },
+    });
+    if (!actor) {
+      throw new ServiceUnavailableException(
+        ORGANIZATION_MESSAGES.provisioningUnavailable,
+      );
+    }
+    return actor.id;
   }
 
   private async assertAvailable(
