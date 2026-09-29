@@ -73,5 +73,4 @@ export class AccountController {
   ) {
     return this.updateUserStatusUseCase.execute(id, dto, currentUser);
   }
-
 }

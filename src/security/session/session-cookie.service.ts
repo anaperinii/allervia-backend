@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { CookieOptions, Request, Response } from 'express';
+import { CodedUnauthorizedException } from 'src/infra/exceptions/coded.exception';
 import { createHash } from 'node:crypto';
 import { SessionConfig } from './session.config';
 
@@ -22,11 +23,32 @@ export class SessionCookieService {
 
   clear(response: Response): void {
     response.clearCookie(this.config.cookieName, this.baseOptions());
+    response.clearCookie('__Host-allervia_refresh', {
+      ...this.baseOptions(),
+      secure: true,
+    });
+    response.clearCookie('allervia_refresh', this.baseOptions());
+    response.clearCookie('__Host-allervia_session', {
+      ...this.baseOptions(),
+      secure: true,
+    });
+    response.clearCookie('allervia_session', this.baseOptions());
   }
 
   read(request: Request): string | null {
+    const matches = (request.get('cookie') ?? '')
+      .split(';')
+      .filter((part) => part.trim().startsWith(this.config.cookieName + '='));
+    if (matches.length > 1)
+      throw new CodedUnauthorizedException(
+        'SESSION_INVALID',
+        'Credencial ambígua.',
+      );
     const cookies = request.cookies as Record<string, string> | undefined;
-    return cookies?.[this.config.cookieName] ?? null;
+    const value = cookies?.[this.config.cookieName];
+    return typeof value === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value)
+      ? value
+      : null;
   }
 
   describeDevice(request: Request): {

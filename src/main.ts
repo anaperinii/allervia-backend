@@ -16,7 +16,12 @@ function configuredOrigins(): string[] {
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.set('trust proxy', 1);
+  // Trust forwarded client addresses only from explicitly configured proxies.
+  const trustedProxies = (process.env.TRUST_PROXY ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  app.set('trust proxy', trustedProxies.length ? trustedProxies : false);
 
   app.use(cookieParser());
   app.use(
@@ -31,7 +36,12 @@ async function bootstrap() {
     app.enableCors({
       origin: origins,
       credentials: true,
-      allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'X-Request-Id'],
+      allowedHeaders: [
+        'X-Session-Context',
+        'Content-Type',
+        'X-CSRF-Token',
+        'X-Request-Id',
+      ],
       exposedHeaders: ['X-Request-Id'],
       maxAge: 600,
     });
@@ -43,13 +53,15 @@ async function bootstrap() {
     .setTitle('Allervia Server')
     .setDescription('The Allervia API Specification')
     .setVersion('1.0')
-    .addCookieAuth('__Host-allervia_session', {
+    .addCookieAuth('__Host-allervia_refresh', {
       type: 'apiKey',
       in: 'cookie',
-      description:
-        'Sessão opaca do navegador. O valor é apenas um segredo aleatório.',
+      description: 'Refresh token opaco. Não autentica rotas clínicas.',
     })
-    .addBearerAuth({ type: 'http', scheme: 'bearer' }, 'legacy-bearer')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'access-token',
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

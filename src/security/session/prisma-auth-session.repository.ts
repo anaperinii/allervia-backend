@@ -14,9 +14,9 @@ import {
 } from './session.types';
 
 const sessionSelection = {
+  organizationId: true,
   id: true,
   userId: true,
-  csrfTokenHash: true,
   authVersion: true,
   createdAt: true,
   expiresAt: true,
@@ -149,7 +149,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
       data: {
         userId: params.userId,
         secretHash: params.secretHash,
-        csrfTokenHash: params.csrfTokenHash,
+        organizationId: params.organizationId,
         authVersion: params.authVersion,
         expiresAt: params.expiresAt,
         mfaVerifiedAt: params.mfaVerifiedAt,
@@ -160,7 +160,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     });
   }
 
-  async findSessionBySecretHash(
+  async findSessionByHash(
     secretHash: string,
   ): Promise<SessionWithContext | null> {
     const found = await this.prisma.authSession.findUnique({
@@ -174,34 +174,10 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     return { session, context: this.toContext(user) };
   }
 
-  async touchSession(sessionId: string, at: Date): Promise<void> {
-    await this.prisma.authSession.update({
-      where: { id: sessionId },
-      data: { lastInteractiveAt: at },
-    });
-  }
-
-  async rotateCsrfToken(
-    sessionId: string,
-    csrfTokenHash: string,
-  ): Promise<void> {
-    await this.prisma.authSession.update({
-      where: { id: sessionId },
-      data: { csrfTokenHash },
-    });
-  }
-
   async markReauthenticated(sessionId: string, at: Date): Promise<void> {
     await this.prisma.authSession.update({
       where: { id: sessionId },
       data: { reauthenticatedAt: at, lastInteractiveAt: at },
-    });
-  }
-
-  async markMfaVerified(sessionId: string, at: Date): Promise<void> {
-    await this.prisma.authSession.update({
-      where: { id: sessionId },
-      data: { mfaVerifiedAt: at },
     });
   }
 

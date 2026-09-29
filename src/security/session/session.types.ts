@@ -28,18 +28,18 @@ export interface SessionDeviceMetadata {
 }
 
 export interface CreateSessionParams extends SessionDeviceMetadata {
+  organizationId: string;
   userId: string;
   secretHash: string;
-  csrfTokenHash: string;
   authVersion: number;
   expiresAt: Date;
   mfaVerifiedAt: Date | null;
 }
 
 export interface StoredSession {
+  organizationId: string;
   id: string;
   userId: string;
-  csrfTokenHash: string;
   authVersion: number;
   createdAt: Date;
   expiresAt: Date;

@@ -1,3 +1,6 @@
+import { createHmac } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from 'src/infra/database/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { AuthSessionRevokeReason } from '@prisma/client';
 import {
@@ -32,20 +35,29 @@ export class SessionService {
   constructor(
     private readonly repository: IAuthSessionRepository,
     private readonly config: SessionConfig,
-  ) {}
+    private readonly prisma: PrismaService,
+    private readonly environment: ConfigService,
+  ) {
+    if (
+      Buffer.byteLength(
+        this.environment.get<string>('AUTH_SESSION_CSRF_SECRET') ?? '',
+      ) < 32
+    )
+      throw new Error('AUTH_SESSION_CSRF_SECRET requires at least 32 bytes');
+  }
 
   async issue(
     context: AuthContext,
     device: SessionDeviceMetadata,
     mfaVerifiedAt: Date | null,
   ): Promise<IssuedSession> {
+    await this.assertAccountUsable(context);
     const sessionSecret = generateOpaqueSecret();
-    const csrfToken = generateOpaqueSecret();
 
     const session = await this.repository.createSession({
       userId: context.userId,
+      organizationId: context.organizationId!,
       secretHash: hashOpaqueSecret(sessionSecret),
-      csrfTokenHash: hashOpaqueSecret(csrfToken),
       authVersion: context.authVersion,
       expiresAt: new Date(Date.now() + this.config.absoluteTimeoutMs),
       mfaVerifiedAt,
@@ -53,21 +65,20 @@ export class SessionService {
       ipAddressHash: device.ipAddressHash,
     });
 
-    return { session, sessionSecret, csrfToken };
+    return {
+      session,
+      sessionSecret,
+      csrfToken: this.csrfForSession(session.id),
+    };
   }
 
-  async validate(sessionSecret: string): Promise<SessionWithContext> {
-    const found = await this.repository.findSessionBySecretHash(
-      hashOpaqueSecret(sessionSecret),
-    );
-
-    if (!found) {
+  async validate(secret: string): Promise<SessionWithContext> {
+    const found = await this.findBySecret(secret);
+    if (!found)
       throw new CodedUnauthorizedException(
         AUTH_ERROR_CODES.sessionExpired,
         AUTH_MESSAGES.sessionExpired,
       );
-    }
-
     const { session, context } = found;
     const now = Date.now();
 
@@ -115,6 +126,11 @@ export class SessionService {
     }
 
     await this.assertAccountUsable(context, session.id);
+    if (session.organizationId !== context.organizationId)
+      throw new CodedUnauthorizedException(
+        'SESSION_CONTEXT_CHANGED',
+        'Entre novamente.',
+      );
 
     if (this.requiresSecondFactor(context) && !session.mfaVerifiedAt) {
       throw new CodedForbiddenException(
@@ -129,21 +145,42 @@ export class SessionService {
   async registerActivity(session: StoredSession): Promise<void> {
     const now = Date.now();
     if (now - session.lastInteractiveAt.getTime() < TOUCH_THRESHOLD_MS) return;
-    await this.repository.touchSession(session.id, new Date(now));
+    const updated = await this.prisma.authSession.updateMany({
+      where: {
+        id: session.id,
+        revokedAt: null,
+        expiresAt: { gt: new Date(now) },
+        lastInteractiveAt: { gt: new Date(now - this.config.idleTimeoutMs) },
+      },
+      data: { lastInteractiveAt: new Date(now) },
+    });
+    if (!updated.count)
+      throw new CodedUnauthorizedException(
+        'SESSION_EXPIRED',
+        'Entre novamente.',
+      );
   }
 
-  validateCsrfToken(session: StoredSession, presented: string): boolean {
-    if (!presented) return false;
-    return safeEquals(session.csrfTokenHash, hashOpaqueSecret(presented));
+  csrfForSession(id: string): string {
+    return createHmac(
+      'sha256',
+      this.environment.getOrThrow<string>('AUTH_SESSION_CSRF_SECRET'),
+    )
+      .update('session-csrf:v2:' + id)
+      .digest('base64url');
   }
 
-  async rotateCsrfToken(sessionId: string): Promise<string> {
-    const csrfToken = generateOpaqueSecret();
-    await this.repository.rotateCsrfToken(
-      sessionId,
-      hashOpaqueSecret(csrfToken),
-    );
-    return csrfToken;
+  async findBySecret(secret: string): Promise<SessionWithContext | null> {
+    if (!/^[A-Za-z0-9_-]{43}$/.test(secret)) return null;
+    return this.repository.findSessionByHash(hashOpaqueSecret(secret));
+  }
+
+  assertCsrf(session: StoredSession, presented?: string): void {
+    if (!presented || !safeEquals(this.csrfForSession(session.id), presented))
+      throw new CodedForbiddenException(
+        'CSRF_TOKEN_INVALID',
+        'Token de proteção inválido.',
+      );
   }
 
   async revoke(
@@ -168,8 +205,18 @@ export class SessionService {
     return this.repository.findSessionForUser(sessionId, userId);
   }
 
-  async markMfaVerified(sessionId: string): Promise<void> {
-    await this.repository.markMfaVerified(sessionId, new Date());
+  async replaceCredential(session: StoredSession): Promise<string> {
+    const secret = generateOpaqueSecret();
+    const updated = await this.prisma.authSession.updateMany({
+      where: { id: session.id, revokedAt: null, expiresAt: { gt: new Date() } },
+      data: { secretHash: hashOpaqueSecret(secret), mfaVerifiedAt: new Date() },
+    });
+    if (!updated.count)
+      throw new CodedUnauthorizedException(
+        'SESSION_REVOKED',
+        'Entre novamente.',
+      );
+    return secret;
   }
 
   assertRecentReauthentication(session: StoredSession): void {

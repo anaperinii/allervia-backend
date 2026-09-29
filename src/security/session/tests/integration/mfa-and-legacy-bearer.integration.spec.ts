@@ -26,7 +26,7 @@ import {
 
 const PASSWORD = 'Senha!Forte#2026';
 const ORIGIN = 'http://127.0.0.1';
-const SESSION_COOKIE = 'allervia_session';
+const SESSION_COOKIE = 'allervia_session_v2';
 const PERIOD_SECONDS = 30;
 
 describe('Segundo fator e bearer legado - Integração HTTP', () => {
@@ -96,7 +96,7 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
   }
 
   function legacyToken(user: AuthenticatedUserPayload): string {
-    return module.get(JwtService).sign({
+    return new JwtService({ secret: 'retired-test-key' }).sign({
       sub: user.id,
       email: user.email,
       type: user.type,
@@ -115,11 +115,16 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     });
   }
 
-  async function enrollTotp(cookie: string, csrfToken: string) {
+  async function enrollTotp(
+    cookie: string,
+    csrfToken: string,
+    sessionId: string,
+  ) {
     const enrollment = await server()
       .post('/auth/mfa/enroll')
       .set('Origin', ORIGIN)
       .set('Cookie', cookie)
+      .set('X-Session-Context', sessionId)
       .set('X-CSRF-Token', csrfToken)
       .send({})
       .expect(201);
@@ -130,6 +135,7 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
       .post('/auth/mfa/enroll/confirm')
       .set('Origin', ORIGIN)
       .set('Cookie', cookie)
+      .set('X-Session-Context', sessionId)
       .set('X-CSRF-Token', csrfToken)
       .send({
         credentialId: started.credentialId,
@@ -138,6 +144,7 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
       .expect(200);
 
     return {
+      cookie: findCookie(confirmation, SESSION_COOKIE),
       secret: started.secret,
       credentialId: started.credentialId,
       recoveryCodes: readBody<{ recoveryCodes: string[] }>(confirmation)
@@ -151,7 +158,11 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     const cookie = findCookie(first, SESSION_COOKIE);
     const csrfToken = readBody<SessionBody>(first).csrfToken;
 
-    const { secret, recoveryCodes } = await enrollTotp(cookie, csrfToken);
+    const { secret, recoveryCodes } = await enrollTotp(
+      cookie,
+      csrfToken,
+      readBody<SessionBody>(first).session.id,
+    );
 
     expect(recoveryCodes).toHaveLength(10);
     expect(new Set(recoveryCodes).size).toBe(10);
@@ -177,6 +188,7 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     const me = await server()
       .get('/account/me')
       .set('Cookie', findCookie(verified, SESSION_COOKIE))
+      .set('Cookie', findCookie(verified, SESSION_COOKIE))
       .expect(200);
 
     const account = readBody<AccountBody>(me);
@@ -190,6 +202,7 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     const { recoveryCodes } = await enrollTotp(
       findCookie(first, SESSION_COOKIE),
       readBody<SessionBody>(first).csrfToken,
+      readBody<SessionBody>(first).session.id,
     );
     const [recoveryCode] = recoveryCodes;
 
@@ -230,6 +243,7 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     const { secret } = await enrollTotp(
       findCookie(first, SESSION_COOKIE),
       readBody<SessionBody>(first).csrfToken,
+      readBody<SessionBody>(first).session.id,
     );
 
     const challenged = await login(user.email);
@@ -268,72 +282,45 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     expect(readBody<ErrorBody>(consumed).code).toBe('MFA_CHALLENGE_INVALID');
   });
 
-  it('não emite bearer legado para conta com segundo fator confirmado', async () => {
-    const user = await createProfessional();
-    const first = await login(user.email);
-    await enrollTotp(
-      findCookie(first, SESSION_COOKIE),
-      readBody<SessionBody>(first).csrfToken,
-    );
-
-    const response = await server()
-      .post('/auth/login')
-      .send({ email: user.email, password: PASSWORD })
-      .expect(403);
-
-    expect(readBody<ErrorBody>(response).code).toBe('MFA_REQUIRED');
-  });
-
-  it('recusa bearer existente depois que a conta passa a exigir segundo fator', async () => {
-    const user = await createProfessional();
-    const token = legacyToken(user);
-
+  it('does not expose the retired login endpoint', async () => {
     await server()
-      .get('/account/me')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(200);
-
-    const first = await login(user.email);
-    await enrollTotp(
-      findCookie(first, SESSION_COOKIE),
-      readBody<SessionBody>(first).csrfToken,
-    );
-
-    const afterEnrollment = await server()
-      .get('/account/me')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(403);
-
-    expect(readBody<ErrorBody>(afterEnrollment).code).toBe('MFA_REQUIRED');
+      .post('/auth/login')
+      .send({ email: 'retired@example.test', password: PASSWORD })
+      .expect(404);
   });
 
-  it('recusa bearer de conta desativada mesmo com token válido', async () => {
+  it('rejects legacy tokens even when the retired environment flag is enabled', async () => {
     const user = await createProfessional();
-    const token = legacyToken(user);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { isActive: false },
-    });
-
     const response = await server()
-      .get('/account/me')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(401);
-
-    expect(readBody<ErrorBody>(response).code).toBeDefined();
-  });
-
-  it('marca a requisição por bearer como não baseada em sessão', async () => {
-    const user = await createProfessional();
-
-    const response = await server()
-      .get('/account/me')
+      .get('/patients')
       .set('Authorization', `Bearer ${legacyToken(user)}`)
-      .expect(200);
+      .expect(401);
+    expect(readBody<ErrorBody>(response).code).toBe('SESSION_MISSING');
+  });
 
-    const account = readBody<AccountBody>(response);
-    expect(account.security.sessionBased).toBe(false);
-    expect(JSON.stringify(account)).not.toContain('password');
+  it('revokes a previous device when another device confirms MFA', async () => {
+    const user = await createProfessional();
+    const first = await login(user.email);
+    const second = await login(user.email);
+    const rotated = await enrollTotp(
+      findCookie(second, SESSION_COOKIE),
+      readBody<SessionBody>(second).csrfToken,
+      readBody<SessionBody>(second).session.id,
+    );
+    await server()
+      .get('/patients')
+      .set('Cookie', findCookie(first, SESSION_COOKIE))
+      .expect(401);
+    await server().get('/patients').set('Cookie', rotated.cookie).expect(200);
+  });
+
+  it('uses the current family for the public account context', async () => {
+    const user = await createProfessional();
+    const first = await login(user.email);
+    const response = await server()
+      .get('/account/me')
+      .set('Cookie', findCookie(first, SESSION_COOKIE))
+      .expect(200);
+    expect(readBody<AccountBody>(response).security.sessionBased).toBe(true);
   });
 });
