@@ -1,4 +1,5 @@
-﻿import { Test, TestingModule } from '@nestjs/testing';
+﻿import cookieParser from 'cookie-parser';
+import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
   ValidationPipe,
@@ -7,7 +8,8 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { SessionService } from 'src/security/session/session.service';
+import { IAuthSessionRepository } from 'src/security/session/auth-session.repository';
 import { Prisma } from '@prisma/client';
 import request from 'supertest';
 import type { App } from 'supertest/types';
@@ -41,12 +43,14 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
   let versionId: string;
   let protocolId: string;
   beforeAll(async () => {
+    process.env.AUTH_ALLOWED_ORIGINS = 'http://127.0.0.1';
     await TestDatabaseManager.connect();
     module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
       .useValue(TestDatabaseManager.getInstance())
       .compile();
     app = module.createNestApplication();
+    app.use(cookieParser());
     app.useGlobalPipes(
       new ValidationPipe({
         transform: true,
@@ -137,16 +141,17 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       targetStepId: 'high',
     };
   }
-  function token(actor = user) {
-    return module.get(JwtService).sign({
-      sub: actor.id,
-      email: actor.email,
-      type: actor.type,
-      organizationId: actor.organizationId,
-      professionalId: actor.professionalId,
-      roles: actor.roles,
-      tokenVersion: 0,
-    });
+  async function token(actor = user) {
+    const context = await module
+      .get(IAuthSessionRepository)
+      .loadContextByUserId(actor.id);
+    if (!context) throw new Error('Missing test account');
+    const issued = (
+      await module
+        .get(SessionService)
+        .issue(context, { userAgent: null, ipAddressHash: null }, null)
+    );
+    return { Cookie: 'allervia_session_v2=' + issued.sessionSecret, Origin: 'http://127.0.0.1', 'X-CSRF-Token': issued.csrfToken, 'X-Session-Context': issued.session.id };
   }
 
   it('binds the published default and creates the first dose atomically', async () => {
@@ -532,10 +537,10 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
   });
   it('uses real HTTP DTOs and guards for editable values and administration', async () => {
     const result = await create.execute(createInput(), user);
-    const auth = `Bearer ${token()}`;
+    const auth = await token();
     await request(app.getHttpServer())
       .patch(`/doses/${result.firstDose.id}/scheduled`)
-      .set('Authorization', auth)
+      .set(auth)
       .send({
         values: { concentration: '1000', volume: '0.2', intervalDays: 7 },
         scheduledAt: '2026-01-01T13:00:00Z',
@@ -547,7 +552,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     expect(await prisma.dose.count()).toBe(1);
     await request(app.getHttpServer())
       .post(`/doses/${result.firstDose.id}/administer`)
-      .set('Authorization', auth)
+      .set(auth)
       .send(
         command({
           values: { concentration: '1000', volume: '0.2', intervalDays: 7 },
@@ -558,7 +563,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       .expect(201);
     await request(app.getHttpServer())
       .patch(`/doses/${result.firstDose.id}`)
-      .set('Authorization', auth)
+      .set(auth)
       .send({ volume: 0.3 })
       .expect(410);
     await request(app.getHttpServer())
@@ -569,10 +574,14 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     const result = await create.execute(createInput(), user);
     await request(app.getHttpServer())
       .post(`/doses/${result.firstDose.id}/administer`)
-      .set('Authorization', `Bearer ${token()}`)
+      .set(await token())
       .send({
         ...command(),
-        values: { volume: new Prisma.Decimal('0.2'), concentration: 1000, intervalDays: 7 },
+        values: {
+          volume: new Prisma.Decimal('0.2'),
+          concentration: 1000,
+          intervalDays: 7,
+        },
         expectedRevision: undefined,
       })
       .expect(400);
@@ -585,7 +594,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     );
     await request(app.getHttpServer())
       .post(`/treatment-protocols/versions/${versionId}/publish`)
-      .set('Authorization', `Bearer ${token(nurse)}`)
+      .set(await token(nurse))
       .send({ expectedRevision: 1 })
       .expect(403);
     const result = await create.execute(createInput(), user);
@@ -593,7 +602,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       await factories.users.createAuthenticatedPhysicianProfessional();
     await request(app.getHttpServer())
       .get(`/doses/${result.firstDose.id}`)
-      .set('Authorization', `Bearer ${token(other)}`)
+      .set(await token(other))
       .expect(404);
   });
 
@@ -689,7 +698,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
   it('registers a prescription through the real HTTP validation pipeline', async () => {
     const response = await request(app.getHttpServer())
       .post('/immunotherapies/register')
-      .set('Authorization', `Bearer ${token()}`)
+      .set(await token())
       .send(createInput())
       .expect(201);
     expect(response.body).toMatchObject({

@@ -5,7 +5,8 @@ import { promisify } from 'node:util';
 import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
-import { JwtService } from '@nestjs/jwt';
+import { SessionService } from 'src/security/session/session.service';
+import { IAuthSessionRepository } from 'src/security/session/auth-session.repository';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/infra/database/prisma.service';
@@ -35,7 +36,7 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
     }
     process.env.AUTH_INSECURE_COOKIES = 'true';
     process.env.AUTH_MFA_ENFORCEMENT = 'optional';
-    process.env.AUTH_LEGACY_BEARER = 'enabled';
+    process.env.AUTH_LEGACY_BEARER = 'disabled';
 
     await TestDatabaseManager.connect();
     await TestDatabaseManager.cleanAll();
@@ -100,15 +101,18 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
       },
       user,
     );
-    const token = module.get(JwtService).sign({
-      sub: user.id,
-      email: user.email,
-      type: user.type,
-      organizationId: user.organizationId,
-      professionalId: user.professionalId,
-      roles: user.roles,
-      tokenVersion: 0,
-    });
+    const context = await module
+      .get(IAuthSessionRepository)
+      .loadContextByUserId(user.id);
+    if (!context) throw new Error('Missing synthetic account');
+    const issued = await module
+      .get(SessionService)
+      .issue(
+        context,
+        { userAgent: 'contract-test', ipAddressHash: null },
+        null,
+      );
+    const token = issued.sessionSecret;
     const childEnv: NodeJS.ProcessEnv = {
       PATH: process.env.PATH,
       SystemRoot: process.env.SystemRoot,
@@ -119,7 +123,9 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
       LOCALAPPDATA: process.env.LOCALAPPDATA,
       NODE_ENV: 'test',
       ALLERVIA_CONTRACT_URL: await app.getUrl(),
-      ALLERVIA_CONTRACT_TOKEN: token,
+      ALLERVIA_CONTRACT_SESSION_ID: issued.session.id,
+      ALLERVIA_CONTRACT_COOKIE: 'allervia_session_v2=' + issued.sessionSecret,
+      ALLERVIA_CONTRACT_CSRF: issued.csrfToken,
       ALLERVIA_CONTRACT_DOSE_ID: therapy.firstDose.id,
     };
     const run = promisify(execFile);
@@ -134,7 +140,7 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
           maxBuffer: 1024 * 1024,
         },
       );
-      expect(result.stdout).toContain('9 passed');
+      expect(result.stdout).toContain('10 passed');
       expect(
         await prisma.dose.count({
           where: { immunotherapyId: therapy.immunotherapy.id },
@@ -146,7 +152,8 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
         [output.message, output.stdout, output.stderr]
           .filter(Boolean)
           .join('\n')
-          .replaceAll(token, '[REDACTED]'),
+          .replaceAll(token, '[REDACTED]')
+          .replaceAll(issued.sessionSecret, '[REDACTED]'),
       );
     }
   });

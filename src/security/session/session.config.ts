@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-export type LegacyBearerMode = 'enabled' | 'disabled';
 export type MfaEnforcement = 'required' | 'optional';
 
-const SECURE_COOKIE_NAME = '__Host-allervia_session';
-const INSECURE_COOKIE_NAME = 'allervia_session';
+const SECURE_COOKIE_NAME = '__Host-allervia_session_v2';
+const INSECURE_COOKIE_NAME = 'allervia_session_v2';
 
 @Injectable()
 export class SessionConfig {
@@ -50,14 +49,6 @@ export class SessionConfig {
 
   get reauthenticationMaxAgeMs(): number {
     return this.positiveNumber('AUTH_REAUTH_MAX_AGE_MINUTES', 5) * 60_000;
-  }
-
-  get legacyBearer(): LegacyBearerMode {
-    const configured = this.configService.get<string>('AUTH_LEGACY_BEARER');
-    if (configured === 'enabled' || configured === 'disabled') {
-      return configured;
-    }
-    return this.isProduction ? 'disabled' : 'enabled';
   }
 
   get mfaEnforcement(): MfaEnforcement {

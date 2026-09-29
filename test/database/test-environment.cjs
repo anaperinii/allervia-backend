@@ -53,10 +53,10 @@ function loadTestEnvironment() {
   ) {
     throw new Error('Inherited DATABASE_URL differs from .env.test.local.');
   }
-  Object.assign(process.env, testEnv);
+  Object.assign(process.env, testEnv, {
+    AUTH_SESSION_CSRF_SECRET: 'test-only-session-csrf-secret-32-bytes',
+  });
   process.env.EMAIL_TRANSPORT = 'log';
-  process.env.JWT_SECRET = testEnv.JWT_SECRET || 'allervia-local-test-secret';
-  process.env.JWT_EXPIRES_IN = testEnv.JWT_EXPIRES_IN || '1h';
 }
 
 module.exports = { assertTestDatabase, loadTestEnvironment };

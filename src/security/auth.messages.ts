@@ -17,9 +17,6 @@ export const AUTH_MESSAGES = {
   csrfTokenMissing: 'Token CSRF ausente ou inválido.',
   originNotAllowed: 'Origem da requisição não permitida.',
   unsupportedContentType: 'Tipo de conteúdo não suportado para este comando.',
-  legacyBearerDisabled: 'Autenticação por bearer não está disponível.',
-  legacyBearerSecondFactorRequired:
-    'Esta conta exige segundo fator; use o fluxo de sessão do aplicativo.',
   mfaRequired: 'Segundo fator obrigatório.',
   mfaChallengeInvalid: 'Desafio de segundo fator inválido ou expirado.',
   mfaCodeInvalid: 'Código de verificação inválido.',
@@ -40,7 +37,6 @@ export const AUTH_ERROR_CODES = {
   csrfInvalid: 'CSRF_TOKEN_INVALID',
   originNotAllowed: 'ORIGIN_NOT_ALLOWED',
   unsupportedContentType: 'UNSUPPORTED_CONTENT_TYPE',
-  legacyBearerDisabled: 'LEGACY_BEARER_DISABLED',
   mfaRequired: 'MFA_REQUIRED',
   mfaEnrollmentRequired: 'MFA_ENROLLMENT_REQUIRED',
   mfaChallengeInvalid: 'MFA_CHALLENGE_INVALID',

@@ -24,7 +24,7 @@ import {
 
 const PASSWORD = 'Senha!Forte#2026';
 const ORIGIN = 'http://127.0.0.1';
-const SESSION_COOKIE = 'allervia_session';
+const SESSION_COOKIE = 'allervia_session_v2';
 
 interface PatientPage {
   items: Array<{
@@ -131,6 +131,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
 
     return {
       cookie: findCookie(response, SESSION_COOKIE),
+      sessionId: readBody<SessionBody>(response).session.id,
       csrfToken: readBody<SessionBody>(response).csrfToken,
     };
   }
@@ -171,6 +172,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const firstPage = await server()
       .get('/patients?pageSize=1&page=1')
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const page = readBody<PatientPage>(firstPage);
@@ -180,6 +182,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const searched = await server()
       .get('/patients?search=ana')
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const found = readBody<PatientPage>(searched);
@@ -201,6 +204,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const listed = await server()
       .get('/patients')
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .expect(200);
 
     expect(readBody<PatientPage>(listed).total).toBe(0);
@@ -233,6 +237,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const detail = await server()
       .get(`/patients/${patientId}`)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const patient = readBody<PatientDetail>(detail);
@@ -252,6 +257,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const therapyDetail = await server()
       .get(`/immunotherapies/${first.immunotherapy.id}`)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const therapy = readBody<TherapyDetail>(therapyDetail);
@@ -267,6 +273,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const detail = await server()
       .get(`/immunotherapies/${created.immunotherapy.id}`)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const therapy = readBody<TherapyDetail>(detail);
@@ -284,6 +291,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
       .patch(`/patients/update/${patientId}`)
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ cpf: '529.982.247-25' })
       .expect(200);
@@ -291,6 +299,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const asPhysician = await server()
       .get(`/patients/${patientId}`)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const full = readBody<PatientDetail>(asPhysician);
@@ -307,6 +316,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
     const asNurse = await server()
       .get(`/patients/${patientId}`)
       .set('Cookie', nurseSession.cookie)
+      .set('Cookie', nurseSession.cookie).set('X-Session-Context', nurseSession.sessionId)
       .expect(200);
 
     const masked = readBody<PatientDetail>(asNurse);
@@ -324,6 +334,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
       .patch(`/patients/update/${first.immunotherapy.patientId}`)
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ cpf: '111.111.111-11' })
       .expect(400);
@@ -333,6 +344,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
       .patch(`/patients/update/${first.immunotherapy.patientId}`)
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ cpf: '529.982.247-25' })
       .expect(200);
@@ -341,6 +353,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
       .patch(`/patients/update/${second.immunotherapy.patientId}`)
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ cpf: '52998224725' })
       .expect(409);
@@ -358,6 +371,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
       .patch(`/patients/update/${created.immunotherapy.patientId}`)
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ responsiblePhysicianId: stranger.professionalId })
       .expect(404);
@@ -371,6 +385,7 @@ describe('Prontuário de leitura - Integração HTTP', () => {
       .patch(`/patients/update/${created.immunotherapy.patientId}`)
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ responsiblePhysicianId: nurseColleague.professionalId })
       .expect(404);

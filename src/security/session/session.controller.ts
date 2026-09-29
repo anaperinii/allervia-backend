@@ -1,3 +1,9 @@
+import { PreAuthCsrf } from './preauth-csrf.decorator';
+import { SkipCsrf } from './skip-csrf.decorator';
+import {
+  CodedForbiddenException,
+  CodedUnauthorizedException,
+} from 'src/infra/exceptions/coded.exception';
 import {
   Body,
   Controller,
@@ -63,11 +69,24 @@ export class SessionController {
   @Get('csrf')
   @Public()
   @ApiOkResponse({ type: CsrfTokenResponseDto })
-  issueCsrfToken(@Res({ passthrough: true }) response: Response) {
+  async issueCsrfToken(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     response.setHeader('Cache-Control', 'no-store');
-    return { csrfToken: this.csrf.issue(response) };
+    const secret =
+      request.query.scope === 'session' ? this.cookies.read(request) : null;
+    const found = secret
+      ? await this.sessionService.findBySecret(secret)
+      : null;
+    return {
+      csrfToken: found
+        ? this.sessionService.csrfForSession(found.session.id)
+        : this.csrf.issue(response),
+    };
   }
 
+  @PreAuthCsrf()
   @Post('sessions')
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -111,6 +130,7 @@ export class SessionController {
     };
   }
 
+  @PreAuthCsrf()
   @Post('mfa/verify')
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -138,12 +158,12 @@ export class SessionController {
 
   @Get('session')
   @AuthenticatedOnly()
-  async readSession(
+  readSession(
     @CurrentSession() session: StoredSession,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<SessionEnvelopeDto> {
+  ): SessionEnvelopeDto {
     response.setHeader('Cache-Control', 'no-store');
-    const csrfToken = await this.sessionService.rotateCsrfToken(session.id);
+    const csrfToken = this.sessionService.csrfForSession(session.id);
     return this.envelope(session, csrfToken);
   }
 
@@ -202,18 +222,54 @@ export class SessionController {
   }
 
   @Post('logout')
-  @AuthenticatedOnly()
+  @Public()
+  @SkipCsrf()
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
-    @CurrentSession() session: StoredSession,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
-    await this.sessionService.revoke(
-      session.id,
-      AuthSessionRevokeReason.LOGOUT,
-    );
+    this.assertCookieOrigin(request);
+    const secret = this.cookies.read(request);
+    const found = secret
+      ? await this.sessionService.findBySecret(secret)
+      : null;
+    if (found) {
+      this.sessionService.assertCsrf(
+        found.session,
+        request.get('x-csrf-token'),
+      );
+      const expected = request.get('x-session-context');
+      if (expected && expected !== found.session.id)
+        throw new CodedUnauthorizedException(
+          'SESSION_CONTEXT_CHANGED',
+          'A conta mudou.',
+        );
+      await this.sessionService.revoke(
+        found.session.id,
+        AuthSessionRevokeReason.LOGOUT,
+      );
+    }
     this.cookies.clear(response);
     this.csrf.clear(response);
+    response.setHeader('Cache-Control', 'no-store');
+  }
+
+  private assertCookieOrigin(request: Request): void {
+    const origin = request.get('origin');
+    const sameOrigin = request.get('host')
+      ? request.protocol + '://' + request.get('host')
+      : null;
+    if (
+      !origin ||
+      (!this.config.allowedOrigins.includes(origin) && origin !== sameOrigin) ||
+      request.get('content-type')?.split(';')[0].trim().toLowerCase() !==
+        'application/json'
+    )
+      throw new CodedForbiddenException(
+        'ORIGIN_NOT_ALLOWED',
+        'Origem da requisição não permitida.',
+      );
   }
 
   @Post('logout-all')
@@ -305,7 +361,10 @@ export class SessionController {
       dto.code,
     );
 
-    await this.sessionService.markMfaVerified(session.id);
+    this.cookies.set(
+      response,
+      await this.sessionService.replaceCredential(session),
+    );
     await this.sessionService.revokeAllForUser(
       context.userId,
       AuthSessionRevokeReason.MFA_CHANGED,
@@ -357,6 +416,8 @@ export class SessionController {
       authenticated: true,
       csrfToken,
       session: {
+        userId: session.userId,
+        organizationId: session.organizationId,
         id: session.id,
         createdAt: session.createdAt,
         expiresAt: session.expiresAt,

@@ -80,6 +80,12 @@ export class CsrfTokenResponseDto {
 
 export class SessionStateDto {
   @ApiProperty()
+  userId: string;
+
+  @ApiProperty()
+  organizationId: string;
+
+  @ApiProperty()
   id: string;
 
   @ApiProperty()

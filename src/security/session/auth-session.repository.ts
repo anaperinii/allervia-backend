@@ -23,20 +23,11 @@ export abstract class IAuthSessionRepository {
 
   abstract createSession(params: CreateSessionParams): Promise<StoredSession>;
 
-  abstract findSessionBySecretHash(
+  abstract findSessionByHash(
     secretHash: string,
   ): Promise<SessionWithContext | null>;
 
-  abstract touchSession(sessionId: string, at: Date): Promise<void>;
-
-  abstract rotateCsrfToken(
-    sessionId: string,
-    csrfTokenHash: string,
-  ): Promise<void>;
-
   abstract markReauthenticated(sessionId: string, at: Date): Promise<void>;
-
-  abstract markMfaVerified(sessionId: string, at: Date): Promise<void>;
 
   abstract revokeSession(
     sessionId: string,

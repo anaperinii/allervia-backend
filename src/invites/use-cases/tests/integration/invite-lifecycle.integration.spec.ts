@@ -24,7 +24,7 @@ import {
 
 const PASSWORD = 'Senha!Forte#2026';
 const ORIGIN = 'http://127.0.0.1';
-const SESSION_COOKIE = 'allervia_session';
+const SESSION_COOKIE = 'allervia_session_v2';
 
 interface InviteBody {
   id: string;
@@ -116,12 +116,13 @@ describe('Ciclo do convite - Integração HTTP', () => {
     return {
       admin,
       cookie: findCookie(response, SESSION_COOKIE),
+      sessionId: readBody<SessionBody>(response).session.id,
       csrfToken: readBody<SessionBody>(response).csrfToken,
     };
   }
 
   async function invite(
-    session: { cookie: string; csrfToken: string },
+    session: { cookie: string; csrfToken: string; sessionId: string },
     email: string,
     role = 'NURSE',
   ) {
@@ -129,6 +130,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
       .post('/onboarding/invites')
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ email, fullName: 'Convidado Teste', userRole: role })
       .expect(201);
@@ -149,6 +151,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
     const listed = await server()
       .get('/onboarding/invites/list')
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const page = readBody<InvitePageBody>(listed);
@@ -250,6 +253,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
       .delete(`/onboarding/invites/${cancelled.id}`)
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
+      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .expect(204);
 
@@ -280,6 +284,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
     const listed = await server()
       .get('/onboarding/invites/list')
       .set('Cookie', findCookie(otherSession, SESSION_COOKIE))
+      .set('X-Session-Context', readBody<SessionBody>(otherSession).session.id)
       .expect(200);
 
     expect(readBody<InvitePageBody>(listed).total).toBe(0);
