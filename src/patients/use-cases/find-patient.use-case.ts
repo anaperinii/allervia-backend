@@ -5,6 +5,7 @@ import { PATIENT_MESSAGES } from 'src/patients/patient.messages';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { maskCpf } from '../cpf';
+import { guardianFromColumns } from '../guardian';
 import { PatientDetailDto, TherapySummaryDto } from '../dtos/patient-read.dto';
 
 @Injectable()
@@ -27,6 +28,9 @@ export class FindPatientUseCase {
         id: true,
         fullName: true,
         cpf: true,
+        guardianName: true,
+        guardianCpf: true,
+        guardianPhoneNumber: true,
         birthDate: true,
         phoneNumber: true,
         weightInKg: true,
@@ -82,6 +86,8 @@ export class FindPatientUseCase {
         },
       })) > 0;
 
+    const guardian = guardianFromColumns(patient);
+
     const therapies: TherapySummaryDto[] = patient.immunotherapies.map(
       (therapy) => ({
         id: therapy.id,
@@ -108,6 +114,9 @@ export class FindPatientUseCase {
       fullName: patient.fullName,
       cpfMasked: patient.cpf ? maskCpf(patient.cpf) : null,
       ...(canUpdate ? { cpf: patient.cpf } : {}),
+      guardian: guardian
+        ? { ...guardian, cpf: canUpdate ? guardian.cpf : null }
+        : null,
       birthDate: patient.birthDate,
       phoneNumber: patient.phoneNumber,
       weightInKg: patient.weightInKg,

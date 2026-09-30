@@ -7,11 +7,12 @@ import {
   Max,
   Matches,
 } from '@nestjs/class-validator';
-import { IsOptional, Validate } from 'class-validator';
+import { IsOptional, Validate, ValidateNested } from 'class-validator';
 import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { isValidCpf } from '../cpf';
 
@@ -24,6 +25,30 @@ export class CpfConstraint implements ValidatorConstraintInterface {
   defaultMessage(): string {
     return 'CPF inválido.';
   }
+}
+
+export class GuardianDto {
+  @ApiProperty({ description: 'Nome completo do responsável legal' })
+  @IsString()
+  @IsNotEmpty()
+  fullName: string;
+
+  @ApiPropertyOptional({
+    description:
+      'CPF do responsável, com ou sem máscara. Ausente quando a pessoa não possui CPF conhecido.',
+  })
+  @IsOptional()
+  @IsString()
+  @Validate(CpfConstraint)
+  cpf?: string;
+
+  @ApiProperty({ description: 'Telefone do responsável' })
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{10,11}$/, {
+    message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.',
+  })
+  phoneNumber: string;
 }
 
 export class CreatePatientDto {
@@ -64,4 +89,15 @@ export class CreatePatientDto {
   @IsString()
   @IsNotEmpty()
   responsiblePhysicianId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Responsável legal. Obrigatório para menores de 18 anos e recusado para maiores. Enviar null remove o vínculo.',
+    type: GuardianDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => GuardianDto)
+  guardian?: GuardianDto | null;
 }

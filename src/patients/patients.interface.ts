@@ -4,6 +4,9 @@ export interface CreatePatientData {
   weightInKg: number;
   phoneNumber: string;
   cpf: string | null;
+  guardianName: string | null;
+  guardianCpf: string | null;
+  guardianPhoneNumber: string | null;
   organizationId: string;
   responsiblePhysicianId: string;
   createdById: string;
@@ -20,6 +23,9 @@ export interface UpdatePatientData {
   userId: string | null;
   phoneNumber: string;
   cpf: string | null;
+  guardianName: string | null;
+  guardianCpf: string | null;
+  guardianPhoneNumber: string | null;
   responsiblePhysicianId: string;
   updatedById: string;
   isActive: boolean;

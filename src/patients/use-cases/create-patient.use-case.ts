@@ -6,6 +6,7 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { Prisma } from '@prisma/client';
 import { normalizeCpf } from '../cpf';
+import { guardianColumns } from '../guardian';
 
 @Injectable()
 export class CreatePatientUseCase {
@@ -20,6 +21,8 @@ export class CreatePatientUseCase {
     tx?: Prisma.TransactionClient,
   ) {
     const cpf = normalizeCpf(dto.cpf);
+    const birthDate = new Date(dto.birthDate);
+    const guardian = guardianColumns(dto.guardian, birthDate);
 
     if (cpf) {
       const client = tx ?? this.prisma;
@@ -36,10 +39,11 @@ export class CreatePatientUseCase {
     const savedPatient = await this.patientRepository.create(
       {
         fullName: dto.fullName,
-        birthDate: new Date(dto.birthDate),
+        birthDate,
         weightInKg: dto.weightInKg,
         phoneNumber: dto.phoneNumber,
         cpf,
+        ...guardian,
         organizationId: currentUser.organizationId,
         responsiblePhysicianId: dto.responsiblePhysicianId,
         createdById: currentUser.id,

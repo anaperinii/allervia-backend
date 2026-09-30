@@ -24,6 +24,10 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   DOSE_NOT_ADMINISTERED: 'Esta dose ainda não foi administrada.',
   DOSE_NOT_SCHEDULED: 'Esta dose não está agendada e não pode ser alterada.',
   DOSE_VALUES_REQUIRED: 'Informe os valores da dose.',
+  GUARDIAN_NOT_ALLOWED_FOR_ADULT:
+    'Paciente maior de idade não tem responsável legal. Remova os dados do responsável.',
+  GUARDIAN_REQUIRED_FOR_MINOR:
+    'Paciente menor de idade exige responsável legal. Informe nome e telefone do responsável.',
   DUPLICATE_OBSERVATION_PHASE:
     'Já existe uma observação registrada para esta fase. Use apenas uma por fase.',
   IDEMPOTENCY_KEY_REQUIRED:

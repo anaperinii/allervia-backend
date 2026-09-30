@@ -83,6 +83,21 @@ export class TherapySummaryDto {
   createdAt: Date;
 }
 
+export class PatientGuardianDto {
+  @ApiProperty()
+  fullName: string;
+
+  @ApiProperty({
+    nullable: true,
+    description:
+      'Documento completo; presente apenas quando o ator pode editar o cadastro',
+  })
+  cpf: string | null;
+
+  @ApiProperty()
+  phoneNumber: string;
+}
+
 export class PatientListItemDto {
   @ApiProperty()
   id: string;
@@ -125,6 +140,13 @@ export class PatientDetailDto extends PatientListItemDto {
       'Documento completo; presente apenas quando o ator pode editar o cadastro',
   })
   cpf?: string | null;
+
+  @ApiProperty({
+    type: PatientGuardianDto,
+    nullable: true,
+    description: 'Responsável legal; null quando o paciente é maior de idade',
+  })
+  guardian: PatientGuardianDto | null;
 
   @ApiProperty({ type: [TherapySummaryDto] })
   therapies: TherapySummaryDto[];

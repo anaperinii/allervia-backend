@@ -174,6 +174,13 @@ model Patient {
   /// não um valor a inventar. Unicidade vale por organização quando informado.
   cpf String?
 
+  /// Responsável legal, obrigatório enquanto o paciente é menor de idade e
+  /// ausente quando é maior. Os três campos vivem e morrem juntos: ou há
+  /// responsável completo, ou não há responsável.
+  guardianName        String?
+  guardianCpf         String?
+  guardianPhoneNumber String?
+
   isActive   Boolean @default(true)
   isArchived Boolean @default(false)
 
