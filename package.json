@@ -20,6 +20,7 @@
     "start:logs": "node scripts/log-viewer.cjs -- npm run start",
     "seed:system-user": "ts-node -T -r tsconfig-paths/register scripts/seed-onboarding.ts",
     "seed:default-protocol": "ts-node -T -r tsconfig-paths/register scripts/seed-default-protocol.ts",
+    "errors:export": "ts-node -T -r tsconfig-paths/register scripts/export-error-catalog.ts",
     "test:setup": "node test/database/prepare-test-database.cjs deploy",
     "test:clean-setup": "node test/database/prepare-test-database.cjs reset",
     "test:watch": "jest --watch",

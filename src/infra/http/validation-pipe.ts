@@ -1,6 +1,7 @@
 import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
 import { CodedHttpException } from 'src/infra/exceptions/coded.exception';
+import { messageForCode } from 'src/infra/errors/error-catalog';
 
 function collect(
   errors: ValidationError[],
@@ -30,7 +31,7 @@ export function buildValidationPipe(): ValidationPipe {
       new CodedHttpException(
         HttpStatus.BAD_REQUEST,
         'VALIDATION_ERROR',
-        'Requisição inválida.',
+        messageForCode('VALIDATION_ERROR')!,
         collect(errors),
       ),
   });

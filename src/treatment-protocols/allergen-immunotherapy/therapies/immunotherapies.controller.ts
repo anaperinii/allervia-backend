@@ -31,6 +31,7 @@ import { CreateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunot
 import { TherapyLifecycleDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/therapy-lifecycle.dto';
 import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
 import { ListAllImmunotherapiesUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
+import { ListImmunotherapyTypesUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-immunotherapy-types.use-case';
 import { PageDto } from 'src/infra/http/pagination';
 import {
   ImmunotherapyDetailDto,
@@ -53,6 +54,7 @@ export class ImmunotherapiesController {
     private history: ClinicalHistoryService,
     private listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
     private listAllImmunotherapies: ListAllImmunotherapiesUseCase,
+    private listImmunotherapyTypesUseCase: ListImmunotherapyTypesUseCase,
   ) {}
 
   @Post('register')
@@ -96,6 +98,14 @@ export class ImmunotherapiesController {
       patientId,
       currentUser,
     );
+  }
+
+  @Get('types')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
+  async listTypes(
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ): Promise<string[]> {
+    return this.listImmunotherapyTypesUseCase.execute(currentUser);
   }
 
   @Get('type/:type')

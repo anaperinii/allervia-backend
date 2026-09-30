@@ -9,6 +9,7 @@ import {
   ImmunotherapyListItemDto,
   ListImmunotherapiesQueryDto,
 } from '../dtos/immunotherapy-read.dto';
+import type { ProtocolPhase } from '../dtos/immunotherapy-read.dto';
 
 const LIST_SELECT = {
   id: true,
@@ -33,9 +34,28 @@ const LIST_SELECT = {
     where: { status: 'SCHEDULED' as const, isArchived: false },
     orderBy: { scheduledAt: 'asc' as const },
     take: 1,
-    select: { id: true, scheduledAt: true, status: true },
+    select: {
+      id: true,
+      scheduledAt: true,
+      status: true,
+      nextIntervalInDays: true,
+      plannedValues: true,
+    },
   },
 } satisfies Prisma.ImmunotherapySelect;
+
+/// Fase vigente sai do snapshot planejado da previsão em aberto; sem ele, a
+/// data de início da manutenção já responde em qual fase o tratamento está.
+export function resolvePhase(
+  plannedValues: Prisma.JsonValue | null | undefined,
+  maintenanceStartDate: Date | null,
+): ProtocolPhase {
+  if (plannedValues && typeof plannedValues === 'object' && !Array.isArray(plannedValues)) {
+    const phase = (plannedValues as Record<string, unknown>).phase;
+    if (phase === 'BUILD_UP' || phase === 'MAINTENANCE') return phase;
+  }
+  return maintenanceStartDate ? 'MAINTENANCE' : 'BUILD_UP';
+}
 
 type ListRow = Prisma.ImmunotherapyGetPayload<{ select: typeof LIST_SELECT }>;
 
@@ -61,7 +81,22 @@ export function toListItem(row: ListRow): ImmunotherapyListItemDto {
           revision: row.currentPrescription.revision,
         }
       : null,
-    nextDose: row.doses[0] ?? null,
+    nextDose: row.doses[0]
+      ? {
+          id: row.doses[0].id,
+          scheduledAt: row.doses[0].scheduledAt,
+          status: row.doses[0].status,
+          intervalDays: row.doses[0].nextIntervalInDays,
+          phase: resolvePhase(
+            row.doses[0].plannedValues,
+            row.maintenanceStartDate,
+          ),
+        }
+      : null,
+    currentPhase: resolvePhase(
+      row.doses[0]?.plannedValues,
+      row.maintenanceStartDate,
+    ),
     createdAt: row.createdAt,
   };
 }
@@ -86,6 +121,7 @@ export class ListAllImmunotherapiesUseCase {
     if (!query.includeArchived) filters.push({ isArchived: false });
     if (query.status) filters.push({ status: query.status });
     if (query.route) filters.push({ administrationRoute: query.route });
+    if (query.immunoType) filters.push({ immunoType: query.immunoType });
 
     if (query.responsiblePhysicianId) {
       filters.push({

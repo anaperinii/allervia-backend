@@ -448,12 +448,13 @@ export class ConfiguredDoseService {
           },
           orderBy: { administeredAt: 'desc' },
         });
+        if (administeredAt < context.therapy.inductionStartDate)
+          throw new ConflictException('ADMINISTRATION_BEFORE_INDUCTION_START');
         if (
-          administeredAt < context.therapy.inductionStartDate ||
-          (preceding?.administeredAt &&
-            administeredAt < preceding.administeredAt)
+          preceding?.administeredAt &&
+          administeredAt < preceding.administeredAt
         )
-          throw new ConflictException('INVALID_ADMINISTRATION_CHRONOLOGY');
+          throw new ConflictException('ADMINISTRATION_OUT_OF_ORDER');
         if (context.dose.plannedStepId !== step.id && !dto.reason?.trim())
           throw new BadRequestException('ADJUSTMENT_REASON_REQUIRED');
         const administrationEndedAt = dto.administrationEndedAt

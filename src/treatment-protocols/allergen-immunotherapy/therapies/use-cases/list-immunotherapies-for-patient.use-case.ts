@@ -51,7 +51,13 @@ export class ListImmunotherapiesForPatientUseCase {
           where: { status: 'SCHEDULED', isArchived: false },
           orderBy: { scheduledAt: 'asc' },
           take: 1,
-          select: { id: true, scheduledAt: true, status: true },
+          select: {
+            id: true,
+            scheduledAt: true,
+            status: true,
+            nextIntervalInDays: true,
+            plannedValues: true,
+          },
         },
       },
     });

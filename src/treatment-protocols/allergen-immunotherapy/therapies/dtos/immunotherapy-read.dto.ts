@@ -10,6 +10,8 @@ import {
 } from 'class-validator';
 import { PageQueryDto } from 'src/infra/http/pagination';
 
+export type ProtocolPhase = 'BUILD_UP' | 'MAINTENANCE';
+
 export class ListImmunotherapiesQueryDto extends PageQueryDto {
   @ApiPropertyOptional({ description: 'Busca por nome do paciente ou extrato' })
   @IsOptional()
@@ -26,6 +28,12 @@ export class ListImmunotherapiesQueryDto extends PageQueryDto {
   @IsOptional()
   @IsEnum(AdministrationRoute)
   route?: AdministrationRoute;
+
+  @ApiPropertyOptional({ description: 'Filtra pelo tipo de alérgeno' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  immunoType?: string;
 
   @ApiPropertyOptional({ description: 'Filtra por médico responsável' })
   @IsOptional()
@@ -92,7 +100,17 @@ export class ImmunotherapyListItemDto {
     id: string;
     scheduledAt: Date;
     status: DoseStatus;
+    /// Intervalo até a dose seguinte, em dias, fixado no planejamento.
+    intervalDays: number;
+    phase: ProtocolPhase;
   } | null;
+
+  @ApiProperty({
+    enum: ['BUILD_UP', 'MAINTENANCE'],
+    description:
+      'Fase vigente: lida do snapshot da previsão em aberto e, sem ela, do início da manutenção',
+  })
+  currentPhase: ProtocolPhase;
 
   @ApiProperty()
   createdAt: Date;

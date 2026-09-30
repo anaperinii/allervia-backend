@@ -7,8 +7,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { STATUS_CODES } from 'node:http';
 import { DomainException } from 'src/infra/exceptions/domain.exception';
 import { CodedHttpException } from 'src/infra/exceptions/coded.exception';
+import { messageForCode } from 'src/infra/errors/error-catalog';
 import {
   codeFromExceptionName,
   defaultCodeForStatus,
@@ -51,7 +53,10 @@ export class HttpErrorFilter implements ExceptionFilter {
       return {
         statusCode: exception.getStatus(),
         code: exception.code,
-        message: this.flatten(body.message) ?? exception.message,
+        message:
+          this.flatten(body.message) ??
+          messageForCode(exception.code) ??
+          exception.message,
         ...(body.fieldErrors ? { fieldErrors: body.fieldErrors } : {}),
         ...(requestId ? { requestId } : {}),
       };
@@ -73,14 +78,16 @@ export class HttpErrorFilter implements ExceptionFilter {
       const body: NestErrorBody =
         typeof raw === 'string' ? { message: raw } : (raw as NestErrorBody);
 
-      const message = this.flatten(body.message) ?? exception.message;
-      const messageIsCode = /^[A-Z][A-Z0-9_]{2,}$/.test(message);
+      const text = this.flatten(body.message) ?? exception.message;
+      const messageIsCode = /^[A-Z][A-Z0-9_]{2,}$/.test(text);
+      const code =
+        body.code ?? (messageIsCode ? text : defaultCodeForStatus(status));
+      const needsCopy = messageIsCode || text === STATUS_CODES[status];
 
       return {
         statusCode: status,
-        code:
-          body.code ?? (messageIsCode ? message : defaultCodeForStatus(status)),
-        message,
+        code,
+        message: needsCopy ? (messageForCode(code) ?? text) : text,
         ...(body.fieldErrors ? { fieldErrors: body.fieldErrors } : {}),
         ...(requestId ? { requestId } : {}),
       };
@@ -89,7 +96,7 @@ export class HttpErrorFilter implements ExceptionFilter {
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       code: 'INTERNAL_ERROR',
-      message: 'Erro interno ao processar a requisição.',
+      message: messageForCode('INTERNAL_ERROR')!,
       ...(requestId ? { requestId } : {}),
     };
   }

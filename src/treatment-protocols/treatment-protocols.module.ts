@@ -21,6 +21,7 @@ import { CreateImmunotherapyUseCase } from './allergen-immunotherapy/therapies/u
 import { FindImmunotherapyUseCase } from './allergen-immunotherapy/therapies/use-cases/find-immunotherapy.use-case';
 import { ReadImmunotherapyUseCase } from './allergen-immunotherapy/therapies/use-cases/read-immunotherapy.use-case';
 import { ListAllImmunotherapiesUseCase } from './allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
+import { ListImmunotherapyTypesUseCase } from './allergen-immunotherapy/therapies/use-cases/list-immunotherapy-types.use-case';
 import { ListImmunotherapiesByTypeUseCase } from './allergen-immunotherapy/therapies/use-cases/list-immunotherapies-by-type.use-case';
 import { ListImmunotherapiesForPatientUseCase } from './allergen-immunotherapy/therapies/use-cases/list-immunotherapies-for-patient.use-case';
 import { UpdateImmunotherapyStatusUseCase } from './allergen-immunotherapy/therapies/use-cases/update-immunotherapy-status.use-case';
@@ -57,6 +58,7 @@ import { PermissionsModule } from 'src/security/permissions/permissions.module';
     UpdateImmunotherapyUseCase,
     UpdateImmunotherapyStatusUseCase,
     ListAllImmunotherapiesUseCase,
+    ListImmunotherapyTypesUseCase,
     {
       provide: IDoseRepository,
       useClass: PrismaDoseRepository,
