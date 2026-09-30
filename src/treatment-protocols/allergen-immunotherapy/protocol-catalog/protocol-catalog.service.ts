@@ -36,6 +36,16 @@ export function requireClinicalAuthor(user: AuthenticatedUserPayload) {
   )
     throw new ForbiddenException('CLINICAL_AUTHOR_REQUIRED');
 }
+export function requireProtocolManager(user: AuthenticatedUserPayload) {
+  if (
+    !user.organizationId ||
+    !user.professionalId ||
+    !user.roles.some(
+      (role) => role === 'PHYSICIAN' || role === 'ADMINISTRATOR',
+    )
+  )
+    throw new ForbiddenException('PROTOCOL_MANAGER_REQUIRED');
+}
 export function persistenceDefinition(
   version: Pick<ProtocolVersion, 'definition' | 'protocolId' | 'id' | 'number'>,
 ) {
@@ -110,7 +120,7 @@ export class ProtocolCatalogService {
     return version;
   }
   async create(dto: CreateProtocolDto, user: AuthenticatedUserPayload) {
-    requireClinicalAuthor(user);
+    requireProtocolManager(user);
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR NO KEY UPDATE`;
       const protocol = await tx.treatmentProtocol.create({
@@ -145,7 +155,7 @@ export class ProtocolCatalogService {
     definition: Record<string, unknown>,
     user: AuthenticatedUserPayload,
   ) {
-    requireClinicalAuthor(user);
+    requireProtocolManager(user);
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR NO KEY UPDATE`;
       const rows = await tx.$queryRaw<
@@ -182,7 +192,7 @@ export class ProtocolCatalogService {
     operation: 'edit' | 'publish' | 'retire' | 'default',
     definition?: EditProtocolVersionDto['definition'],
   ) {
-    requireClinicalAuthor(user);
+    requireProtocolManager(user);
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR NO KEY UPDATE`;
       const initial = await tx.protocolVersion.findFirst({
@@ -292,6 +302,49 @@ export class ProtocolCatalogService {
       return updated;
     });
   }
+  async discardDraft(
+    id: string,
+    revision: number,
+    user: AuthenticatedUserPayload,
+  ) {
+    requireProtocolManager(user);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR NO KEY UPDATE`;
+      const initial = await tx.protocolVersion.findFirst({
+        where: { id, organizationId: user.organizationId },
+      });
+      if (!initial) throw new NotFoundException();
+      await tx.$queryRaw`SELECT id FROM "TreatmentProtocol" WHERE id = ${initial.protocolId} FOR UPDATE`;
+      const version = await tx.protocolVersion.findUniqueOrThrow({
+        where: { id },
+      });
+      if (version.revision !== revision)
+        throw new ConflictException('STALE_PROTOCOL_REVISION');
+      if (version.status !== 'DRAFT')
+        throw new ConflictException('PUBLISHED_VERSION_IMMUTABLE');
+
+      await this.record(tx, user, id, 'PROTOCOL_DRAFT_DISCARDED', {
+        oldValues: {
+          definition: version.definition,
+          status: version.status,
+          number: version.number,
+        },
+        changedFields: ['status'],
+      });
+      await tx.protocolVersion.delete({ where: { id } });
+
+      const remaining = await tx.protocolVersion.count({
+        where: { protocolId: version.protocolId },
+      });
+      if (remaining === 0)
+        await tx.treatmentProtocol.delete({ where: { id: version.protocolId } });
+
+      return {
+        discardedVersionId: id,
+        protocolRemoved: remaining === 0,
+      };
+    });
+  }
   async simulate(
     id: string,
     dto: SimulateProtocolDto,
@@ -318,7 +371,7 @@ export class ProtocolCatalogService {
     };
   }
   async settings(dto: AutomationSettingsDto, user: AuthenticatedUserPayload) {
-    requireClinicalAuthor(user);
+    requireProtocolManager(user);
     try {
       new Intl.DateTimeFormat('en', { timeZone: dto.timeZone });
     } catch {
@@ -369,6 +422,7 @@ export class ProtocolCatalogService {
     action:
       | 'PROTOCOL_DRAFT_CREATED'
       | 'PROTOCOL_DRAFT_EDITED'
+      | 'PROTOCOL_DRAFT_DISCARDED'
       | 'PROTOCOL_PUBLISHED'
       | 'PROTOCOL_RETIRED'
       | 'PROTOCOL_DEFAULT_CHANGED'

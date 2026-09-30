@@ -35,7 +35,7 @@ export class CreatePatientDto {
   @ApiProperty({ description: 'Data de Nascimento' })
   @IsDateString({ strict: true })
   @IsNotEmpty()
-  birthDate: Date;
+  birthDate: string;
 
   @ApiProperty({ description: 'Peso em kg' })
   @IsNumber()

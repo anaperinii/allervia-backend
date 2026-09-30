@@ -84,7 +84,7 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
         idempotencyKey: 'contract-fixture-1',
         patient: {
           fullName: 'Synthetic contract patient',
-          birthDate: new Date('1990-01-01'),
+          birthDate: '1990-01-01',
           weightInKg: 70,
           phoneNumber: '11999999999',
           responsiblePhysicianId: user.professionalId!,

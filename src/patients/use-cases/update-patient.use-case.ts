@@ -77,7 +77,7 @@ export class UpdatePatientUseCase {
         id,
         {
           fullName: dto.fullName,
-          birthDate: dto.birthDate,
+          birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
           weightInKg: dto.weightInKg,
           phoneNumber: dto.phoneNumber,
           cpf,

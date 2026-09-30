@@ -36,7 +36,7 @@ export class CreatePatientUseCase {
     const savedPatient = await this.patientRepository.create(
       {
         fullName: dto.fullName,
-        birthDate: dto.birthDate,
+        birthDate: new Date(dto.birthDate),
         weightInKg: dto.weightInKg,
         phoneNumber: dto.phoneNumber,
         cpf,

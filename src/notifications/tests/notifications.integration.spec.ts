@@ -75,7 +75,7 @@ describe('Notifications outbox and persisted requests - Integration', () => {
       idempotencyKey: `notify-${sequence}`,
       patient: {
         fullName: `Paciente ${sequence}`,
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         weightInKg: 70,
         phoneNumber: '11999999999',
         responsiblePhysicianId: physician.professionalId!,

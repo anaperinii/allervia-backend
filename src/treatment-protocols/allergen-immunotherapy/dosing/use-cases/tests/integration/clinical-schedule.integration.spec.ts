@@ -71,7 +71,7 @@ describe('Clinical schedule and metrics - Integration', () => {
       idempotencyKey: `schedule-${registrationSequence}`,
       patient: {
         fullName,
-        birthDate: new Date('1990-01-01'),
+        birthDate: '1990-01-01',
         weightInKg: 70,
         phoneNumber: '11999999999',
         responsiblePhysicianId: actor.professionalId!,
