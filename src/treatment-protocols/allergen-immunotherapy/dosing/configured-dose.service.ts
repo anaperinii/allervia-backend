@@ -56,6 +56,91 @@ export function configuredValues(
     concentrationUnit: protocol.concentrationUnit,
   };
 }
+export interface TherapyMilestones {
+  inductionStartDate: Date;
+  maintenanceStartDate: Date | null;
+}
+
+/**
+ * Marcos derivados das doses vivas: a indução começa na primeira dose não
+ * arquivada e a manutenção na primeira aplicação de fase MAINTENANCE. Reagendar
+ * a primeira dose ou retratar a aplicação que marcou a manutenção muda esses
+ * marcos, então eles são recalculados em vez de escritos uma única vez.
+ */
+export async function therapyMilestones(
+  tx: Prisma.TransactionClient,
+  immunotherapyId: string,
+): Promise<TherapyMilestones | null> {
+  const first = await tx.dose.findFirst({
+    where: {
+      immunotherapyId,
+      isArchived: false,
+      status: { not: 'ENTERED_IN_ERROR' },
+    },
+    orderBy: { scheduledAt: 'asc' },
+    select: { scheduledAt: true },
+  });
+  if (!first) return null;
+  const maintenance = await tx.dose.findFirst({
+    where: {
+      immunotherapyId,
+      isArchived: false,
+      status: { in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'] },
+      administeredAt: { not: null },
+      administeredValues: { path: ['phase'], equals: 'MAINTENANCE' },
+    },
+    orderBy: { administeredAt: 'asc' },
+    select: { administeredAt: true },
+  });
+  return {
+    inductionStartDate: first.scheduledAt,
+    maintenanceStartDate: maintenance?.administeredAt ?? null,
+  };
+}
+
+/**
+ * Compara os marcos recalculados com os gravados e devolve apenas o que mudou,
+ * para a escrita e a auditoria ficarem vazias quando nada se move.
+ */
+export function milestoneChanges(
+  current: { inductionStartDate: Date; maintenanceStartDate: Date | null },
+  next: TherapyMilestones | null,
+): {
+  data: { inductionStartDate?: Date; maintenanceStartDate?: Date | null };
+  changedFields: string[];
+  oldValues: Record<string, string | null>;
+  newValues: Record<string, string | null>;
+} {
+  const data: {
+    inductionStartDate?: Date;
+    maintenanceStartDate?: Date | null;
+  } = {};
+  const changedFields: string[] = [];
+  const oldValues: Record<string, string | null> = {};
+  const newValues: Record<string, string | null> = {};
+  if (!next) return { data, changedFields, oldValues, newValues };
+
+  if (
+    current.inductionStartDate.getTime() !== next.inductionStartDate.getTime()
+  ) {
+    data.inductionStartDate = next.inductionStartDate;
+    changedFields.push('inductionStartDate');
+    oldValues.inductionStartDate = current.inductionStartDate.toISOString();
+    newValues.inductionStartDate = next.inductionStartDate.toISOString();
+  }
+  const currentMaintenance = current.maintenanceStartDate?.getTime() ?? null;
+  const nextMaintenance = next.maintenanceStartDate?.getTime() ?? null;
+  if (currentMaintenance !== nextMaintenance) {
+    data.maintenanceStartDate = next.maintenanceStartDate;
+    changedFields.push('maintenanceStartDate');
+    oldValues.maintenanceStartDate =
+      current.maintenanceStartDate?.toISOString() ?? null;
+    newValues.maintenanceStartDate =
+      next.maintenanceStartDate?.toISOString() ?? null;
+  }
+  return { data, changedFields, oldValues, newValues };
+}
+
 export function prescriptionFromJson(
   value: unknown,
   protocol: PublishedProtocolDefinition,
@@ -379,10 +464,34 @@ export class ConfiguredDoseService {
           updatedById: user.id,
         },
       });
+      // Reagendar a primeira dose move o início da indução; o recálculo roda
+      // depois da escrita da dose para enxergar o novo `scheduledAt`.
+      const milestones = milestoneChanges(
+        context.therapy,
+        await therapyMilestones(tx, context.therapy.id),
+      );
       const therapy = await tx.immunotherapy.update({
         where: { id: context.therapy.id },
-        data: { revision: { increment: 1 }, updatedById: user.id },
+        data: {
+          revision: { increment: 1 },
+          updatedById: user.id,
+          ...milestones.data,
+        },
       });
+      if (milestones.changedFields.length > 0)
+        await this.audit.record(
+          {
+            userId: user.id,
+            organizationId: user.organizationId,
+            entityType: 'Immunotherapy',
+            entityId: context.therapy.id,
+            action: 'IMMUNOTHERAPY_UPDATED',
+            oldValues: milestones.oldValues,
+            newValues: { ...milestones.newValues, doseId: id },
+            changedFields: milestones.changedFields,
+          },
+          tx,
+        );
       await this.audit.record(
         {
           userId: user.id,

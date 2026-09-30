@@ -12,6 +12,7 @@ import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { json } from '../protocol-catalog/protocol-catalog.service';
+import { milestoneChanges, therapyMilestones } from './configured-dose.service';
 import { enqueueOutbox } from 'src/notifications/notifications.service';
 import { LateObservationDto, RetractDoseDto } from './dtos/dose-correction.dto';
 
@@ -120,10 +121,35 @@ export class DoseCorrectionService {
           updatedById: user.id,
         },
       });
+      // A retratada sai da contagem e a reemitida entra: se a aplicação
+      // retratada era o marco da manutenção, o campo volta a ficar vazio até
+      // uma nova aplicação de fase MAINTENANCE.
+      const milestones = milestoneChanges(
+        dose.immunotherapy,
+        await therapyMilestones(tx, dose.immunotherapyId),
+      );
       const therapy = await tx.immunotherapy.update({
         where: { id: dose.immunotherapyId },
-        data: { revision: { increment: 1 }, updatedById: user.id },
+        data: {
+          revision: { increment: 1 },
+          updatedById: user.id,
+          ...milestones.data,
+        },
       });
+      if (milestones.changedFields.length > 0)
+        await this.audit.record(
+          {
+            userId: user.id,
+            organizationId: user.organizationId,
+            entityType: 'Immunotherapy',
+            entityId: dose.immunotherapyId,
+            action: 'IMMUNOTHERAPY_UPDATED',
+            oldValues: milestones.oldValues,
+            newValues: { ...milestones.newValues, retractedDoseId: id },
+            changedFields: milestones.changedFields,
+          },
+          tx,
+        );
       await this.audit.record(
         {
           userId: user.id,
