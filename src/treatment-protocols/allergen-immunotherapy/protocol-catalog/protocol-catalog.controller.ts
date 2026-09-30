@@ -1,7 +1,15 @@
 import { ProtocolMigrationService } from './protocol-migration.service';
 import { BindLegacyProtocolDto } from './protocol-catalog.dto';
 import type { ResolvedPrescription } from '../clinical-rules/protocol-definition';
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
@@ -72,6 +80,15 @@ export class ProtocolCatalogController {
       'edit',
       dto.definition,
     );
+  }
+  @Delete('versions/:id')
+  @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  discard(
+    @Param('id') id: string,
+    @Body() dto: ProtocolRevisionDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.catalog.discardDraft(id, dto.expectedRevision, user);
   }
   @Post('versions/:id/publish')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })

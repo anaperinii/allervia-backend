@@ -38,7 +38,7 @@ export class AbilityFactory {
 
     switch (role) {
       case Role.ADMINISTRATOR:
-        can('read', 'TreatmentProtocol', inOrg);
+        can('manage', 'TreatmentProtocol', inOrg);
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can('read', 'Dose', doseInOrg);

@@ -191,6 +191,49 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       }),
     ).rejects.toThrow();
   });
+  it('discards a draft and refuses to discard published content', async () => {
+    const draft = await catalog.createVersion(
+      protocolId,
+      syntheticProtocolDefinition(),
+      user,
+    );
+    await expect(catalog.discardDraft(draft.id, 1, user)).rejects.toThrow(
+      ConflictException,
+    );
+    await expect(catalog.discardDraft(versionId, 1, user)).rejects.toThrow(
+      ConflictException,
+    );
+
+    const discarded = await catalog.discardDraft(draft.id, 0, user);
+    expect(discarded).toMatchObject({
+      discardedVersionId: draft.id,
+      protocolRemoved: false,
+    });
+    expect(
+      await prisma.protocolVersion.findUnique({ where: { id: draft.id } }),
+    ).toBeNull();
+    expect(
+      await prisma.protocolVersion.findUnique({ where: { id: versionId } }),
+    ).not.toBeNull();
+    expect(
+      await prisma.auditLog.count({
+        where: { action: 'PROTOCOL_DRAFT_DISCARDED', entityId: draft.id },
+      }),
+    ).toBe(1);
+  });
+  it('removes the protocol when its only draft is discarded', async () => {
+    const created = await catalog.create(
+      { name: 'Somente rascunho', definition: syntheticProtocolDefinition() },
+      user,
+    );
+    const discarded = await catalog.discardDraft(created.version.id, 0, user);
+    expect(discarded.protocolRemoved).toBe(true);
+    expect(
+      await prisma.treatmentProtocol.findUnique({
+        where: { id: created.protocol.id },
+      }),
+    ).toBeNull();
+  });
   it('keeps v1 treatments unchanged after v2 becomes default and v1 is retired', async () => {
     const result = await create.execute(createInput(), user);
     const definition = syntheticProtocolDefinition();
@@ -240,7 +283,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     await expect(
       catalog.create(
         { name: 'Unauthorized', definition: {} },
-        { ...user, roles: ['ADMINISTRATOR'] },
+        { ...user, roles: ['NURSE'] },
       ),
     ).rejects.toThrow(ForbiddenException);
     const other =
