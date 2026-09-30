@@ -5,6 +5,7 @@ import { IMMUNOTHERAPY_MESSAGES } from 'src/treatment-protocols/allergen-immunot
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { ImmunotherapyDetailDto } from '../dtos/immunotherapy-read.dto';
+import { resolvePhase } from './list-all-immunotherapies.use-case';
 
 @Injectable()
 export class ReadImmunotherapyUseCase {
@@ -58,8 +59,19 @@ export class ReadImmunotherapyUseCase {
     const nextDose = await this.prisma.dose.findFirst({
       where: { immunotherapyId: id, status: 'SCHEDULED', isArchived: false },
       orderBy: { scheduledAt: 'asc' },
-      select: { id: true, scheduledAt: true, status: true },
+      select: {
+        id: true,
+        scheduledAt: true,
+        status: true,
+        nextIntervalInDays: true,
+        plannedValues: true,
+      },
     });
+
+    const currentPhase = resolvePhase(
+      nextDose?.plannedValues,
+      therapy.maintenanceStartDate,
+    );
 
     return {
       id: therapy.id,
@@ -84,7 +96,16 @@ export class ReadImmunotherapyUseCase {
             resolved: therapy.currentPrescription.resolved,
           }
         : null,
-      nextDose,
+      nextDose: nextDose
+        ? {
+            id: nextDose.id,
+            scheduledAt: nextDose.scheduledAt,
+            status: nextDose.status,
+            intervalDays: nextDose.nextIntervalInDays,
+            phase: currentPhase,
+          }
+        : null,
+      currentPhase,
       doseCount: therapy._count.doses,
       createdAt: therapy.createdAt,
       updatedAt: therapy.updatedAt,
