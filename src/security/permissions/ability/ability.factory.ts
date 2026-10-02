@@ -39,6 +39,7 @@ export class AbilityFactory {
     switch (role) {
       case Role.ADMINISTRATOR:
         can('manage', 'TreatmentProtocol', inOrg);
+        can('manage', 'GoogleCalendarConnection', inOrg);
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can('read', 'Dose', doseInOrg);
@@ -62,12 +63,20 @@ export class AbilityFactory {
             immunotherapy: { patient: ownPatient },
           });
           can('manage', 'Appointment', { patient: ownPatient });
+          can('manage', 'GoogleCalendarConnection', {
+            professionalId: user.professionalId,
+          });
         }
         can('read', 'Professional', inOrg);
         break;
 
       case Role.NURSE:
         can('read', 'TreatmentProtocol', inOrg);
+        if (user.professionalId) {
+          can('manage', 'GoogleCalendarConnection', {
+            professionalId: user.professionalId,
+          });
+        }
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can(['read', 'create', 'update', 'archive'], 'Dose', doseInOrg);

@@ -149,6 +149,8 @@ model Professional {
   professionalRolesRevoked ProfessionalRole[]   @relation("RoleRevokedById")
   patientsResponsible      Patient[]            @relation("ResponsiblePhysician")
   internalUserInvites      InternalUserInvite[]
+  appointments             Appointment[]        @relation("AppointmentProfessional")
+  googleCalendarConnection GoogleCalendarConnection?
 
   @@index([organizationId, profession])
 }
@@ -388,6 +390,11 @@ model Appointment {
   doseId String? @unique
   dose   Dose?   @relation(fields: [doseId], references: [id])
 
+  /// Profissional dono da agenda do compromisso. Obrigatório para novos
+  /// registros (validado na aplicação); nulo apenas no legado anterior à coluna.
+  professionalId String?
+  professional   Professional? @relation("AppointmentProfessional", fields: [professionalId], references: [id], onDelete: Restrict)
+
   title    String?
   startsAt DateTime
   endsAt   DateTime
@@ -405,8 +412,12 @@ model Appointment {
   updatedById String
   updatedBy   User     @relation("AppointmentUpdatedBy", fields: [updatedById], references: [id])
 
+  calendarEventLink GoogleCalendarEventLink?
+  calendarSyncJobs  CalendarSyncJob[]
+
   @@index([organizationId, startsAt])
   @@index([patientId, startsAt])
+  @@index([professionalId, startsAt])
 }
 
 model Dose {
@@ -881,4 +892,114 @@ model AuthSession {
   ipAddressHash String?
   @@index([userId, revokedAt])
   @@index([expiresAt])
+}
+
+enum GoogleCalendarConnectionStatus {
+  ACTIVE
+  /// Refresh token inválido ou revogado no Google; exige reconexão do profissional.
+  BROKEN
+}
+
+enum CalendarSyncJobKind {
+  /// Reconciliar o evento Google com o estado atual do Appointment.
+  PUSH_SYNC
+  /// Consumir mudanças incrementais via syncToken após notificação push.
+  PULL_INCREMENTAL
+  /// Reconstrução completa após 410 GONE do syncToken.
+  PULL_FULL_RESYNC
+  CHANNEL_RENEW
+  CHANNEL_STOP
+}
+
+/// Conexão OAuth do Google Calendar por profissional. O refresh token é
+/// reversível por natureza, então segue o padrão do MfaCredential:
+/// AES-256-GCM com chave dedicada fora do banco.
+model GoogleCalendarConnection {
+  id             String @id @default(ulid())
+  organizationId String
+
+  professionalId String       @unique
+  professional   Professional @relation(fields: [professionalId], references: [id])
+
+  googleAccountEmail String
+  calendarId         String @default("primary")
+  grantedScopes      String
+
+  refreshTokenCiphertext String
+  refreshTokenIv         String
+  refreshTokenAuthTag    String
+  keyVersion             Int    @default(1)
+
+  status       GoogleCalendarConnectionStatus @default(ACTIVE)
+  brokenReason String?
+
+  /// Estado do sync incremental (nextSyncToken do events.list).
+  syncToken             String?
+  lastIncrementalSyncAt DateTime?
+  lastFullSyncAt        DateTime?
+
+  /// Canal de push (events.watch). Só o hash do token do canal é persistido.
+  channelId         String?   @unique
+  channelResourceId String?
+  channelExpiresAt  DateTime?
+  channelTokenHash  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  eventLinks GoogleCalendarEventLink[]
+
+  @@index([organizationId, status])
+  @@index([channelExpiresAt])
+}
+
+/// Correlação Appointment <-> evento do Google, com hash do último conteúdo
+/// sincronizado para supressão de eco (evitar loop push -> webhook -> push).
+model GoogleCalendarEventLink {
+  id             String @id @default(ulid())
+  organizationId String
+
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+
+  connectionId String
+  connection   GoogleCalendarConnection @relation(fields: [connectionId], references: [id])
+
+  googleEventId String
+  etag          String?
+  /// SHA-256 dos campos sincronizados (summary, description, startsAt, endsAt, status).
+  lastSyncedHash String?
+  deletedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([connectionId, googleEventId])
+}
+
+/// Job de sincronização gravado no mesmo commit do fato de origem (padrão
+/// outbox), consumido pelo dispatcher com backoff e dead-letter visível.
+model CalendarSyncJob {
+  id             String  @id @default(ulid())
+  organizationId String
+  kind           CalendarSyncJobKind
+  connectionId   String?
+  appointmentId  String?
+  appointment    Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  payload        Json?
+
+  /// Chave de deduplicação enquanto o job está pendente ("PUSH:<appointmentId>",
+  /// "PULL:<connectionId>"). Vira nulo quando o job é concluído ou vai para
+  /// dead-letter, liberando o slot — o índice único aceita vários nulos.
+  pendingKey String? @unique
+
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  leaseUntil    DateTime?
+  processedAt   DateTime?
+  lastError     String?
+  createdAt     DateTime  @default(now())
+
+  @@index([processedAt, nextAttemptAt, createdAt])
+  @@index([organizationId, createdAt])
 }

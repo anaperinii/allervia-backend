@@ -15,6 +15,7 @@ import { SessionConfig } from 'src/security/session/session.config';
 import { SessionService } from 'src/security/session/session.service';
 import { IAuthSessionRepository } from 'src/security/session/auth-session.repository';
 import { PrismaAuthSessionRepository } from 'src/security/session/prisma-auth-session.repository';
+import { GoogleCalendarConnectionService } from 'src/integrations/google-calendar/google-calendar-connection.service';
 
 describe('UpdateUserStatusUseCase - Integration', () => {
   let module: TestingModule;
@@ -46,6 +47,10 @@ describe('UpdateUserStatusUseCase - Integration', () => {
         {
           provide: IAuthSessionRepository,
           useClass: PrismaAuthSessionRepository,
+        },
+        {
+          provide: GoogleCalendarConnectionService,
+          useValue: { disconnectByUserId: jest.fn() },
         },
       ],
     }).compile();

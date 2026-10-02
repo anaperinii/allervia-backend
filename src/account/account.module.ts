@@ -5,6 +5,7 @@ import { EmailModule } from 'src/infra/email/email.module';
 import { AuthModule } from 'src/security/auth.module';
 import { SessionModule } from 'src/security/session/session.module';
 import { PermissionsModule } from 'src/security/permissions/permissions.module';
+import { GoogleCalendarModule } from 'src/integrations/google-calendar/google-calendar.module';
 import { AccountController } from './account.controller';
 import { GetAccountContextUseCase } from './use-cases/get-account-context.use-case';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-case';
@@ -27,6 +28,7 @@ import { UserResponseDto } from './dtos/user-response.dto';
     AuthModule,
     SessionModule,
     PermissionsModule,
+    GoogleCalendarModule,
   ],
   providers: [
     FindUserByIdUseCase,

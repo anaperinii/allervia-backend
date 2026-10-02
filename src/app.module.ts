@@ -19,6 +19,7 @@ import { AuditTrailModule } from './audit/audit-trail.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PublicRequestsModule } from './public-requests/public-requests.module';
+import { GoogleCalendarModule } from './integrations/google-calendar/google-calendar.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PublicRequestsModule } from './public-requests/public-requests.module';
     SchedulingModule,
     NotificationsModule,
     PublicRequestsModule,
+    GoogleCalendarModule,
   ],
   controllers: [],
   providers: [
