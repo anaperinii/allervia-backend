@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -60,6 +61,7 @@ export class AppointmentsService {
 
   async create(dto: CreateAppointmentDto, user: AuthenticatedUserPayload) {
     const window = period(dto.startsAt, dto.endsAt);
+    const ability = this.abilities.createForUser(user);
     return this.prisma.$transaction(async (tx) => {
       const patient = await tx.patient.findFirst({
         where: {
@@ -67,7 +69,7 @@ export class AppointmentsService {
           organizationId: user.organizationId,
           isArchived: false,
         },
-        select: { id: true, isActive: true },
+        select: { id: true, isActive: true, responsiblePhysicianId: true },
       });
       if (!patient) throw new NotFoundException('PATIENT_NOT_FOUND');
       if (!dto.professionalId)
@@ -116,6 +118,17 @@ export class AppointmentsService {
         },
         select: APPOINTMENT_SELECT,
       });
+      const accessible = await tx.appointment.findFirst({
+        where: {
+          AND: [
+            { id: appointment.id },
+            accessibleBy(ability, 'create').ofType('Appointment'),
+          ],
+        },
+        select: { id: true },
+      });
+      if (!accessible)
+        throw new ForbiddenException('APPOINTMENT_NOT_ACCESSIBLE');
       await this.audit.record(
         {
           userId: user.id,

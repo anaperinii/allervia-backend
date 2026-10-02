@@ -62,7 +62,12 @@ export class AbilityFactory {
           can(['read', 'create', 'update'], 'Dose', {
             immunotherapy: { patient: ownPatient },
           });
-          can('manage', 'Appointment', { patient: ownPatient });
+          can('manage', 'Appointment', {
+            OR: [
+              { patient: ownPatient },
+              { professionalId: user.professionalId },
+            ],
+          });
           can('manage', 'GoogleCalendarConnection', {
             professionalId: user.professionalId,
           });

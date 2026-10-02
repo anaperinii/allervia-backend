@@ -8,6 +8,8 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
     'Já existe uma dose registrada com data e hora posteriores a esta. Registre as doses em ordem.',
   APPOINTMENT_ALREADY_CLOSED:
     'Este agendamento já foi encerrado e não pode mais ser alterado.',
+  APPOINTMENT_NOT_ACCESSIBLE:
+    'Você não pode agendar para este paciente. Agende na sua própria agenda ou peça ao profissional responsável.',
   APPOINTMENT_PROFESSIONAL_NOT_FOUND:
     'Profissional do agendamento não encontrado nesta clínica.',
   APPOINTMENT_PROFESSIONAL_REQUIRED:

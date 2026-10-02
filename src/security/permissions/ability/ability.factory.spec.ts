@@ -1,4 +1,5 @@
 import { subject } from '@casl/ability';
+import { accessibleBy } from '@casl/prisma';
 import { AuditLog, Patient } from '@prisma/client';
 import { AbilityFactory, AbilityUser } from './ability.factory';
 
@@ -107,6 +108,23 @@ describe('AbilityFactory', () => {
     it('pode atualizar imunoterapia (nível de tipo)', () => {
       expect(ability.can('update', 'Immunotherapy')).toBe(true);
     });
+
+    it.each(['read', 'create', 'update'] as const)(
+      'filtra agendamento por paciente próprio ou agenda própria — %s',
+      (action) => {
+        const filter = accessibleBy(ability, action).ofType('Appointment');
+        expect(filter).toEqual({
+          OR: [
+            {
+              OR: [
+                { patient: { responsiblePhysicianId: 'prof-1' } },
+                { professionalId: 'prof-1' },
+              ],
+            },
+          ],
+        });
+      },
+    );
   });
 
   describe('NURSE', () => {
