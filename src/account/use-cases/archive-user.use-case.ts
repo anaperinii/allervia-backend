@@ -8,6 +8,7 @@ import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
 import { diffFields } from 'src/infra/audit/diff-fields';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { USER_MESSAGES } from 'src/account/user.messages';
+import { GoogleCalendarConnectionService } from 'src/integrations/google-calendar/google-calendar-connection.service';
 
 @Injectable()
 export class ArchiveUserUseCase {
@@ -15,6 +16,7 @@ export class ArchiveUserUseCase {
     private userRepository: IUserRepository,
     private prisma: PrismaService,
     private auditLog: IAuditLogService,
+    private googleConnections: GoogleCalendarConnectionService,
   ) {}
 
   async execute(
@@ -29,6 +31,11 @@ export class ArchiveUserUseCase {
     if (!user) {
       throw new NotFoundException(USER_MESSAGES.notFound(id));
     }
+
+    await this.googleConnections.disconnectByUserId(id, {
+      id: currentUser.id,
+      organizationId: currentUser.organizationId,
+    });
 
     return this.prisma.$transaction(async (tx) => {
       const archived = await this.userRepository.update(

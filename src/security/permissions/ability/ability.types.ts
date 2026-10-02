@@ -4,6 +4,7 @@ import {
   AuditLog,
   TreatmentProtocol,
   Dose,
+  GoogleCalendarConnection,
   Immunotherapy,
   InternalUserInvite,
   Organization,
@@ -29,6 +30,7 @@ export type AppSubjects =
       AuditLog: AuditLog;
       TreatmentProtocol: TreatmentProtocol;
       Appointment: Appointment;
+      GoogleCalendarConnection: GoogleCalendarConnection;
     }>;
 
 export type AppAbility = PrismaAbility<[AppAction, AppSubjects]>;

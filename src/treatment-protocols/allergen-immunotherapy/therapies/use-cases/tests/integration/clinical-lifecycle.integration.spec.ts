@@ -521,6 +521,7 @@ describe('Clinical lifecycle workflows - Integration', () => {
     const created = await appointments.create(
       {
         patientId,
+        professionalId: physician.professionalId!,
         doseId: result.firstDose.id,
         title: 'Aplicação SCIT',
         startsAt: '2026-01-01T10:00:00-03:00',
@@ -534,6 +535,7 @@ describe('Clinical lifecycle workflows - Integration', () => {
       appointments.create(
         {
           patientId,
+          professionalId: physician.professionalId!,
           doseId: result.firstDose.id,
           startsAt: '2026-01-02T10:00:00-03:00',
           endsAt: '2026-01-02T10:30:00-03:00',
@@ -611,6 +613,7 @@ describe('Clinical lifecycle workflows - Integration', () => {
     const created = await appointments.create(
       {
         patientId: result.patient.id,
+        professionalId: physician.professionalId!,
         startsAt: future.toISOString(),
         endsAt: end.toISOString(),
       },

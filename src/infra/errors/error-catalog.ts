@@ -8,6 +8,12 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
     'Já existe uma dose registrada com data e hora posteriores a esta. Registre as doses em ordem.',
   APPOINTMENT_ALREADY_CLOSED:
     'Este agendamento já foi encerrado e não pode mais ser alterado.',
+  APPOINTMENT_NOT_ACCESSIBLE:
+    'Você não pode agendar para este paciente. Agende na sua própria agenda ou peça ao profissional responsável.',
+  APPOINTMENT_PROFESSIONAL_NOT_FOUND:
+    'Profissional do agendamento não encontrado nesta clínica.',
+  APPOINTMENT_PROFESSIONAL_REQUIRED:
+    'Informe o profissional responsável pelo agendamento.',
   AUTOMATION_DISABLED:
     'A automação de protocolos está desativada para esta clínica. Fale com quem administra a conta.',
   CLINICAL_AUTHOR_REQUIRED: 'Apenas médicos podem realizar esta ação.',
@@ -24,6 +30,22 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   DOSE_NOT_ADMINISTERED: 'Esta dose ainda não foi administrada.',
   DOSE_NOT_SCHEDULED: 'Esta dose não está agendada e não pode ser alterada.',
   DOSE_VALUES_REQUIRED: 'Informe os valores da dose.',
+  GOOGLE_CALENDAR_ALREADY_CONNECTED:
+    'Já existe uma conta Google conectada para este profissional. Desconecte antes de conectar outra.',
+  GOOGLE_CALENDAR_CONNECTION_BROKEN:
+    'A conexão com o Google Calendar foi revogada. Reconecte sua conta para retomar a sincronização.',
+  GOOGLE_CALENDAR_NOT_CONNECTED:
+    'Nenhuma conta Google conectada para este profissional.',
+  GOOGLE_OAUTH_EXCHANGE_FAILED:
+    'Não foi possível concluir a conexão com o Google. Tente novamente.',
+  GOOGLE_OAUTH_STATE_INVALID:
+    'A autorização expirou ou é inválida. Inicie a conexão com o Google novamente.',
+  GOOGLE_SCOPE_NOT_GRANTED:
+    'A permissão de agenda não foi concedida. Conecte novamente e mantenha a permissão do Google Agenda marcada.',
+  GOOGLE_REFRESH_TOKEN_MISSING:
+    'O Google não concedeu acesso contínuo. Remova o Allervia das permissões da sua conta Google e conecte de novo.',
+  GOOGLE_TOKEN_KEY_UNAVAILABLE:
+    'A integração com o Google Calendar está indisponível no momento. Fale com o suporte.',
   GUARDIAN_NOT_ALLOWED_FOR_ADULT:
     'Paciente maior de idade não tem responsável legal. Remova os dados do responsável.',
   GUARDIAN_REQUIRED_FOR_MINOR:

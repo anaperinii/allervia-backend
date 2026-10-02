@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { buildPage, resolvePage } from 'src/infra/http/pagination';
+import { enqueueCalendarSync } from 'src/integrations/google-calendar/calendar-sync.enqueue';
 import {
   CreateAppointmentDto,
   ListAppointmentsQueryDto,
@@ -31,8 +33,10 @@ const APPOINTMENT_SELECT = {
   revision: true,
   createdAt: true,
   updatedAt: true,
+  professionalId: true,
   patient: { select: { id: true, fullName: true, phoneNumber: true } },
   dose: { select: { id: true, scheduledAt: true, status: true } },
+  professional: { select: { id: true, fullName: true, profession: true } },
 } satisfies Prisma.AppointmentSelect;
 
 function period(from: string, to: string): { from: Date; to: Date } {
@@ -57,6 +61,7 @@ export class AppointmentsService {
 
   async create(dto: CreateAppointmentDto, user: AuthenticatedUserPayload) {
     const window = period(dto.startsAt, dto.endsAt);
+    const ability = this.abilities.createForUser(user);
     return this.prisma.$transaction(async (tx) => {
       const patient = await tx.patient.findFirst({
         where: {
@@ -64,9 +69,20 @@ export class AppointmentsService {
           organizationId: user.organizationId,
           isArchived: false,
         },
-        select: { id: true, isActive: true },
+        select: { id: true, isActive: true, responsiblePhysicianId: true },
       });
       if (!patient) throw new NotFoundException('PATIENT_NOT_FOUND');
+      if (!dto.professionalId)
+        throw new BadRequestException('APPOINTMENT_PROFESSIONAL_REQUIRED');
+      const professional = await tx.professional.findFirst({
+        where: {
+          id: dto.professionalId,
+          organizationId: user.organizationId,
+        },
+        select: { id: true },
+      });
+      if (!professional)
+        throw new NotFoundException('APPOINTMENT_PROFESSIONAL_NOT_FOUND');
       if (dto.doseId) {
         const dose = await tx.dose.findFirst({
           where: {
@@ -91,6 +107,7 @@ export class AppointmentsService {
         data: {
           organizationId: user.organizationId,
           patientId: dto.patientId,
+          professionalId: dto.professionalId,
           doseId: dto.doseId ?? null,
           title: dto.title ?? null,
           startsAt: window.from,
@@ -101,6 +118,17 @@ export class AppointmentsService {
         },
         select: APPOINTMENT_SELECT,
       });
+      const accessible = await tx.appointment.findFirst({
+        where: {
+          AND: [
+            { id: appointment.id },
+            accessibleBy(ability, 'create').ofType('Appointment'),
+          ],
+        },
+        select: { id: true },
+      });
+      if (!accessible)
+        throw new ForbiddenException('APPOINTMENT_NOT_ACCESSIBLE');
       await this.audit.record(
         {
           userId: user.id,
@@ -111,12 +139,18 @@ export class AppointmentsService {
           newValues: {
             appointmentId: appointment.id,
             doseId: dto.doseId ?? null,
+            professionalId: dto.professionalId,
             startsAt: window.from.toISOString(),
             endsAt: window.to.toISOString(),
           },
         },
         tx,
       );
+      await enqueueCalendarSync(tx, {
+        organizationId: user.organizationId,
+        kind: 'PUSH_SYNC',
+        appointmentId: appointment.id,
+      });
       return appointment;
     });
   }
@@ -157,6 +191,22 @@ export class AppointmentsService {
       const reschedule = dto.startsAt !== undefined || dto.endsAt !== undefined;
       if (reschedule && appointment.status !== 'SCHEDULED')
         throw new ConflictException('APPOINTMENT_ALREADY_CLOSED');
+      if (
+        dto.professionalId !== undefined &&
+        dto.professionalId !== appointment.professionalId
+      ) {
+        if (appointment.status !== 'SCHEDULED')
+          throw new ConflictException('APPOINTMENT_ALREADY_CLOSED');
+        const professional = await tx.professional.findFirst({
+          where: {
+            id: dto.professionalId,
+            organizationId: user.organizationId,
+          },
+          select: { id: true },
+        });
+        if (!professional)
+          throw new NotFoundException('APPOINTMENT_PROFESSIONAL_NOT_FOUND');
+      }
       const window = reschedule
         ? period(
             dto.startsAt ?? appointment.startsAt.toISOString(),
@@ -170,6 +220,9 @@ export class AppointmentsService {
           status: nextStatus,
           statusReason: dto.statusReason ?? appointment.statusReason,
           ...(window ? { startsAt: window.from, endsAt: window.to } : {}),
+          ...(dto.professionalId !== undefined
+            ? { professionalId: dto.professionalId }
+            : {}),
           ...(dto.title !== undefined ? { title: dto.title } : {}),
           ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
           revision: { increment: 1 },
@@ -187,16 +240,25 @@ export class AppointmentsService {
           oldValues: {
             status: appointment.status,
             startsAt: appointment.startsAt.toISOString(),
+            professionalId: appointment.professionalId,
           },
           newValues: {
             appointmentId: id,
             status: nextStatus,
             statusReason: dto.statusReason ?? null,
             startsAt: updated.startsAt.toISOString(),
+            professionalId: updated.professionalId,
           },
         },
         tx,
       );
+      if (updated.professionalId || appointment.professionalId) {
+        await enqueueCalendarSync(tx, {
+          organizationId: user.organizationId,
+          kind: 'PUSH_SYNC',
+          appointmentId: id,
+        });
+      }
       return updated;
     });
   }
@@ -213,6 +275,9 @@ export class AppointmentsService {
         { startsAt: { gte: window.from, lte: window.to } },
         ...(query.status ? [{ status: query.status }] : []),
         ...(query.patientId ? [{ patientId: query.patientId }] : []),
+        ...(query.professionalId
+          ? [{ professionalId: query.professionalId }]
+          : []),
       ],
     };
     const [items, total] = await this.prisma.$transaction([

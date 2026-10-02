@@ -18,6 +18,11 @@ const OFFSET = /T.*(?:Z|[+-]\d{2}:\d{2})$/;
 export class CreateAppointmentDto {
   @ApiProperty() @IsString() @IsNotEmpty() patientId: string;
 
+  @ApiProperty({ description: 'Professional who owns the appointment agenda' })
+  @IsString()
+  @IsNotEmpty()
+  professionalId: string;
+
   @ApiPropertyOptional({
     description: 'Optional link to the clinical scheduled dose',
   })
@@ -44,6 +49,12 @@ export class CreateAppointmentDto {
 
 export class UpdateAppointmentDto {
   @ApiProperty() @IsInt() @Min(0) expectedRevision: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  professionalId?: string;
 
   @ApiPropertyOptional({ enum: AppointmentStatus })
   @IsOptional()
@@ -95,4 +106,10 @@ export class ListAppointmentsQueryDto extends PageQueryDto {
   @IsString()
   @IsNotEmpty()
   patientId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  professionalId?: string;
 }

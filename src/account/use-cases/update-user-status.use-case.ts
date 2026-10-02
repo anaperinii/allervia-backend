@@ -11,6 +11,7 @@ import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.
 import { USER_MESSAGES } from 'src/account/user.messages';
 import { SessionService } from 'src/security/session/session.service';
 import { AuthSessionRevokeReason } from '@prisma/client';
+import { GoogleCalendarConnectionService } from 'src/integrations/google-calendar/google-calendar-connection.service';
 
 @Injectable()
 export class UpdateUserStatusUseCase {
@@ -19,6 +20,7 @@ export class UpdateUserStatusUseCase {
     private readonly prisma: PrismaService,
     private readonly auditLog: IAuditLogService,
     private readonly sessionService: SessionService,
+    private readonly googleConnections: GoogleCalendarConnectionService,
   ) {}
 
   async execute(
@@ -40,6 +42,10 @@ export class UpdateUserStatusUseCase {
         id,
         AuthSessionRevokeReason.ACCOUNT_DISABLED,
       );
+      await this.googleConnections.disconnectByUserId(id, {
+        id: currentUser.id,
+        organizationId: currentUser.organizationId,
+      });
     }
 
     return this.prisma.$transaction(async (tx) => {
