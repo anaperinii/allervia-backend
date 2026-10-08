@@ -1,7 +1,18 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AdministrationRoute, TherapyStatus } from '@prisma/client';
 
 export class ImmunotherapyResponseDto {
+  @ApiPropertyOptional({
+    description: 'Concurrency revision for clinical writes',
+  })
+  revision?: number;
+  @ApiPropertyOptional({
+    type: Object,
+    nullable: true,
+    description:
+      'Immutable prescription snapshot: versionId, revision and resolved step selection',
+  })
+  prescription?: unknown;
   @ApiProperty({ description: 'ID da imunoterapia' })
   id: string;
 
@@ -23,8 +34,11 @@ export class ImmunotherapyResponseDto {
   @ApiProperty({ description: 'Concentração alvo' })
   targetConcentration: number;
 
-  @ApiProperty({ description: 'Volume alvo' })
-  targetVolume: number;
+  @ApiProperty({
+    type: String,
+    description: 'Volume alvo em decimal exato',
+  })
+  targetVolume: string;
 
   @ApiProperty({ description: 'ID do paciente' })
   patientId: string;

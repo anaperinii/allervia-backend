@@ -1,7 +1,10 @@
+import type { ProtocolPrescription, Prisma } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { AdministrationRoute, TherapyStatus } from '@prisma/client';
 
 export interface ImmunotherapyProps {
+  prescription?: ProtocolPrescription | null;
+  revision?: number;
   id: string;
   immunoType: string;
   administrationRoute: AdministrationRoute;
@@ -9,7 +12,7 @@ export interface ImmunotherapyProps {
   inductionStartDate: Date;
   maintenanceStartDate: Date | null;
   targetConcentration: number;
-  targetVolume: number;
+  targetVolume: Prisma.Decimal | string;
   patientId: string;
   createdById: string;
   isArchived: boolean;
@@ -27,13 +30,15 @@ export interface CreateImmunotherapyProps {
   extract: string;
   inductionStartDate: Date;
   targetConcentration: number;
-  targetVolume: number;
+  targetVolume: string;
   patientId: string;
   createdById: string;
   updatedById: string;
 }
 
 export class Immunotherapy {
+  prescription?: ProtocolPrescription | null;
+  revision: number;
   id: string;
   immunoType: string;
   administrationRoute: AdministrationRoute;
@@ -41,7 +46,7 @@ export class Immunotherapy {
   inductionStartDate: Date;
   maintenanceStartDate: Date | null;
   targetConcentration: number;
-  targetVolume: number;
+  targetVolume: string;
   patientId: string;
   isArchived: boolean;
   status: TherapyStatus;
@@ -53,6 +58,8 @@ export class Immunotherapy {
   archivedAt: Date | null;
 
   constructor(props: ImmunotherapyProps) {
+    this.prescription = props.prescription;
+    this.revision = props.revision ?? 0;
     this.id = props.id;
     this.immunoType = props.immunoType;
     this.administrationRoute = props.administrationRoute;
@@ -60,7 +67,7 @@ export class Immunotherapy {
     this.inductionStartDate = props.inductionStartDate;
     this.maintenanceStartDate = props.maintenanceStartDate;
     this.targetConcentration = props.targetConcentration;
-    this.targetVolume = props.targetVolume;
+    this.targetVolume = props.targetVolume.toString();
     this.patientId = props.patientId;
     this.createdById = props.createdById;
     this.isArchived = props.isArchived;

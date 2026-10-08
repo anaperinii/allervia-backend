@@ -1,8 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { IEmailService } from './email.service';
+import { IEmailService, InviteEmailParams } from './email.service';
 
 @Injectable()
 export class LogEmailService extends IEmailService {
+  sendDemoRequest(): Promise<void> {
+    return Promise.reject(new Error('SMTP_REQUIRED'));
+  }
+
   private readonly logger = new Logger('EmailService');
 
   sendPasswordResetLink(email: string, token: string): Promise<void> {
@@ -14,6 +18,13 @@ export class LogEmailService extends IEmailService {
 
   sendPasswordChangedNotification(email: string): Promise<void> {
     this.logger.log(`[DEV] Senha alterada — aviso enviado para ${email}`);
+    return Promise.resolve();
+  }
+
+  sendInviteLink(params: InviteEmailParams): Promise<void> {
+    this.logger.log(
+      `[DEV] Convite para ${params.email} em ${params.organizationName} — token=${params.token}`,
+    );
     return Promise.resolve();
   }
 }

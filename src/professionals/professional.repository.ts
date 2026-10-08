@@ -10,7 +10,10 @@ export abstract class ProfessionalRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Professional>;
 
-  abstract findById(id: string): Promise<Professional | null>;
+  abstract findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Professional | null>;
 
   abstract findByUserId(
     userId: string,

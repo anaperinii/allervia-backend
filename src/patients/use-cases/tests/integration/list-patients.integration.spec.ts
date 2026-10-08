@@ -65,22 +65,22 @@ describe('ListPatientsUseCase - Integration', () => {
       updatedById: authenticatedUser.id,
     });
 
-    const result = await listPatientsUseCase.execute(authenticatedUser);
+    const result = await listPatientsUseCase.execute(authenticatedUser, {});
 
-    expect(result).toBeDefined();
-    expect(result.length).toBe(2);
-    expect(result.some((p) => p.id === patient1.id)).toBe(true);
-    expect(result.some((p) => p.id === patient2.id)).toBe(true);
+    expect(result.total).toBe(2);
+    expect(result.page).toBe(1);
+    expect(result.items.some((p) => p.id === patient1.id)).toBe(true);
+    expect(result.items.some((p) => p.id === patient2.id)).toBe(true);
   });
 
   it('should return empty array when organization has no patients', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
 
-    const result = await listPatientsUseCase.execute(authenticatedUser);
+    const result = await listPatientsUseCase.execute(authenticatedUser, {});
 
-    expect(result).toBeDefined();
-    expect(result.length).toBe(0);
+    expect(result.items).toEqual([]);
+    expect(result.total).toBe(0);
   });
 
   it('should not return patients from another organization', async () => {
@@ -103,10 +103,11 @@ describe('ListPatientsUseCase - Integration', () => {
       updatedById: authenticatedUserAnotherOrg.id,
     });
 
-    const result = await listPatientsUseCase.execute(authenticatedUser);
+    const result = await listPatientsUseCase.execute(authenticatedUser, {});
 
-    expect(result).toBeDefined();
-    expect(result.length).toBe(1);
-    expect(result[0].organizationId).toBe(authenticatedUser.organizationId);
+    expect(result.total).toBe(1);
+    expect(result.items[0].responsiblePhysician.id).toBe(
+      authenticatedUser.professionalId,
+    );
   });
 });

@@ -19,8 +19,10 @@ export class PrismaProfessionalRepository extends ProfessionalRepository {
     return client.professional.create({ data });
   }
 
-  async findById(id: string) {
-    return this.prismaService.professional.findUnique({ where: { id } });
+  async findById(id: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prismaService;
+
+    return client.professional.findUnique({ where: { id } });
   }
 
   async findByUserId(userId: string, tx?: Prisma.TransactionClient) {

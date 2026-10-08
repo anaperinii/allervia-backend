@@ -61,6 +61,8 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
           professionalId: professional.id,
           role: invite.role,
           grantedById: inviter?.id ?? professional.id,
+          actorUserId: invite.createdById,
+          organizationId: invite.organizationId,
         },
         tx,
       );

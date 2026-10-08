@@ -1,10 +1,9 @@
-import { Prisma, User } from '@prisma/client';
+import { Prisma, Role, User } from '@prisma/client';
 import { BaseFactory } from './base.factory';
 import { faker } from '@faker-js/faker';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 
 export class UserFactory extends BaseFactory<User> {
-  // Fornece campos sem default e não opcionais no schema (User = credencial/status)
   protected getDefaultData(): Partial<User> {
     return {
       email: faker.internet.email(),
@@ -22,6 +21,23 @@ export class UserFactory extends BaseFactory<User> {
     });
   }
 
+  async createInOrganization(
+    organizationId: string,
+    overrides: Partial<User> = {},
+  ): Promise<User> {
+    const user = await this.create({ ...overrides, type: 'PROFESSIONAL' });
+    await this.prisma.professional.create({
+      data: {
+        userId: user.id,
+        organizationId,
+        fullName: faker.person.fullName(),
+        phoneNumber: faker.phone.number(),
+        profession: 'PHYSICIAN',
+      },
+    });
+    return user;
+  }
+
   private async createOrganization() {
     return this.prisma.organization.create({
       data: {
@@ -32,10 +48,11 @@ export class UserFactory extends BaseFactory<User> {
   }
 
   private async createProfessionalUser(
-    roles: string[],
+    roles: Role[],
+    overrides: Partial<User> = {},
   ): Promise<AuthenticatedUserPayload> {
     const organization = await this.createOrganization();
-    const user = await this.create({ type: 'PROFESSIONAL' });
+    const user = await this.create({ ...overrides, type: 'PROFESSIONAL' });
 
     const professional = await this.prisma.professional.create({
       data: {
@@ -45,6 +62,14 @@ export class UserFactory extends BaseFactory<User> {
         phoneNumber: faker.phone.number(),
         profession: 'PHYSICIAN',
       },
+    });
+
+    await this.prisma.professionalRole.createMany({
+      data: roles.map((role) => ({
+        professionalId: professional.id,
+        role,
+        grantedById: professional.id,
+      })),
     });
 
     return {
@@ -57,11 +82,56 @@ export class UserFactory extends BaseFactory<User> {
     };
   }
 
-  async createAuthenticatedPhysicianProfessional(): Promise<AuthenticatedUserPayload> {
-    return this.createProfessionalUser(['PHYSICIAN']);
+  async createAuthenticatedPhysicianProfessional(
+    overrides: Partial<User> = {},
+  ): Promise<AuthenticatedUserPayload> {
+    return this.createProfessionalUser(['PHYSICIAN'], overrides);
   }
 
-  async createAuthenticatedAdmin(): Promise<AuthenticatedUserPayload> {
-    return this.createProfessionalUser(['ADMINISTRATOR']);
+  async createAuthenticatedAdmin(
+    overrides: Partial<User> = {},
+  ): Promise<AuthenticatedUserPayload> {
+    return this.createProfessionalUser(['ADMINISTRATOR'], overrides);
+  }
+
+  async createAuthenticatedNurse(
+    overrides: Partial<User> = {},
+  ): Promise<AuthenticatedUserPayload> {
+    return this.createProfessionalUser(['NURSE'], overrides);
+  }
+
+  async createColleagueWithRoles(
+    organizationId: string,
+    roles: Role[],
+    overrides: Partial<User> = {},
+  ): Promise<AuthenticatedUserPayload> {
+    const user = await this.create({ ...overrides, type: 'PROFESSIONAL' });
+
+    const professional = await this.prisma.professional.create({
+      data: {
+        userId: user.id,
+        organizationId,
+        fullName: faker.person.fullName(),
+        phoneNumber: faker.phone.number(),
+        profession: 'NURSE',
+      },
+    });
+
+    await this.prisma.professionalRole.createMany({
+      data: roles.map((role) => ({
+        professionalId: professional.id,
+        role,
+        grantedById: professional.id,
+      })),
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      type: 'PROFESSIONAL',
+      organizationId,
+      professionalId: professional.id,
+      roles,
+    };
   }
 }

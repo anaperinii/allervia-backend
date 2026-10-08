@@ -53,6 +53,38 @@ enum DoseObservationPhase {
   POST_ADMINISTRATION
 }
 
+/// Conduta imediata registrada junto da administração. Alterar a prescrição ou
+/// a próxima previsão continua sendo comando próprio; aqui fica só a decisão
+/// tomada na sala de aplicação.
+enum DoseImmediateConduct {
+  MAINTAIN
+  REQUEST_PHYSICIAN_REVIEW
+  SUSPEND_TREATMENT
+}
+
+enum LifecycleEventType {
+  SUSPENSION
+  RESUMPTION
+  COMPLETION
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  MISSED
+}
+
+enum NotificationKind {
+  PHYSICIAN_REVIEW_REQUESTED
+  TREATMENT_SUSPENDED
+}
+
+enum ContactRequestStatus {
+  RECEIVED
+  HANDLED
+}
+
 model Organization {
   id    String @id @default(ulid())
   name  String @unique
@@ -67,6 +99,11 @@ model Organization {
   patients            Patient[]
   professionalInvites InternalUserInvite[]
   auditLogs           AuditLog[]
+  treatmentProtocols TreatmentProtocol[]
+  protocolDefaults OrganizationProtocolDefault[]
+  appointments Appointment[]
+  automationEnabled Boolean @default(false)
+  timeZone String @default("America/Sao_Paulo")
 }
 
 model ProfessionalRole {
@@ -112,6 +149,8 @@ model Professional {
   professionalRolesRevoked ProfessionalRole[]   @relation("RoleRevokedById")
   patientsResponsible      Patient[]            @relation("ResponsiblePhysician")
   internalUserInvites      InternalUserInvite[]
+  appointments             Appointment[]        @relation("AppointmentProfessional")
+  googleCalendarConnection GoogleCalendarConnection?
 
   @@index([organizationId, profession])
 }
@@ -132,6 +171,18 @@ model Patient {
   weightInKg  Float
   phoneNumber String
 
+  /// Documento protegido, apenas dígitos. Nullable porque o legado foi criado
+  /// sem CPF e porque existe pessoa sem CPF conhecido — a ausência é um fato,
+  /// não um valor a inventar. Unicidade vale por organização quando informado.
+  cpf String?
+
+  /// Responsável legal, obrigatório enquanto o paciente é menor de idade e
+  /// ausente quando é maior. Os três campos vivem e morrem juntos: ou há
+  /// responsável completo, ou não há responsável.
+  guardianName        String?
+  guardianCpf         String?
+  guardianPhoneNumber String?
+
   isActive   Boolean @default(true)
   isArchived Boolean @default(false)
 
@@ -148,7 +199,9 @@ model Patient {
   archivedBy   User?     @relation("PatientArchivedBy", fields: [archivedById], references: [id])
 
   immunotherapies Immunotherapy[]
+  appointments    Appointment[]
 
+  @@unique([organizationId, cpf])
   @@index([organizationId, isActive, isArchived])
   @@index([responsiblePhysicianId])
   @@index([fullName])
@@ -189,10 +242,23 @@ model User {
   dosesArchived  Dose[]               @relation("DoseArchivedBy")
   invitesCreated InternalUserInvite[] @relation("InviteCreatedBy")
 
+  lifecycleEventsCreated TherapyLifecycleEvent[]   @relation("LifecycleCreatedBy")
+  addendaCreated         DoseObservationAddendum[] @relation("AddendumCreatedBy")
+  appointmentsCreated    Appointment[]             @relation("AppointmentCreatedBy")
+  appointmentsUpdated    Appointment[]             @relation("AppointmentUpdatedBy")
+  notifications           Notification[]           @relation("NotificationRecipient")
+  notificationPreferences NotificationPreference[] @relation("NotificationPreferenceOwner")
+  supportRequests         SupportRequest[]         @relation("SupportRequestAuthor")
+
   auditLogs          AuditLog[]
   usersCreated       User[]              @relation("UserCreatedBy")
   usersUpdated       User[]              @relation("UserUpdatedBy")
   verificationTokens VerificationToken[] @relation("UserVerificationToken")
+
+  authSessions AuthSession[]
+  mfaCredentials    MfaCredential[]    @relation("UserMfaCredential")
+  mfaRecoveryCodes  MfaRecoveryCode[]  @relation("UserMfaRecoveryCode")
+  preAuthChallenges PreAuthChallenge[] @relation("UserPreAuthChallenge")
 
   @@index([type, isActive, isArchived])
 }
@@ -225,7 +291,7 @@ model Immunotherapy {
   inductionStartDate   DateTime
   maintenanceStartDate DateTime?
   targetConcentration  Int
-  targetVolume         Float
+  targetVolume         Decimal @db.Decimal(65, 30)
 
   status     TherapyStatus @default(IN_PROGRESS)
   isArchived Boolean       @default(false)
@@ -244,8 +310,114 @@ model Immunotherapy {
 
   doses Dose[]
 
+  /// Todas as prescrições já fixadas (imutáveis); a vigente é apontada por
+  /// currentPrescriptionId. Revisão clínica cria snapshot novo e move o
+  /// ponteiro — nada é editado nem apagado.
+  prescriptions ProtocolPrescription[] @relation("TherapyPrescriptions")
+  currentPrescriptionId String? @unique
+  currentPrescription ProtocolPrescription? @relation("CurrentPrescription", fields: [currentPrescriptionId], references: [id])
+
+  lifecycleEvents TherapyLifecycleEvent[]
+  revision Int @default(0)
+
   @@index([patientId, status, isArchived])
   @@index([administrationRoute])
+}
+
+/// Ciclo de vida clínico com motivo, autoria e efeito explícito: suspensão,
+/// retomada e encerramento nunca se reduzem ao campo status.
+model TherapyLifecycleEvent {
+  id String @id @default(ulid())
+
+  immunotherapyId String
+  immunotherapy   Immunotherapy @relation(fields: [immunotherapyId], references: [id])
+
+  type     LifecycleEventType
+  category String?
+  reason   String
+
+  /// Suspensão: previsão de retorno para a equipe reavaliar.
+  expectedReturnAt DateTime?
+
+  /// Encerramento: recomendações finais estruturadas do wizard.
+  recommendations Json?
+
+  /// Previsões arquivadas pelo evento (encerramento); trilha explícita.
+  archivedDoseIds String[] @default([])
+
+  createdAt   DateTime @default(now())
+  createdById String
+  createdBy   User     @relation("LifecycleCreatedBy", fields: [createdById], references: [id])
+
+  @@index([immunotherapyId, createdAt])
+}
+
+/// Observação pós-aplicação tardia: registro adicional imutável com autoria e
+/// instante próprios; nunca reescreve as observações da administração.
+model DoseObservationAddendum {
+  id String @id @default(ulid())
+
+  doseId String
+  dose   Dose   @relation(fields: [doseId], references: [id])
+
+  reportedSideEffects     String[] @default([])
+  administeredMedications String[] @default([])
+  notes                   String?
+  observedAt              DateTime
+
+  conduct              DoseImmediateConduct?
+  conductJustification String?
+
+  createdAt   DateTime @default(now())
+  createdById String
+  createdBy   User     @relation("AddendumCreatedBy", fields: [createdById], references: [id])
+
+  @@index([doseId, observedAt])
+}
+
+/// Compromisso de agenda: entidade própria, relacionada e distinta da dose.
+/// Cancelamento e falta pertencem ao compromisso; a dose clínica não ganha
+/// status de agenda.
+model Appointment {
+  id String @id @default(ulid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id])
+
+  /// Vínculo opcional e único com a previsão clínica que o compromisso agenda.
+  doseId String? @unique
+  dose   Dose?   @relation(fields: [doseId], references: [id])
+
+  /// Profissional dono da agenda do compromisso. Obrigatório para novos
+  /// registros (validado na aplicação); nulo apenas no legado anterior à coluna.
+  professionalId String?
+  professional   Professional? @relation("AppointmentProfessional", fields: [professionalId], references: [id], onDelete: Restrict)
+
+  title    String?
+  startsAt DateTime
+  endsAt   DateTime
+  status   AppointmentStatus @default(SCHEDULED)
+
+  notes        String?
+  statusReason String?
+  revision     Int     @default(0)
+
+  createdAt   DateTime @default(now())
+  createdById String
+  createdBy   User     @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+
+  updatedAt   DateTime @default(now()) @updatedAt
+  updatedById String
+  updatedBy   User     @relation("AppointmentUpdatedBy", fields: [updatedById], references: [id])
+
+  calendarEventLink GoogleCalendarEventLink?
+  calendarSyncJobs  CalendarSyncJob[]
+
+  @@index([organizationId, startsAt])
+  @@index([patientId, startsAt])
+  @@index([professionalId, startsAt])
 }
 
 model Dose {
@@ -253,15 +425,24 @@ model Dose {
 
   immunotherapyId  String
   immunotherapy    Immunotherapy @relation(fields: [immunotherapyId], references: [id])
+  /// Conta do profissional que executou a aplicação; o registrador fica no AuditLog.
   administeredById String?
   administeredBy   User?         @relation("AdministeredBy", fields: [administeredById], references: [id])
 
   concentration      Int
-  volume             Float
+  volume             Decimal @db.Decimal(65, 30)
   scheduledAt        DateTime
   administeredAt     DateTime?
   nextIntervalInDays Int
   betweenDosesReport String
+
+  /// Hora final da aplicação. `administeredAt` é o início; a janela completa
+  /// pertence ao registro clínico, não à agenda.
+  administrationEndedAt DateTime?
+
+
+  immediateConduct              DoseImmediateConduct?
+  immediateConductJustification String?
 
   status     DoseStatus @default(SCHEDULED)
   isArchived Boolean    @default(false)
@@ -278,7 +459,20 @@ model Dose {
   archivedById String?
   archivedBy   User?     @relation("DoseArchivedBy", fields: [archivedById], references: [id])
 
+  prescriptionId String?
+  prescription ProtocolPrescription? @relation(fields: [prescriptionId], references: [id])
+  plannedStepId String?
+  administeredStepId String?
+  plannedValues Json?
+  administeredValues Json?
+  sourceDoseId String? @unique
+  sourceDose Dose? @relation("DoseSuccessor", fields: [sourceDoseId], references: [id])
+  successor Dose? @relation("DoseSuccessor")
+  recommendation Json?
+  revision Int @default(0)
   observations DoseObservation[]
+  observationAddenda DoseObservationAddendum[]
+  appointment Appointment?
 
   @@index([immunotherapyId, scheduledAt])
   @@index([concentration, volume])
@@ -301,6 +495,128 @@ model DoseObservation {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@unique([doseId, phase])
+}
+
+/// Evento de saída gravado no MESMO commit do fato de origem. O consumidor o
+/// materializa depois (notificação interna hoje; canais externos quando houver
+/// provedor), com tentativas e falha visível — nunca um envio dentro da
+/// transação clínica.
+model OutboxEvent {
+  id String @id @default(ulid())
+
+  organizationId String
+  kind           NotificationKind
+  payload        Json
+
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+  attempts    Int       @default(0)
+  lastError   String?
+
+  notifications Notification[]
+
+  @@index([processedAt, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+/// Notificação interna: destinatário, leitura e paginação. Deriva de um
+/// OutboxEvent — a unicidade por (evento, destinatário) torna o consumidor
+/// idempotente por construção.
+model Notification {
+  id String @id @default(ulid())
+
+  organizationId String
+  userId         String
+  user           User   @relation("NotificationRecipient", fields: [userId], references: [id])
+
+  outboxEventId String
+  outboxEvent   OutboxEvent @relation(fields: [outboxEventId], references: [id])
+
+  kind       NotificationKind
+  title      String
+  body       String
+  entityType String?
+  entityId   String?
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([outboxEventId, userId])
+  @@index([userId, readAt, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+/// Preferência por tipo e destinatário; ausência = habilitado.
+model NotificationPreference {
+  id String @id @default(ulid())
+
+  userId String
+  user   User   @relation("NotificationPreferenceOwner", fields: [userId], references: [id])
+
+  kind    NotificationKind
+  enabled Boolean @default(true)
+
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([userId, kind])
+}
+
+/// Solicitação pública de contato/trial: persistida com confirmação de
+/// recebimento; nenhum envio externo é simulado.
+model DemoRequest {
+  id String @id @default(ulid())
+  requestId String @unique @db.Uuid
+  name String
+  lastName String
+  email String
+  phone String
+  role String
+  solution String
+  specialty String
+  professionals Int
+  sourceHash String
+  createdAt DateTime @default(now())
+  emailAttempts Int @default(0)
+  emailNextAttemptAt DateTime? @default(now())
+  emailLeaseUntil DateTime?
+  emailAcceptedAt DateTime?
+  emailErrorCode String?
+
+  @@index([emailNextAttemptAt, emailLeaseUntil])
+  @@index([sourceHash, createdAt])
+  @@index([email, createdAt])
+  @@index([createdAt])
+}
+
+model ContactRequest {
+  id String @id @default(ulid())
+
+  name         String
+  email        String
+  organization String?
+  message      String
+  status       ContactRequestStatus @default(RECEIVED)
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
+/// Solicitação de suporte autenticada: registro persistido, não um mailto.
+model SupportRequest {
+  id String @id @default(ulid())
+
+  organizationId String
+  userId         String
+  user           User   @relation("SupportRequestAuthor", fields: [userId], references: [id])
+
+  subject String
+  message String
+  status  ContactRequestStatus @default(RECEIVED)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt])
 }
 
 model AuditLog {
@@ -353,4 +669,337 @@ model InternalUserInvite {
   @@index([organizationId, isActive])
   @@index([expiresAt])
   @@index([professionalId])
+}
+
+
+enum ProtocolVersionStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+model TreatmentProtocol {
+  id String @id @default(ulid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  name String
+  route AdministrationRoute
+  available Boolean @default(true)
+  createdById String
+  createdAt DateTime @default(now())
+  versions ProtocolVersion[]
+  @@unique([id, organizationId])
+  @@index([organizationId, route])
+}
+
+model ProtocolVersion {
+  id String @id @default(ulid())
+  protocolId String
+  organizationId String
+  protocol TreatmentProtocol @relation(fields: [protocolId, organizationId], references: [id, organizationId])
+  number Int
+  status ProtocolVersionStatus @default(DRAFT)
+  definition Json
+  schemaVersion Int @default(1)
+  engineVersion String @default("1")
+  revision Int @default(0)
+  createdById String
+  publishedById String?
+  createdAt DateTime @default(now())
+  publishedAt DateTime?
+  prescriptions ProtocolPrescription[]
+  defaults OrganizationProtocolDefault[]
+  @@unique([protocolId, number])
+  @@unique([id, organizationId])
+}
+
+model OrganizationProtocolDefault {
+  organizationId String
+  route AdministrationRoute
+  organization Organization @relation(fields: [organizationId], references: [id])
+  versionId String
+  version ProtocolVersion @relation(fields: [versionId, organizationId], references: [id, organizationId])
+  @@id([organizationId, route])
+}
+
+model ProtocolPrescription {
+  id String @id @default(ulid())
+  immunotherapyId String
+  immunotherapy Immunotherapy @relation("TherapyPrescriptions", fields: [immunotherapyId], references: [id])
+  organizationId String
+  versionId String
+  version ProtocolVersion @relation(fields: [versionId, organizationId], references: [id, organizationId])
+  resolved Json
+  revision Int @default(1)
+  /// Motivo da revisão clínica quando este snapshot substituiu outro.
+  revisionReason String?
+  createdById String
+  createdAt DateTime @default(now())
+  doses Dose[]
+  currentOf Immunotherapy? @relation("CurrentPrescription")
+
+  @@index([immunotherapyId, createdAt])
+}
+
+/// Idempotência do cadastro de prescrição: mesma chave e corpo devolvem o
+/// resultado original; chave reutilizada com corpo diferente é conflito.
+model RegistrationCommand {
+  id String @id @default(ulid())
+  organizationId String
+  actorId String
+  key String
+  requestHash String
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([organizationId, actorId, key])
+}
+
+model ClinicalCommand {
+  id String @id @default(ulid())
+  organizationId String
+  actorId String
+  doseId String
+  key String
+  requestHash String
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([organizationId, actorId, doseId, key])
+}
+
+enum MfaFactorType {
+  TOTP
+}
+
+enum PreAuthPurpose {
+  MFA_CHALLENGE
+  MFA_ENROLLMENT
+  REAUTHENTICATION
+}
+
+enum AuthSessionRevokeReason {
+  LOGOUT
+  LOGOUT_ALL
+  DEVICE_REVOKED
+  PASSWORD_CHANGED
+  ACCOUNT_DISABLED
+  MFA_CHANGED
+  IDLE_TIMEOUT
+  ABSOLUTE_TIMEOUT
+  SUPERSEDED
+}
+
+/// Segundo fator registrado pelo usuário. O segredo TOTP precisa ser reversível
+/// para verificação, então é guardado com criptografia autenticada e chave externa.
+model MfaCredential {
+  id String @id @default(ulid())
+
+  userId String
+  user   User   @relation("UserMfaCredential", fields: [userId], references: [id])
+
+  type  MfaFactorType @default(TOTP)
+  label String
+
+  secretCiphertext String
+  secretIv         String
+  secretAuthTag    String
+  keyVersion       Int    @default(1)
+
+  confirmedAt     DateTime?
+  lastUsedAt      DateTime?
+  /// Último contador TOTP aceito; impede replay do mesmo código.
+  lastUsedCounter BigInt?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@index([userId, revokedAt])
+}
+
+/// Código de recuperação exibido uma vez, guardado por hash e consumido atomicamente.
+model MfaRecoveryCode {
+  id String @id @default(ulid())
+
+  userId String
+  user   User   @relation("UserMfaRecoveryCode", fields: [userId], references: [id])
+
+  codeHash String @unique
+
+  createdAt  DateTime  @default(now())
+  consumedAt DateTime?
+
+  @@index([userId, consumedAt])
+}
+
+/// Estado curto entre senha verificada e sessão clínica criada, ou desafio de
+/// reautenticação de ação sensível. Não concede acesso clínico.
+model PreAuthChallenge {
+  id String @id @default(ulid())
+
+  secretHash String @unique
+
+  userId String
+  user   User   @relation("UserPreAuthChallenge", fields: [userId], references: [id])
+
+  purpose PreAuthPurpose
+
+  /// Preenchido apenas em reautenticação, para vincular o desafio à sessão.
+  sessionId String?
+  /// Credencial em confirmação durante o enrollment de MFA.
+  credentialId String?
+
+  attemptCount Int @default(0)
+
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+}
+
+/// Tentativas de autenticação para limitar por conta, IP e operação.
+model AuthAttempt {
+  id String @id @default(ulid())
+
+  /// Hash do identificador (e-mail normalizado ou IP); não guardar o valor cru.
+  identifierHash String
+  scope          String
+  operation      String
+  succeeded      Boolean
+  occurredAt     DateTime @default(now())
+
+  @@index([identifierHash, operation, occurredAt])
+  @@index([occurredAt])
+}
+
+// Opaque browser login; only the credential hash is persisted.
+model AuthSession {
+  id String @id @default(ulid())
+  secretHash String @unique
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  organizationId String
+  authVersion Int
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  lastInteractiveAt DateTime @default(now())
+  mfaVerifiedAt DateTime?
+  reauthenticatedAt DateTime?
+  revokedAt DateTime?
+  revokedReason AuthSessionRevokeReason?
+  userAgent String?
+  ipAddressHash String?
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+enum GoogleCalendarConnectionStatus {
+  ACTIVE
+  /// Refresh token inválido ou revogado no Google; exige reconexão do profissional.
+  BROKEN
+}
+
+enum CalendarSyncJobKind {
+  /// Reconciliar o evento Google com o estado atual do Appointment.
+  PUSH_SYNC
+  /// Consumir mudanças incrementais via syncToken após notificação push.
+  PULL_INCREMENTAL
+  /// Reconstrução completa após 410 GONE do syncToken.
+  PULL_FULL_RESYNC
+  CHANNEL_RENEW
+  CHANNEL_STOP
+}
+
+/// Conexão OAuth do Google Calendar por profissional. O refresh token é
+/// reversível por natureza, então segue o padrão do MfaCredential:
+/// AES-256-GCM com chave dedicada fora do banco.
+model GoogleCalendarConnection {
+  id             String @id @default(ulid())
+  organizationId String
+
+  professionalId String       @unique
+  professional   Professional @relation(fields: [professionalId], references: [id])
+
+  googleAccountEmail String
+  calendarId         String @default("primary")
+  grantedScopes      String
+
+  refreshTokenCiphertext String
+  refreshTokenIv         String
+  refreshTokenAuthTag    String
+  keyVersion             Int    @default(1)
+
+  status       GoogleCalendarConnectionStatus @default(ACTIVE)
+  brokenReason String?
+
+  /// Estado do sync incremental (nextSyncToken do events.list).
+  syncToken             String?
+  lastIncrementalSyncAt DateTime?
+  lastFullSyncAt        DateTime?
+
+  /// Canal de push (events.watch). Só o hash do token do canal é persistido.
+  channelId         String?   @unique
+  channelResourceId String?
+  channelExpiresAt  DateTime?
+  channelTokenHash  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  eventLinks GoogleCalendarEventLink[]
+
+  @@index([organizationId, status])
+  @@index([channelExpiresAt])
+}
+
+/// Correlação Appointment <-> evento do Google, com hash do último conteúdo
+/// sincronizado para supressão de eco (evitar loop push -> webhook -> push).
+model GoogleCalendarEventLink {
+  id             String @id @default(ulid())
+  organizationId String
+
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+
+  connectionId String
+  connection   GoogleCalendarConnection @relation(fields: [connectionId], references: [id])
+
+  googleEventId String
+  etag          String?
+  /// SHA-256 dos campos sincronizados (summary, description, startsAt, endsAt, status).
+  lastSyncedHash String?
+  deletedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([connectionId, googleEventId])
+}
+
+/// Job de sincronização gravado no mesmo commit do fato de origem (padrão
+/// outbox), consumido pelo dispatcher com backoff e dead-letter visível.
+model CalendarSyncJob {
+  id             String  @id @default(ulid())
+  organizationId String
+  kind           CalendarSyncJobKind
+  connectionId   String?
+  appointmentId  String?
+  appointment    Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  payload        Json?
+
+  /// Chave de deduplicação enquanto o job está pendente ("PUSH:<appointmentId>",
+  /// "PULL:<connectionId>"). Vira nulo quando o job é concluído ou vai para
+  /// dead-letter, liberando o slot — o índice único aceita vários nulos.
+  pendingKey String? @unique
+
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  leaseUntil    DateTime?
+  processedAt   DateTime?
+  lastError     String?
+  createdAt     DateTime  @default(now())
+
+  @@index([processedAt, nextAttemptAt, createdAt])
+  @@index([organizationId, createdAt])
 }

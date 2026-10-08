@@ -38,17 +38,22 @@ export class AbilityFactory {
 
     switch (role) {
       case Role.ADMINISTRATOR:
+        can('manage', 'TreatmentProtocol', inOrg);
+        can('manage', 'GoogleCalendarConnection', inOrg);
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can('read', 'Dose', doseInOrg);
+        can('read', 'Appointment', inOrg);
         can('manage', 'Professional', inOrg);
         can('manage', 'User', userInOrg);
         can('manage', 'InternalUserInvite', inOrg);
         can('manage', 'ProfessionalRole', roleInOrg);
-        can('read', 'Organization', { id: orgId });
+        can('manage', 'Organization', { id: orgId });
+        can('read', 'AuditLog', inOrg);
         break;
 
       case Role.PHYSICIAN:
+        can('manage', 'TreatmentProtocol', inOrg);
         can('create', 'Patient', inOrg);
         if (user.professionalId) {
           const ownPatient = { responsiblePhysicianId: user.professionalId };
@@ -57,19 +62,36 @@ export class AbilityFactory {
           can(['read', 'create', 'update'], 'Dose', {
             immunotherapy: { patient: ownPatient },
           });
+          can('manage', 'Appointment', {
+            OR: [
+              { patient: ownPatient },
+              { professionalId: user.professionalId },
+            ],
+          });
+          can('manage', 'GoogleCalendarConnection', {
+            professionalId: user.professionalId,
+          });
         }
         can('read', 'Professional', inOrg);
         break;
 
       case Role.NURSE:
+        can('read', 'TreatmentProtocol', inOrg);
+        if (user.professionalId) {
+          can('manage', 'GoogleCalendarConnection', {
+            professionalId: user.professionalId,
+          });
+        }
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can(['read', 'create', 'update', 'archive'], 'Dose', doseInOrg);
+        can('manage', 'Appointment', inOrg);
         can('read', 'Professional', inOrg);
         break;
 
       case Role.RECEPTIONIST:
         can(['read', 'create', 'update'], 'Patient', inOrg);
+        can('manage', 'Appointment', inOrg);
         can('read', 'Professional', inOrg);
         break;
     }

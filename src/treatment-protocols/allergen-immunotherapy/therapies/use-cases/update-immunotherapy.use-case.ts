@@ -1,36 +1,57 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { accessibleBy } from '@casl/prisma';
-import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
-import { UpdateImmunotherapyDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/update-immunotherapy.dto';
-import { ImmunotherapyResponseDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto';
-import { IMMUNOTHERAPY_MESSAGES } from 'src/treatment-protocols/allergen-immunotherapy/therapies/immunotherapy.messages';
-import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
-import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
-
+import {
+  ConflictException,
+  Injectable,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from 'src/infra/database/prisma.service';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
+import { ConfiguredDoseService } from '../../dosing/configured-dose.service';
+import { UpdateImmunotherapyDto } from '../dtos/update-immunotherapy.dto';
 @Injectable()
 export class UpdateImmunotherapyUseCase {
   constructor(
-    private readonly immunotherapyRepository: IImmunotherapyRepository,
-    private readonly abilityFactory: AbilityFactory,
+    private readonly prisma: PrismaService,
+    private readonly clinical: ConfiguredDoseService,
+    private readonly audit: IAuditLogService,
   ) {}
-
   async execute(
     id: string,
     dto: UpdateImmunotherapyDto,
-    currentUser: AuthenticatedUserPayload,
-  ): Promise<ImmunotherapyResponseDto> {
-    const ability = this.abilityFactory.createForUser(currentUser);
-    const where = accessibleBy(ability, 'update').ofType('Immunotherapy');
-
-    const immunotherapy = await this.immunotherapyRepository.findByIdAccessible(
-      id,
-      where,
-    );
-
-    if (!immunotherapy) {
-      throw new NotFoundException(IMMUNOTHERAPY_MESSAGES.notFound(id));
-    }
-
-    return this.immunotherapyRepository.update(immunotherapy.id, dto);
+    user: AuthenticatedUserPayload,
+  ) {
+    if (
+      Object.keys(dto).some(
+        (key) => !['immunoType', 'expectedRevision'].includes(key),
+      )
+    )
+      throw new BadRequestException('PRESCRIPTION_REVISION_REQUIRED');
+    return this.prisma.$transaction(async (tx) => {
+      const therapy = await this.clinical.lockTherapy(tx, id, user);
+      if (therapy.revision !== dto.expectedRevision)
+        throw new ConflictException('STALE_CLINICAL_REVISION');
+      const updated = await tx.immunotherapy.update({
+        where: { id },
+        data: {
+          immunoType: dto.immunoType,
+          revision: { increment: 1 },
+          updatedById: user.id,
+        },
+      });
+      await this.audit.record(
+        {
+          userId: user.id,
+          organizationId: user.organizationId,
+          entityType: 'Immunotherapy',
+          entityId: id,
+          action: 'IMMUNOTHERAPY_UPDATED',
+          oldValues: { immunoType: therapy.immunoType },
+          newValues: { immunoType: updated.immunoType },
+          changedFields: ['immunoType'],
+        },
+        tx,
+      );
+      return { ...updated, targetVolume: updated.targetVolume.toString() };
+    });
   }
 }

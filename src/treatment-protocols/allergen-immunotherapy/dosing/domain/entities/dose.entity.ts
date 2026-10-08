@@ -1,13 +1,20 @@
-import { DoseStatus } from '@prisma/client';
+import { DoseStatus, Prisma } from '@prisma/client';
 import { DoseAlreadyArchivedException } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/dose-already-archived.exception';
 import { UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { UpdateDoseStatusDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose-status.dto';
 import { InvalidDoseStatusException } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/invalid-dose-status.exception';
 
 export interface DoseProps {
+  revision?: number;
+  prescriptionId?: string | null;
+  plannedStepId?: string | null;
+  administeredStepId?: string | null;
+  plannedValues?: Prisma.JsonValue;
+  administeredValues?: Prisma.JsonValue;
+  recommendation?: Prisma.JsonValue;
   id: string;
   concentration: number;
-  volume: number;
+  volume: Prisma.Decimal | string;
   scheduledAt: Date;
   administeredAt: Date | null;
   nextIntervalInDays: number;
@@ -26,7 +33,7 @@ export interface DoseProps {
 
 export interface CreateDoseProps {
   concentration: number;
-  volume: number;
+  volume: string;
   scheduledAt: Date;
   administeredAt?: Date | null;
   nextIntervalInDays: number;
@@ -38,9 +45,16 @@ export interface CreateDoseProps {
 }
 
 export class Dose {
+  revision: number;
+  prescriptionId?: string | null;
+  plannedStepId?: string | null;
+  administeredStepId?: string | null;
+  plannedValues?: Prisma.JsonValue;
+  administeredValues?: Prisma.JsonValue;
+  recommendation?: Prisma.JsonValue;
   id: string;
   concentration: number;
-  volume: number;
+  volume: string;
   scheduledAt: Date;
   administeredAt: Date | null;
   nextIntervalInDays: number;
@@ -57,9 +71,16 @@ export class Dose {
   updatedAt: Date;
 
   constructor(props: DoseProps) {
+    this.revision = props.revision ?? 0;
+    this.prescriptionId = props.prescriptionId;
+    this.plannedStepId = props.plannedStepId;
+    this.administeredStepId = props.administeredStepId;
+    this.plannedValues = props.plannedValues;
+    this.administeredValues = props.administeredValues;
+    this.recommendation = props.recommendation;
     this.id = props.id;
     this.concentration = props.concentration;
-    this.volume = props.volume;
+    this.volume = props.volume.toString();
     this.scheduledAt = props.scheduledAt;
     this.administeredAt = props.administeredAt;
     this.nextIntervalInDays = props.nextIntervalInDays;
@@ -99,7 +120,6 @@ export class Dose {
       const administeredDate = new Date(administeredAt);
       const scheduledDate = new Date(this.scheduledAt);
 
-      // Comparar strings de data no formato YYYY-MM-DD para evitar problemas de timezone
       const administeredDateStr = administeredDate.toISOString().split('T')[0];
       const scheduledDateStr = scheduledDate.toISOString().split('T')[0];
 
@@ -116,7 +136,6 @@ export class Dose {
   changeStatus(props: UpdateDoseStatusDto): void {
     const newStatus = props.status;
 
-    // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
     if (
       String(this.status).startsWith('ADMINISTERED') &&
       newStatus !== 'ENTERED_IN_ERROR'
@@ -138,7 +157,6 @@ export class Dose {
       );
     }
 
-    // Verificar se o status atual começa com 'ADMINISTERED' (pode ser ON_SCHEDULE ou OFF_SCHEDULE)
     if (
       String(this.status).startsWith('ADMINISTERED') &&
       newStatus === 'ENTERED_IN_ERROR'

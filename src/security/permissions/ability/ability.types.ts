@@ -1,6 +1,10 @@
 import { PrismaAbility, Subjects } from '@casl/prisma';
 import {
+  Appointment,
+  AuditLog,
+  TreatmentProtocol,
   Dose,
+  GoogleCalendarConnection,
   Immunotherapy,
   InternalUserInvite,
   Organization,
@@ -23,6 +27,10 @@ export type AppSubjects =
       Organization: Organization;
       InternalUserInvite: InternalUserInvite;
       ProfessionalRole: ProfessionalRole;
+      AuditLog: AuditLog;
+      TreatmentProtocol: TreatmentProtocol;
+      Appointment: Appointment;
+      GoogleCalendarConnection: GoogleCalendarConnection;
     }>;
 
 export type AppAbility = PrismaAbility<[AppAction, AppSubjects]>;

@@ -1,0 +1,123 @@
+import { PREAUTH_CSRF_KEY } from './preauth-csrf.decorator';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import {
+  CodedForbiddenException,
+  CodedHttpException,
+} from 'src/infra/exceptions/coded.exception';
+import { HttpStatus } from '@nestjs/common';
+import { AUTH_ERROR_CODES, AUTH_MESSAGES } from '../auth.messages';
+import { SKIP_CSRF_KEY } from './skip-csrf.decorator';
+import { CSRF_HEADER, CsrfService } from './csrf.service';
+import { SessionService } from './session.service';
+import { SessionConfig } from './session.config';
+import { RequestWithSession } from './session-auth.guard';
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const ACCEPTED_CONTENT_TYPES = ['application/json'];
+
+@Injectable()
+export class CsrfGuard implements CanActivate {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly csrf: CsrfService,
+    private readonly config: SessionConfig,
+    private readonly sessions: SessionService,
+  ) {}
+
+  canActivate(executionContext: ExecutionContext): boolean {
+    const request = executionContext
+      .switchToHttp()
+      .getRequest<RequestWithSession>();
+
+    if (SAFE_METHODS.has(request.method)) return true;
+
+    const skip = this.reflector.getAllAndOverride<boolean>(SKIP_CSRF_KEY, [
+      executionContext.getHandler(),
+      executionContext.getClass(),
+    ]);
+    if (skip) return true;
+
+    this.assertContentType(request);
+    this.assertOrigin(request);
+
+    const presented = request.get(CSRF_HEADER) ?? undefined;
+    if (request.authSession) {
+      this.sessions.assertCsrf(request.authSession, presented);
+      if (request.get('x-session-context') !== request.authSession.id)
+        throw new CodedForbiddenException(
+          'SESSION_CONTEXT_REQUIRED',
+          'Atualize o contexto da sessão.',
+        );
+      return true;
+    }
+
+    const preAuthRequired = this.reflector.getAllAndOverride<boolean>(
+      PREAUTH_CSRF_KEY,
+      [executionContext.getHandler(), executionContext.getClass()],
+    );
+    if (!preAuthRequired && !this.csrfCookiePresent(request)) return true;
+
+    if (!this.csrf.validate(request, presented)) {
+      throw new CodedForbiddenException(
+        AUTH_ERROR_CODES.csrfInvalid,
+        AUTH_MESSAGES.csrfTokenMissing,
+      );
+    }
+
+    return true;
+  }
+
+  private csrfCookiePresent(request: RequestWithSession): boolean {
+    const cookies = request.cookies as Record<string, string> | undefined;
+    return Boolean(cookies?.[this.csrf.cookieName]);
+  }
+
+  private assertContentType(request: RequestWithSession): void {
+    const contentType = request.get('content-type');
+    if (!contentType) return;
+
+    const normalized = contentType.split(';')[0].trim().toLowerCase();
+    if (ACCEPTED_CONTENT_TYPES.includes(normalized)) return;
+
+    throw new CodedHttpException(
+      HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+      AUTH_ERROR_CODES.unsupportedContentType,
+      AUTH_MESSAGES.unsupportedContentType,
+    );
+  }
+
+  private assertOrigin(request: RequestWithSession): void {
+    const origin = request.get('origin');
+
+    if (!origin) {
+      const hasCookieCredential =
+        Boolean(request.authSession) || this.csrfCookiePresent(request);
+      if (!hasCookieCredential) return;
+      throw new CodedForbiddenException(
+        AUTH_ERROR_CODES.originNotAllowed,
+        AUTH_MESSAGES.originNotAllowed,
+      );
+    }
+
+    if (this.isAllowedOrigin(request, origin)) return;
+
+    throw new CodedForbiddenException(
+      AUTH_ERROR_CODES.originNotAllowed,
+      AUTH_MESSAGES.originNotAllowed,
+    );
+  }
+
+  private isAllowedOrigin(
+    request: RequestWithSession,
+    origin: string,
+  ): boolean {
+    const allowed = this.config.allowedOrigins;
+    if (allowed.includes(origin)) return true;
+
+    const host = request.get('host');
+    if (!host) return false;
+
+    return origin === `${request.protocol}://${host}`;
+  }
+}

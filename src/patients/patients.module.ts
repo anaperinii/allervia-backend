@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from 'src/infra/audit/audit.module';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { PermissionsModule } from 'src/security/permissions/permissions.module';
 import { CreatePatientUseCase } from './use-cases/create-patient.use-case';
@@ -11,7 +12,7 @@ import { PrismaPatientRepository } from './prisma-patient.repository';
 import { PatientsController } from './patients.controller';
 
 @Module({
-  imports: [PrismaModule, PermissionsModule],
+  imports: [PrismaModule, AuditModule, PermissionsModule],
   controllers: [PatientsController],
   providers: [
     CreatePatientUseCase,

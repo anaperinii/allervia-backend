@@ -4,9 +4,12 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
 import { PrismaUserRepository } from 'src/account/prisma-user.repository';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { ulid } from 'ulid';
 import { IUserRepository } from 'src/account/user.repository';
-import { UserNotFoundException } from 'src/account/exceptions/user-not-found.exception';
+import { NotFoundException } from '@nestjs/common';
+import { GoogleCalendarConnectionService } from 'src/integrations/google-calendar/google-calendar-connection.service';
 
 describe('ArchiveUserUseCase - Integration', () => {
   let module: TestingModule;
@@ -27,6 +30,14 @@ describe('ArchiveUserUseCase - Integration', () => {
         {
           provide: IUserRepository,
           useClass: PrismaUserRepository,
+        },
+        {
+          provide: IAuditLogService,
+          useClass: PrismaAuditLogService,
+        },
+        {
+          provide: GoogleCalendarConnectionService,
+          useValue: { disconnectByUserId: jest.fn() },
         },
       ],
     }).compile();
@@ -50,13 +61,18 @@ describe('ArchiveUserUseCase - Integration', () => {
   it('should archive user correctly', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
-    const targetUser = await factories.users.create({});
+    const targetUser = await factories.users.createInOrganization(
+      authenticatedUser.organizationId,
+      {},
+    );
 
     const result = await archiveUserUseCase.execute(
       targetUser.id,
       authenticatedUser,
     );
 
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('tokenVersion');
     expect(result).toBeDefined();
     expect(result.isArchived).toBe(true);
   });
@@ -67,18 +83,21 @@ describe('ArchiveUserUseCase - Integration', () => {
 
     await expect(
       archiveUserUseCase.execute(ulid(), authenticatedUser),
-    ).rejects.toThrow(UserNotFoundException);
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('should throw a not found exception when archiving user from another organization', async () => {
-    const _authenticatedUser =
+    const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
     const authenticatedUserAnotherOrg =
       await factories.users.createAuthenticatedPhysicianProfessional();
-    const targetUser = await factories.users.create({});
+    const targetUser = await factories.users.createInOrganization(
+      authenticatedUser.organizationId,
+      {},
+    );
 
     await expect(
       archiveUserUseCase.execute(targetUser.id, authenticatedUserAnotherOrg),
-    ).rejects.toThrow(UserNotFoundException);
+    ).rejects.toThrow(NotFoundException);
   });
 });

@@ -1,5 +1,6 @@
 import { subject } from '@casl/ability';
-import { Patient } from '@prisma/client';
+import { accessibleBy } from '@casl/prisma';
+import { AuditLog, Patient } from '@prisma/client';
 import { AbilityFactory, AbilityUser } from './ability.factory';
 
 describe('AbilityFactory', () => {
@@ -16,10 +17,11 @@ describe('AbilityFactory', () => {
     ...overrides,
   });
 
-  // Helpers: só preenchemos os campos que as conditions olham; o cast mantém o
-  // teste tipado (sem `any`). `immuno` usa forma aninhada (posse via paciente).
   const patient = (data: Partial<Patient>) =>
     subject('Patient', data as Patient);
+
+  const auditLog = (data: Partial<AuditLog>) =>
+    subject('AuditLog', data as AuditLog);
 
   describe('ADMINISTRATOR', () => {
     const ability = factory.createForUser(
@@ -48,6 +50,25 @@ describe('AbilityFactory', () => {
 
     it('pode gerenciar usuários (nível de tipo, para a rota)', () => {
       expect(ability.can('update', 'User')).toBe(true);
+    });
+
+    it('lê a trilha de auditoria da própria organização', () => {
+      expect(ability.can('read', auditLog({ organizationId: ORG }))).toBe(true);
+    });
+
+    it('não lê a trilha de auditoria de outra organização', () => {
+      expect(ability.can('read', auditLog({ organizationId: OTHER_ORG }))).toBe(
+        false,
+      );
+    });
+
+    it('NÃO altera nem apaga a trilha (append-only)', () => {
+      expect(ability.can('update', auditLog({ organizationId: ORG }))).toBe(
+        false,
+      );
+      expect(ability.can('manage', auditLog({ organizationId: ORG }))).toBe(
+        false,
+      );
     });
   });
 
@@ -84,13 +105,26 @@ describe('AbilityFactory', () => {
       expect(ability.can('create', 'Immunotherapy')).toBe(true);
     });
 
-    // Posse de imunoterapia é derivada (patient.responsiblePhysicianId). O
-    // matcher de instância do @casl/prisma não avalia relação aninhada, então
-    // a posse é escopada na query via accessibleBy (Fase 4) — validada lá.
-    // No nível da rota (tipo), o médico pode atualizar imunoterapia.
     it('pode atualizar imunoterapia (nível de tipo)', () => {
       expect(ability.can('update', 'Immunotherapy')).toBe(true);
     });
+
+    it.each(['read', 'create', 'update'] as const)(
+      'filtra agendamento por paciente próprio ou agenda própria — %s',
+      (action) => {
+        const filter = accessibleBy(ability, action).ofType('Appointment');
+        expect(filter).toEqual({
+          OR: [
+            {
+              OR: [
+                { patient: { responsiblePhysicianId: 'prof-1' } },
+                { professionalId: 'prof-1' },
+              ],
+            },
+          ],
+        });
+      },
+    );
   });
 
   describe('NURSE', () => {

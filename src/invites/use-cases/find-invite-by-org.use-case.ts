@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite.repository.interface';
-import { InviteResponseDto } from 'src/invites/dtos/invite-response.dto';
+import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
 import { FindInvitesFilters } from 'src/invites/domain/interfaces/invite.interface';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class FindInviteByOrgUseCase {
   async execute(
     organizationId: string,
     filters: FindInvitesFilters = {},
-  ): Promise<InviteResponseDto[]> {
+  ): Promise<UserInvite[]> {
     return this.inviteRepository.findByOrganization(organizationId, filters);
   }
 }

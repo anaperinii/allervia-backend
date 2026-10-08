@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { Immunotherapy } from './domain/entities/immunotherapy.entity';
 import { IImmunotherapyRepository } from './domain/interfaces/immunotherapy.repository.interface';
@@ -9,10 +9,20 @@ import {
 import { Prisma } from '@prisma/client';
 
 const IMMUNO_INCLUDE = {
+  currentPrescription: true,
   patient: { include: { responsiblePhysician: true } },
   createdBy: { select: { id: true } },
   updatedBy: { select: { id: true } },
 };
+
+function toEntity(
+  row: { currentPrescription?: unknown } & Record<string, unknown>,
+): Immunotherapy {
+  return new Immunotherapy({
+    ...row,
+    prescription: row.currentPrescription ?? null,
+  } as never);
+}
 
 @Injectable()
 export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
@@ -48,8 +58,11 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
   async update(
     immunoId: string,
     immunotherapy: Partial<UpdateImmunotherapyData>,
+    tx?: Prisma.TransactionClient,
   ): Promise<Immunotherapy> {
-    const updated = await this.prisma.immunotherapy.update({
+    const client = tx ?? this.prisma;
+
+    const updated = await client.immunotherapy.update({
       where: { id: immunoId },
       data: {
         administrationRoute: immunotherapy.administrationRoute,
@@ -81,7 +94,7 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
       include: IMMUNO_INCLUDE,
     });
 
-    return immunotherapies.map((t) => new Immunotherapy(t));
+    return immunotherapies.map((t) => toEntity(t));
   }
 
   async findById(
@@ -104,7 +117,7 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
       include: IMMUNO_INCLUDE,
     });
 
-    return therapy ? new Immunotherapy(therapy) : null;
+    return therapy ? toEntity(therapy) : null;
   }
 
   async findByPatientAccessible(
@@ -117,7 +130,7 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
       include: IMMUNO_INCLUDE,
     });
 
-    return therapies.map((t) => new Immunotherapy(t));
+    return therapies.map((t) => toEntity(t));
   }
 
   async findByTypeAccessible(
@@ -129,7 +142,7 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
       include: IMMUNO_INCLUDE,
     });
 
-    return therapies.map((t) => new Immunotherapy(t));
+    return therapies.map((t) => toEntity(t));
   }
 
   async exists(id: string, organizationId: string): Promise<boolean> {

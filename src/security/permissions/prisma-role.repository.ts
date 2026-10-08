@@ -24,8 +24,10 @@ export class PrismaRoleRepository extends IRoleRepository {
     });
   }
 
-  async findById(id: string) {
-    return this.prismaService.professionalRole.findUnique({ where: { id } });
+  async findById(id: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prismaService;
+
+    return client.professionalRole.findUnique({ where: { id } });
   }
 
   async findActiveByProfessional(professionalId: string) {
@@ -46,8 +48,10 @@ export class PrismaRoleRepository extends IRoleRepository {
     });
   }
 
-  async revoke(id: string, revokedById: string) {
-    return this.prismaService.professionalRole.update({
+  async revoke(id: string, revokedById: string, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prismaService;
+
+    return client.professionalRole.update({
       where: { id },
       data: { revokedAt: new Date(), revokedById },
     });

@@ -89,7 +89,7 @@ O grafo de dependências entre módulos é unidirecional e sem ciclos, verificá
 ### Padrões aplicados
 
 - **Strategy + Factory** na geração de token (`patient-token-generator` e `professional-token-generator` selecionados por `TokenGeneratorFactory` conforme `UserType`) e no fluxo de convite e registro (`invite-strategy.factory.ts`, `register-strategy.context.ts`).
-- **Service com interface abstrata** para dependências substituíveis: `IEmailService`, `IPasswordHashingService`, `IJwtTokenService`, `IBuildUpPhase`, `IMaintenancePhase`.
+- **Service com interface abstrata** para dependências substituíveis: `IEmailService`, `IPasswordHashingService`, `IJwtTokenService`.
 - **Exception filter global** traduzindo exceções de domínio para HTTP.
 
 ---
@@ -129,9 +129,8 @@ src/
 │   └── allergen-immunotherapy/
 │       ├── therapies/          # Immunotherapy: entidade, casos de uso, controller
 │       ├── dosing/             # Dose: entidade, casos de uso, controller
-│       └── clinical-rules/
-│           ├── build-up-phase/   # fase de indução
-│           └── maintenance-phase/# fase de manutenção
+│       ├── protocol-catalog/   # configuração, publicação e migração assistida
+│       └── clinical-rules/      # motor puro por valores e transições explícitas
 │
 ├── infra/
 │   ├── database/               # PrismaService + PrismaModule
@@ -216,21 +215,15 @@ Schema completo em `prisma/schema.prisma`.
 
 ## Regras clínicas
 
-A imunoterapia com alérgenos progride em duas fases, implementadas em `treatment-protocols/allergen-immunotherapy/clinical-rules/`. Registrada a terapia, o sistema cria a dose inicial e, a cada aplicação registrada, agenda automaticamente a próxima.
+A automação utiliza protocolos publicados com valores rotulados, IDs estáveis e sucessores explícitos. A recomendação parte do valor realmente administrado; nenhuma contagem de aplicações determina avanço. Outro valor permitido pode ser escolhido na edição da previsão.
 
-**Fase de indução (build-up)**, em `build-up-phase.variables.ts`:
+A prescrição fixa a versão, a seleção de etapas e o fuso. Alterar o padrão da organização vale para novas prescrições. Edição de previsão, prévia e administração são comandos distintos; a administração grava aplicação, sucessora, observações, auditoria e idempotência na mesma transação.
 
-- concentração da dose inicial: `10000`
-- volume da dose inicial: `0.1`
-- intervalo entre doses: `7` dias
+A ativação começa desabilitada por organização. É necessário publicar uma configuração revisada, selecionar o padrão e ativar a automação. Registros legados sem prescrição vinculada exigem inventário e revisão antes de novas administrações; o motor antigo não é usado como fallback.
 
-**Fase de manutenção**, em `maintenance-phase.variables.ts`, com intervalos progressivos:
+Concentrações/volumes configurados são strings decimais. As colunas Float legadas permanecem como projeção de compatibilidade e histórico; os campos exatos e snapshots são a fonte do novo cálculo. O contrato inicial suporta SCIT em mL/denominador de diluição. SLIT não é convertida para SCIT.
 
-- primeiro: `14` dias
-- segundo: `21` dias
-- terceiro: `28` dias
-
-A entidade `Dose` concentra a máquina de estados: decide quando uma aplicação pode mudar de situação, o que ocorre ao ser marcada como registro equivocado (`ENTERED_IN_ERROR`) e como a aderência ao protocolo é derivada da comparação entre `scheduledAt` e `administeredAt`, daí a distinção entre `ADMINISTERED_ON_SCHEDULE` e `ADMINISTERED_OFF_SCHEDULE`. Por ser pura, é exercitada em teste sem infraestrutura.
+Contrato HTTP, exemplos técnicos e sequência de implantação: [configurable-immunotherapy-rollout.md](docs/configurable-immunotherapy-rollout.md).
 
 ---
 
@@ -297,12 +290,13 @@ Para testes de integração, as mesmas variáveis vão em `.env.test.local`, apo
 | `npm run build` | Compila com o Nest CLI |
 | `npm run lint` | ESLint com `--fix` |
 | `npm run format` | Prettier em `src/` e `test/` |
-| `npm test` | Roda toda a suíte Jest |
+| `npm test` | Unitários e integração; exige banco dedicado |
+| `npm run test:unit` | Unitários sem banco |
 | `npm run test:watch` | Jest em watch |
 | `npm run test:cov` | Cobertura (`coverage/`) |
 | `npm run test:integration` | Só integração, com `.env.test.local` |
-| `npm run test:setup` | `prisma db push` mais `generate` no banco de teste |
-| `npm run test:clean-setup` | `prisma migrate reset` mais `generate` no banco de teste |
+| `npm run test:setup` | `prisma migrate deploy` mais `generate` no banco dedicado validado |
+| `npm run test:clean-setup` | Recria o banco dedicado validado com migrations e gera o client; apaga seus dados |
 | `npm run test:e2e` | Suíte end-to-end (`test/jest-e2e.json`) |
 | `npm run deps:circular` | Detecta dependências circulares (madge) |
 | `npm run deps:orphans` | Lista módulos órfãos |
@@ -321,6 +315,10 @@ A estratégia é deliberada: **teste unitário onde há lógica pura, teste de i
 Infraestrutura de teste em `test/`: `TestDatabaseManager` e `TestPrismaService` cuidam de conexão e limpeza; as fábricas em `test/factories/` (organização, usuário, paciente, imunoterapia, dose, convite) montam dados com faker.
 
 `jest.config.ts` roda com `maxWorkers: 1`, obrigatório para testes que compartilham banco, e `testTimeout: 30000`. Os aliases `src/*` e `test/*` estão mapeados.
+
+Integração e E2E carregam `.env.test.local` e exigem `NODE_ENV=test`, PostgreSQL local e nome de banco explicitamente de teste (por exemplo, `imunecare_dbtest`). O destino deve ser diferente do banco de `.env`; uma `DATABASE_URL` herdada divergente interrompe a execução. A limpeza inclui todas as tabelas da aplicação e falha imediatamente se o schema estiver desatualizado.
+
+Execute integração e E2E separadamente: ambos limpam o mesmo banco. E2E verifica autenticação obrigatória, validação de entrada e cadastro/duplicidade de organização. `test:clean-setup` é reservado à recriação dos dados descartáveis do banco de testes; `test:setup` aplica migrations pendentes sem reset.
 
 Antes de rodar integração pela primeira vez:
 
@@ -407,12 +405,19 @@ Prefixo: raiz da aplicação. Todas as rotas exigem `Authorization: Bearer <toke
 | Método | Rota | Acesso |
 | --- | --- | --- |
 | GET | `/doses/:id` | `read Dose` |
-| PATCH | `/doses/:id` | `update Dose` |
-| PATCH | `/doses/update/status/:id` | `update Dose` |
+| PATCH | `/doses/:id/scheduled` | `update Dose`, edição com revisão esperada |
+| POST | `/doses/:id/preview` | `read Dose`, simulação sem gravação |
+| POST | `/doses/:id/administer` | `update Dose`, revisão e idempotência |
+| PATCH | `/doses/:id` | Retirado: retorna 410 |
+| PATCH | `/doses/update/status/:id` | Retirado: retorna 410 |
 
 A referência viva e completa (DTOs, campos, exemplos) é o Swagger em `/api`.
 
 ---
+
+### `treatment-protocols`
+
+Configuração disponível tanto no onboarding quanto no uso diário: listar/criar protocolos, criar/editar rascunhos, simular, publicar, selecionar padrão e retirar versões. Médicos da organização podem escrever; administradores e enfermagem podem consultar. As rotas e os payloads estão no [guia de integração](docs/configurable-immunotherapy-rollout.md).
 
 ## Tratamento de erros
 

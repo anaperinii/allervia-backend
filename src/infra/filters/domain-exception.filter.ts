@@ -4,19 +4,30 @@ import {
   ExceptionFilter,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { DomainException } from 'src/infra/exceptions/domain.exception';
+import {
+  codeFromExceptionName,
+  ErrorEnvelope,
+  readRequestId,
+} from './error-envelope';
 
 @Catch(DomainException)
 export class DomainExceptionFilter implements ExceptionFilter {
   catch(exception: DomainException, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
+    const http = host.switchToHttp();
+    const response = http.getResponse<Response>();
+    const request = http.getRequest<Request>();
     const status = exception.status ?? HttpStatus.BAD_REQUEST;
+    const requestId = readRequestId(request);
 
-    response.status(status).json({
+    const envelope: ErrorEnvelope = {
       statusCode: status,
+      code: codeFromExceptionName(exception.name),
       message: exception.message,
-      error: exception.name,
-    });
+      ...(requestId ? { requestId } : {}),
+    };
+
+    response.status(status).json(envelope);
   }
 }

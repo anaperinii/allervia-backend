@@ -6,7 +6,10 @@ export abstract class IRoleRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<ProfessionalRole>;
 
-  abstract findById(id: string): Promise<ProfessionalRole | null>;
+  abstract findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ProfessionalRole | null>;
 
   abstract findActiveByProfessional(
     professionalId: string,
@@ -18,5 +21,9 @@ export abstract class IRoleRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<ProfessionalRole | null>;
 
-  abstract revoke(id: string, revokedById: string): Promise<ProfessionalRole>;
+  abstract revoke(
+    id: string,
+    revokedById: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ProfessionalRole>;
 }

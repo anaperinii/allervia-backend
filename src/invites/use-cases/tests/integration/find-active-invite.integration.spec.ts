@@ -52,7 +52,7 @@ describe('FindActiveInviteUseCase - Integration', () => {
       email: 'test@example.com',
       organizationId: authenticatedUser.organizationId,
       isActive: true,
-      expiresAt: new Date('2026-01-01'),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       createdById: authenticatedUser.id,
     });
 
@@ -84,7 +84,7 @@ describe('FindActiveInviteUseCase - Integration', () => {
       email: 'test@example.com',
       organizationId: authenticatedUser.organizationId,
       isActive: false,
-      expiresAt: new Date('2026-01-01'),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       createdById: authenticatedUser.id,
     });
 

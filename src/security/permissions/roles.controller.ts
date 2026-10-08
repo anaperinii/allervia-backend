@@ -8,7 +8,6 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
-import { Public } from 'src/security/decorators/public.decorator';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
@@ -28,18 +27,6 @@ export class RolesController {
     private readonly listProfessionalRolesUseCase: ListProfessionalRolesUseCase,
   ) {}
 
-  @Public()
-  @Post('register')
-  @ApiBody({ type: CreateProfessionalRoleDto })
-  async grantOnboarding(@Body() dto: CreateProfessionalRoleDto) {
-    return this.grantRoleUseCase.execute({
-      professionalId: dto.professionalId,
-      role: dto.name,
-      grantedById: dto.professionalId,
-      bootstrapKey: dto.key,
-    });
-  }
-
   @Post()
   @ApiBody({ type: CreateProfessionalRoleDto })
   @CheckPolicies({ action: 'create', subject: 'ProfessionalRole' })
@@ -55,6 +42,8 @@ export class RolesController {
       professionalId: dto.professionalId,
       role: dto.name,
       grantedById: currentUser.professionalId,
+      actorUserId: currentUser.id,
+      organizationId: currentUser.organizationId,
     });
   }
 
@@ -76,6 +65,14 @@ export class RolesController {
     @Param('id') id: string,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
   ) {
-    return this.revokeRoleUseCase.execute(id, currentUser.id);
+    if (!currentUser.professionalId) {
+      throw new ForbiddenException('Apenas profissionais podem revogar roles');
+    }
+
+    return this.revokeRoleUseCase.execute(id, {
+      userId: currentUser.id,
+      professionalId: currentUser.professionalId,
+      organizationId: currentUser.organizationId,
+    });
   }
 }

@@ -52,7 +52,7 @@ describe('CreatePatientUseCase - Integration', () => {
 
     const dto: CreatePatientDto = {
       fullName: 'João Silva',
-      birthDate: new Date('1990-01-15'),
+      birthDate: '1990-01-15',
       weightInKg: 75.5,
       phoneNumber: '11987654321',
       responsiblePhysicianId: authenticatedUser.professionalId!,
@@ -73,7 +73,7 @@ describe('CreatePatientUseCase - Integration', () => {
 
     const dto: CreatePatientDto = {
       fullName: 'Maria Santos',
-      birthDate: new Date('1985-05-20'),
+      birthDate: '1985-05-20',
       weightInKg: 65.0,
       phoneNumber: '11912345678',
       responsiblePhysicianId: authenticatedUser.professionalId!,

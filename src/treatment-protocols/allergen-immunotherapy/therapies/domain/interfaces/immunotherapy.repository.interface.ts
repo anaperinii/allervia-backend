@@ -14,6 +14,7 @@ export abstract class IImmunotherapyRepository {
   abstract update(
     immunoId: string,
     immunotherapy: Partial<UpdateImmunotherapyData>,
+    tx?: Prisma.TransactionClient,
   ): Promise<Immunotherapy>;
 
   abstract findById(

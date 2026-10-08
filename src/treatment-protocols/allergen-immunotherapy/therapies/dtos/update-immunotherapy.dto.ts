@@ -1,6 +1,7 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateImmunotherapyDto } from './create-immunotherapy.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
-export class UpdateImmunotherapyDto extends PartialType(
-  CreateImmunotherapyDto,
-) {}
+export class UpdateImmunotherapyDto {
+  @ApiProperty() @IsInt() @Min(0) expectedRevision: number;
+  @ApiProperty() @IsString() @IsNotEmpty() immunoType: string;
+}

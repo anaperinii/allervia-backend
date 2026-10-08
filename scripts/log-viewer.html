@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Allervia · Log Viewer</title>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --panel: #131a23;
+        --panel-soft: #161e29;
+        --line: #232d3b;
+        --ink: #dbe4ee;
+        --ink-soft: #7d8b9d;
+        --query: #38bdf8;
+        --nest: #a78bfa;
+        --info: #60a5fa;
+        --warn: #fbbf24;
+        --error: #f87171;
+        --stdout: #94a3b8;
+        --ok: #34d399;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, #131a23, #0f151d);
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+      .brand { font-weight: 700; letter-spacing: 0.04em; font-size: 12.5px; }
+      .brand span { color: var(--ink-soft); font-weight: 500; }
+      .status { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+      .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--error); }
+      .dot.live { background: var(--ok); box-shadow: 0 0 8px rgba(52, 211, 153, 0.7); }
+      .spacer { flex: 1; }
+      input[type="search"] {
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        color: var(--ink);
+        padding: 5px 10px;
+        min-width: 240px;
+        font: inherit;
+        outline: none;
+      }
+      input[type="search"]:focus { border-color: var(--query); }
+      button {
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        border-radius: 7px;
+        padding: 5px 10px;
+        font: inherit;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+      }
+      button:hover { color: var(--ink); border-color: #33415a; }
+      button.on { color: #0d1117; background: var(--ok); border-color: var(--ok); font-weight: 700; }
+      .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 3px 10px;
+        cursor: pointer;
+        color: var(--ink-soft);
+        user-select: none;
+        transition: all 0.15s;
+      }
+      .chip .count {
+        font-size: 10.5px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 999px;
+        padding: 0 6px;
+      }
+      .chip[data-active="true"] { color: var(--ink); background: rgba(255, 255, 255, 0.05); }
+      .chip[data-active="true"][data-cat="query"] { border-color: var(--query); color: var(--query); }
+      .chip[data-active="true"][data-cat="nest"] { border-color: var(--nest); color: var(--nest); }
+      .chip[data-active="true"][data-cat="prisma-info"] { border-color: var(--info); color: var(--info); }
+      .chip[data-active="true"][data-cat="warn"],
+      .chip[data-active="true"][data-cat="prisma-warn"] { border-color: var(--warn); color: var(--warn); }
+      .chip[data-active="true"][data-cat="error"],
+      .chip[data-active="true"][data-cat="prisma-error"],
+      .chip[data-active="true"][data-cat="stderr"] { border-color: var(--error); color: var(--error); }
+      main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 250px; }
+      #log { overflow-y: auto; padding: 6px 0 40px; }
+      .row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 3px 14px;
+        border-left: 2px solid transparent;
+        white-space: pre-wrap;
+        word-break: break-word;
+        cursor: default;
+      }
+      .row:hover { background: rgba(255, 255, 255, 0.03); }
+      .row.q { border-left-color: rgba(56, 189, 248, 0.5); cursor: pointer; }
+      .row.nest { border-left-color: rgba(167, 139, 250, 0.5); }
+      .row.warn { border-left-color: var(--warn); background: rgba(251, 191, 36, 0.06); }
+      .row.error { border-left-color: var(--error); background: rgba(248, 113, 113, 0.08); }
+      .time { color: #4b5a6d; flex: none; }
+      .tag {
+        flex: none;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 4px;
+        padding: 1px 6px;
+        border: 1px solid transparent;
+      }
+      .tag.query { color: var(--query); border-color: rgba(56, 189, 248, 0.35); }
+      .tag.nest { color: var(--nest); border-color: rgba(167, 139, 250, 0.35); }
+      .tag.info { color: var(--info); border-color: rgba(96, 165, 250, 0.35); }
+      .tag.warn { color: var(--warn); border-color: rgba(251, 191, 36, 0.4); }
+      .tag.error { color: var(--error); border-color: rgba(248, 113, 113, 0.4); }
+      .tag.stdout { color: var(--stdout); border-color: rgba(148, 163, 184, 0.3); }
+      .op { flex: none; font-weight: 700; color: #7dd3fc; }
+      .table { flex: none; color: #fbbf24; }
+      .tx { flex: none; color: #c084fc; font-size: 10.5px; }
+      .ctx { flex: none; color: var(--nest); }
+      .msg { color: var(--ink); flex: 1; min-width: 0; }
+      .row.q .msg { color: #8fa3ba; }
+      .row.q.open .msg { color: var(--ink); }
+      .msg .kw { color: #7dd3fc; }
+      .msg .lit { color: #86efac; }
+      .row.q:not(.open) .msg {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      aside {
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+        padding: 12px;
+        overflow-y: auto;
+      }
+      aside h2 {
+        margin: 0 0 8px;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        font-weight: 700;
+      }
+      aside + aside { margin-top: 16px; }
+      .bar { margin-bottom: 7px; }
+      .bar .label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+      .bar .label span:last-child { color: var(--ink-soft); }
+      .bar .track { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+      .bar .fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #a78bfa); }
+      .empty { color: var(--ink-soft); padding: 24px 14px; }
+      @media (max-width: 900px) { main { grid-template-columns: 1fr; } aside { display: none; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="top">
+        <div class="brand">allervia <span>· log viewer</span></div>
+        <div class="status"><i class="dot" id="dot"></i><span id="state">conectando…</span></div>
+        <div class="spacer"></div>
+        <input type="search" id="search" placeholder="filtrar por texto, tabela, contexto…" />
+        <button id="pause">pausar</button>
+        <button id="scroll" class="on">auto-scroll</button>
+        <button id="clear">limpar</button>
+      </div>
+      <div class="filters" id="filters"></div>
+    </header>
+
+    <main>
+      <div id="log"><div class="empty">aguardando saída do servidor…</div></div>
+      <aside>
+        <h2>tabelas mais consultadas</h2>
+        <div id="tables"><div class="empty" style="padding: 0">sem queries</div></div>
+      </aside>
+    </main>
+
+    <script>
+      const CATEGORIES = [
+        { key: 'query', label: 'query' },
+        { key: 'nest', label: 'nest' },
+        { key: 'prisma-info', label: 'info' },
+        { key: 'warn', label: 'warn' },
+        { key: 'prisma-warn', label: 'prisma warn' },
+        { key: 'error', label: 'error' },
+        { key: 'prisma-error', label: 'prisma error' },
+        { key: 'stdout', label: 'stdout' },
+        { key: 'stderr', label: 'stderr' },
+      ];
+      const TAG_CLASS = {
+        query: 'query',
+        nest: 'nest',
+        'prisma-info': 'info',
+        warn: 'warn',
+        'prisma-warn': 'warn',
+        error: 'error',
+        'prisma-error': 'error',
+        stderr: 'error',
+        stdout: 'stdout',
+      };
+      const KEYWORDS =
+        /\b(SELECT|INSERT INTO|UPDATE|DELETE FROM|FROM|WHERE|ORDER BY|GROUP BY|LIMIT|OFFSET|INNER JOIN|LEFT JOIN|JOIN|ON|AND|OR|SET|VALUES|RETURNING|BEGIN|COMMIT|ROLLBACK|FOR UPDATE|FOR SHARE|IS NULL|IS NOT NULL|IN|COUNT|AS|DESC|ASC)\b/g;
+
+      const MAX_ROWS = 3000;
+      const log = document.getElementById('log');
+      const filtersEl = document.getElementById('filters');
+      const tablesEl = document.getElementById('tables');
+      const searchEl = document.getElementById('search');
+      const pauseEl = document.getElementById('pause');
+      const scrollEl = document.getElementById('scroll');
+      const clearEl = document.getElementById('clear');
+      const dotEl = document.getElementById('dot');
+      const stateEl = document.getElementById('state');
+
+      let events = [];
+      let hidden = new Set();
+      let search = '';
+      let paused = false;
+      let autoscroll = true;
+      let pending = [];
+      const counts = {};
+      const tableCounts = {};
+
+      function escapeHtml(value) {
+        return value
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function highlight(sql) {
+        return escapeHtml(sql)
+          .replace(KEYWORDS, '<span class="kw">$1</span>')
+          .replace(/(\$\d+)/g, '<span class="lit">$1</span>');
+      }
+
+      function matches(event) {
+        if (hidden.has(event.category)) return false;
+        if (!search) return true;
+        const haystack = [
+          event.message,
+          event.table ?? '',
+          event.context ?? '',
+          event.operation ?? '',
+        ]
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(search);
+      }
+
+      function buildRow(event) {
+        const row = document.createElement('div');
+        const isQuery = event.category === 'query';
+        row.className =
+          'row' +
+          (isQuery ? ' q' : '') +
+          (event.category === 'nest' ? ' nest' : '') +
+          (event.category === 'warn' || event.category === 'prisma-warn' ? ' warn' : '') +
+          (event.category === 'error' ||
+          event.category === 'prisma-error' ||
+          event.category === 'stderr'
+            ? ' error'
+            : '');
+        row.dataset.id = String(event.id);
+
+        const time = new Date(event.at).toLocaleTimeString('pt-BR', { hour12: false });
+        const parts = [];
+        parts.push('<span class="time">' + time + '</span>');
+        parts.push(
+          '<span class="tag ' + (TAG_CLASS[event.category] ?? 'stdout') + '">' +
+            escapeHtml(event.category.replace('prisma-', '')) +
+            '</span>',
+        );
+        if (event.operation) parts.push('<span class="op">' + escapeHtml(event.operation) + '</span>');
+        if (event.table) parts.push('<span class="table">' + escapeHtml(event.table) + '</span>');
+        if (event.transaction) parts.push('<span class="tx">tx#' + event.transaction + '</span>');
+        if (event.context) parts.push('<span class="ctx">[' + escapeHtml(event.context) + ']</span>');
+        parts.push('<span class="msg">' + (isQuery ? highlight(event.message) : escapeHtml(event.message)) + '</span>');
+        row.innerHTML = parts.join(' ');
+
+        if (isQuery) {
+          row.addEventListener('click', () => row.classList.toggle('open'));
+        }
+        return row;
+      }
+
+      function append(event) {
+        if (!matches(event)) return;
+        if (log.firstElementChild?.classList.contains('empty')) log.innerHTML = '';
+        log.appendChild(buildRow(event));
+        while (log.childElementCount > MAX_ROWS) log.removeChild(log.firstElementChild);
+        if (autoscroll) log.scrollTop = log.scrollHeight;
+      }
+
+      function rerender() {
+        log.innerHTML = '';
+        const visible = events.filter(matches);
+        if (visible.length === 0) {
+          log.innerHTML = '<div class="empty">nada corresponde ao filtro atual.</div>';
+          return;
+        }
+        const fragment = document.createDocumentFragment();
+        for (const event of visible.slice(-MAX_ROWS)) fragment.appendChild(buildRow(event));
+        log.appendChild(fragment);
+        if (autoscroll) log.scrollTop = log.scrollHeight;
+      }
+
+      function renderFilters() {
+        filtersEl.innerHTML = '';
+        for (const category of CATEGORIES) {
+          const total = counts[category.key] ?? 0;
+          if (total === 0 && hidden.has(category.key) === false && category.key !== 'query') continue;
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          chip.dataset.cat = category.key;
+          chip.dataset.active = String(!hidden.has(category.key));
+          chip.innerHTML =
+            '<span>' + category.label + '</span><span class="count">' + total + '</span>';
+          chip.addEventListener('click', () => {
+            if (hidden.has(category.key)) hidden.delete(category.key);
+            else hidden.add(category.key);
+            renderFilters();
+            rerender();
+          });
+          filtersEl.appendChild(chip);
+        }
+      }
+
+      function renderTables() {
+        const entries = Object.entries(tableCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+        if (entries.length === 0) {
+          tablesEl.innerHTML = '<div class="empty" style="padding:0">sem queries</div>';
+          return;
+        }
+        const max = entries[0][1];
+        tablesEl.innerHTML = entries
+          .map(([table, total]) => {
+            const width = Math.max(4, Math.round((total / max) * 100));
+            return (
+              '<div class="bar"><div class="label"><span>' +
+              escapeHtml(table) +
+              '</span><span>' +
+              total +
+              '</span></div><div class="track"><div class="fill" style="width:' +
+              width +
+              '%"></div></div></div>'
+            );
+          })
+          .join('');
+      }
+
+      function track(event) {
+        counts[event.category] = (counts[event.category] ?? 0) + 1;
+        if (event.table) tableCounts[event.table] = (tableCounts[event.table] ?? 0) + 1;
+      }
+
+      function ingest(event, batched) {
+        events.push(event);
+        if (events.length > MAX_ROWS * 2) events = events.slice(-MAX_ROWS);
+        track(event);
+        if (!batched) append(event);
+      }
+
+      const source = new EventSource('/stream');
+      source.onopen = () => {
+        dotEl.classList.add('live');
+        stateEl.textContent = 'conectado';
+      };
+      source.onerror = () => {
+        dotEl.classList.remove('live');
+        stateEl.textContent = 'desconectado — tentando de novo';
+      };
+      source.onmessage = (message) => {
+        const payload = JSON.parse(message.data);
+        if (payload.type === 'snapshot') {
+          for (const event of payload.events) ingest(event, true);
+          renderFilters();
+          renderTables();
+          rerender();
+          return;
+        }
+        if (paused) {
+          pending.push(payload);
+          stateEl.textContent = 'pausado · ' + pending.length + ' em espera';
+          track(payload);
+          renderFilters();
+          renderTables();
+          return;
+        }
+        ingest(payload, false);
+        renderFilters();
+        renderTables();
+      };
+
+      searchEl.addEventListener('input', () => {
+        search = searchEl.value.trim().toLowerCase();
+        rerender();
+      });
+      pauseEl.addEventListener('click', () => {
+        paused = !paused;
+        pauseEl.classList.toggle('on', paused);
+        pauseEl.textContent = paused ? 'retomar' : 'pausar';
+        if (!paused) {
+          for (const event of pending) ingest(event, true);
+          pending = [];
+          stateEl.textContent = 'conectado';
+          rerender();
+        }
+      });
+      scrollEl.addEventListener('click', () => {
+        autoscroll = !autoscroll;
+        scrollEl.classList.toggle('on', autoscroll);
+        if (autoscroll) log.scrollTop = log.scrollHeight;
+      });
+      clearEl.addEventListener('click', () => {
+        events = [];
+        pending = [];
+        for (const key of Object.keys(counts)) delete counts[key];
+        for (const key of Object.keys(tableCounts)) delete tableCounts[key];
+        renderFilters();
+        renderTables();
+        log.innerHTML = '<div class="empty">limpo.</div>';
+      });
+      log.addEventListener('scroll', () => {
+        const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+        if (!atBottom && autoscroll) {
+          autoscroll = false;
+          scrollEl.classList.remove('on');
+        }
+      });
+
+      renderFilters();
+    </script>
+  </body>
+</html>

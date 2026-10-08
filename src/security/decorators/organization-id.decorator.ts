@@ -4,13 +4,13 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { Request } from 'express';
+import type { RequestWithSession } from '../session/session-auth.guard';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { AUTH_MESSAGES } from 'src/security/auth.messages';
 
 export const OrganizationId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string => {
-    const request = ctx.switchToHttp().getRequest<Request>();
+    const request = ctx.switchToHttp().getRequest<RequestWithSession>();
     const user = request.user as AuthenticatedUserPayload;
 
     if (!user) {

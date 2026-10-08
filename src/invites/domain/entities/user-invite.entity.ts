@@ -106,7 +106,7 @@ export class UserInvite {
   }
 
   isUsed(): boolean {
-    return !this.isActive || this.usedAt !== null;
+    return this.usedAt !== null;
   }
 
   isDeactive(): boolean {

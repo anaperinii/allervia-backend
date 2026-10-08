@@ -1,0 +1,160 @@
+{
+  "purpose": "Synthetic acceptance data for stage 1; not an approved clinical protocol or a production seed",
+  "volumeUnit": "mL",
+  "concentrationRepresentation": "dilution denominator",
+  "route": "SUBCUTANEOUS",
+  "steps": [
+    {
+      "id": "build-up-1000-010",
+      "label": "1:1000 / 0.1 mL",
+      "phase": "BUILD_UP",
+      "concentration": 1000,
+      "volume": "0.1",
+      "intervalDays": 7,
+      "nextStepId": "build-up-1000-020"
+    },
+    {
+      "id": "build-up-1000-020",
+      "label": "1:1000 / 0.2 mL",
+      "phase": "BUILD_UP",
+      "concentration": 1000,
+      "volume": "0.2",
+      "intervalDays": 7,
+      "nextStepId": "build-up-1000-040"
+    },
+    {
+      "id": "build-up-1000-040",
+      "label": "1:1000 / 0.4 mL",
+      "phase": "BUILD_UP",
+      "concentration": 1000,
+      "volume": "0.4",
+      "intervalDays": 7,
+      "nextStepId": "build-up-1000-080"
+    },
+    {
+      "id": "build-up-1000-080",
+      "label": "1:1000 / 0.8 mL",
+      "phase": "BUILD_UP",
+      "concentration": 1000,
+      "volume": "0.8",
+      "intervalDays": 7,
+      "nextStepId": "build-up-100-010"
+    },
+    {
+      "id": "build-up-100-010",
+      "label": "1:100 / 0.1 mL",
+      "phase": "BUILD_UP",
+      "concentration": 100,
+      "volume": "0.1",
+      "intervalDays": 7,
+      "nextStepId": "build-up-100-020"
+    },
+    {
+      "id": "build-up-100-020",
+      "label": "1:100 / 0.2 mL",
+      "phase": "BUILD_UP",
+      "concentration": 100,
+      "volume": "0.2",
+      "intervalDays": 7,
+      "nextStepId": "build-up-100-040"
+    },
+    {
+      "id": "build-up-100-040",
+      "label": "1:100 / 0.4 mL",
+      "phase": "BUILD_UP",
+      "concentration": 100,
+      "volume": "0.4",
+      "intervalDays": 7,
+      "nextStepId": "build-up-100-050"
+    },
+    {
+      "id": "build-up-100-050",
+      "label": "1:100 / 0.5 mL",
+      "phase": "BUILD_UP",
+      "concentration": 100,
+      "volume": "0.5",
+      "intervalDays": 7,
+      "nextStepId": "maintenance-100-050-14"
+    },
+    {
+      "id": "maintenance-100-050-14",
+      "label": "Maintenance / 14 days",
+      "phase": "MAINTENANCE",
+      "concentration": 100,
+      "volume": "0.5",
+      "intervalDays": 14,
+      "nextStepId": "maintenance-100-050-14"
+    }
+  ],
+  "cases": [
+    {
+      "id": "recommend-configured-successor",
+      "stage": 1,
+      "administeredStepId": "build-up-1000-020",
+      "expectedNextStepId": "build-up-1000-040"
+    },
+    {
+      "id": "editing-a-valid-value-does-not-create-a-successor",
+      "stage": 5,
+      "scheduledStepId": "build-up-1000-040",
+      "editedStepId": "build-up-1000-020",
+      "expectedAdditionalDoseCount": 0
+    },
+    {
+      "id": "recommend-from-administered-value-after-edit",
+      "stage": 5,
+      "scheduledStepId": "build-up-1000-040",
+      "administeredStepId": "build-up-1000-020",
+      "expectedNextStepId": "build-up-1000-040"
+    },
+    {
+      "id": "history-length-does-not-drive-progression",
+      "stage": 1,
+      "historyLengthsForTestHarness": [1, 4, 10],
+      "administeredStepId": "build-up-1000-020",
+      "expectedNextStepId": "build-up-1000-040"
+    },
+    {
+      "id": "advance-concentration-from-configured-terminal-value",
+      "stage": 1,
+      "administeredStepId": "build-up-1000-080",
+      "expectedNextStepId": "build-up-100-010"
+    },
+    {
+      "id": "use-configured-target-volume",
+      "stage": 1,
+      "administeredStepId": "build-up-100-040",
+      "expectedNextStepId": "build-up-100-050"
+    },
+    {
+      "id": "recognize-concentration-as-part-of-the-value",
+      "stage": 1,
+      "administeredStepId": "build-up-100-020",
+      "expectedNextStepId": "build-up-100-040"
+    },
+    {
+      "id": "maintenance-follows-explicit-self-transition",
+      "stage": 1,
+      "historyLengthsForTestHarness": [1, 4, 10],
+      "administeredStepId": "maintenance-100-050-14",
+      "expectedNextStepId": "maintenance-100-050-14"
+    },
+    {
+      "id": "renaming-a-label-does-not-change-progression",
+      "stage": 1,
+      "administeredStepId": "build-up-1000-020",
+      "replacementLabel": "Renamed label",
+      "expectedNextStepId": "build-up-1000-040"
+    },
+    {
+      "id": "unconfigured-value-is-not-rounded-to-a-step",
+      "stage": 1,
+      "administeredValues": {
+        "concentration": 1000,
+        "volume": "0.3",
+        "intervalDays": 7
+      },
+      "expectedResolution": "UNRESOLVED"
+    }
+  ]
+}

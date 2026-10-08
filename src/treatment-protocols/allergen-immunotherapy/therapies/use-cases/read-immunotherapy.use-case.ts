@@ -1,34 +1,114 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { accessibleBy } from '@casl/prisma';
-import { IImmunotherapyRepository } from 'src/treatment-protocols/allergen-immunotherapy/therapies/domain/interfaces/immunotherapy.repository.interface';
-import { ImmunotherapyResponseDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-response.dto';
+import { PrismaService } from 'src/infra/database/prisma.service';
 import { IMMUNOTHERAPY_MESSAGES } from 'src/treatment-protocols/allergen-immunotherapy/therapies/immunotherapy.messages';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
+import { ImmunotherapyDetailDto } from '../dtos/immunotherapy-read.dto';
+import { resolvePhase } from './list-all-immunotherapies.use-case';
 
 @Injectable()
 export class ReadImmunotherapyUseCase {
   constructor(
-    private readonly immunotherapyRepository: IImmunotherapyRepository,
+    private readonly prisma: PrismaService,
     private readonly abilityFactory: AbilityFactory,
   ) {}
 
   async execute(
     id: string,
     currentUser: AuthenticatedUserPayload,
-  ): Promise<ImmunotherapyResponseDto> {
+  ): Promise<ImmunotherapyDetailDto> {
     const ability = this.abilityFactory.createForUser(currentUser);
-    const where = accessibleBy(ability, 'read').ofType('Immunotherapy');
+    const scope = accessibleBy(ability, 'read').ofType('Immunotherapy');
 
-    const immunotherapy = await this.immunotherapyRepository.findByIdAccessible(
-      id,
-      where,
-    );
+    const therapy = await this.prisma.immunotherapy.findFirst({
+      where: { AND: [{ id }, scope] },
+      select: {
+        id: true,
+        immunoType: true,
+        administrationRoute: true,
+        extract: true,
+        status: true,
+        revision: true,
+        isArchived: true,
+        inductionStartDate: true,
+        maintenanceStartDate: true,
+        createdAt: true,
+        updatedAt: true,
+        patient: {
+          select: {
+            id: true,
+            fullName: true,
+            isActive: true,
+            responsiblePhysician: { select: { id: true, fullName: true } },
+          },
+        },
+        currentPrescription: {
+          select: { versionId: true, revision: true, resolved: true },
+        },
+        _count: {
+          select: { doses: { where: { isArchived: false } } },
+        },
+      },
+    });
 
-    if (!immunotherapy) {
+    if (!therapy) {
       throw new NotFoundException(IMMUNOTHERAPY_MESSAGES.notFound(id));
     }
 
-    return immunotherapy;
+    const nextDose = await this.prisma.dose.findFirst({
+      where: { immunotherapyId: id, status: 'SCHEDULED', isArchived: false },
+      orderBy: { scheduledAt: 'asc' },
+      select: {
+        id: true,
+        scheduledAt: true,
+        status: true,
+        nextIntervalInDays: true,
+        plannedValues: true,
+      },
+    });
+
+    const currentPhase = resolvePhase(
+      nextDose?.plannedValues,
+      therapy.maintenanceStartDate,
+    );
+
+    return {
+      id: therapy.id,
+      immunoType: therapy.immunoType,
+      administrationRoute: therapy.administrationRoute,
+      extract: therapy.extract,
+      status: therapy.status,
+      revision: therapy.revision,
+      isArchived: therapy.isArchived,
+      inductionStartDate: therapy.inductionStartDate,
+      maintenanceStartDate: therapy.maintenanceStartDate,
+      patient: {
+        id: therapy.patient.id,
+        fullName: therapy.patient.fullName,
+        isActive: therapy.patient.isActive,
+      },
+      responsiblePhysician: therapy.patient.responsiblePhysician,
+      prescription: therapy.currentPrescription
+        ? {
+            versionId: therapy.currentPrescription.versionId,
+            revision: therapy.currentPrescription.revision,
+            resolved: therapy.currentPrescription.resolved,
+          }
+        : null,
+      nextDose: nextDose
+        ? {
+            id: nextDose.id,
+            scheduledAt: nextDose.scheduledAt,
+            status: nextDose.status,
+            intervalDays: nextDose.nextIntervalInDays,
+            phase: currentPhase,
+          }
+        : null,
+      currentPhase,
+      doseCount: therapy._count.doses,
+      createdAt: therapy.createdAt,
+      updatedAt: therapy.updatedAt,
+    };
   }
 }

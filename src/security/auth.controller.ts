@@ -1,7 +1,6 @@
+import { PreAuthCsrf } from './session/preauth-csrf.decorator';
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { Public } from './decorators/public.decorator';
-import { LoginDto } from './dtos/login.dto';
-import { LoginUseCase } from './use-cases/login.use-case';
 import { PasswordResetRequestDTO } from './dtos/password-reset-request.dto';
 import { PasswordResetRequestUseCase } from './use-cases/password-reset-request.use-case';
 import { PasswordResetVerifyDTO } from './dtos/password-reset-verify.dto';
@@ -9,21 +8,14 @@ import { PasswordResetVerifyUseCase } from './use-cases/password-reset-verify.us
 import { PasswordResetConfirmDTO } from './dtos/password-reset-confirm.dto';
 import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.use-case';
 
+@PreAuthCsrf()
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly loginUseCase: LoginUseCase,
     private readonly passwordResetRequestUseCase: PasswordResetRequestUseCase,
     private readonly passwordResetVerifyUseCase: PasswordResetVerifyUseCase,
     private readonly passwordResetConfirmUseCase: PasswordResetConfirmUseCase,
   ) {}
-
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  @Public()
-  async login(@Body() loginDto: LoginDto) {
-    return this.loginUseCase.execute(loginDto);
-  }
 
   @Post('password-reset/request')
   @HttpCode(HttpStatus.ACCEPTED)

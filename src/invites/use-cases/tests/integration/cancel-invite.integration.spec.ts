@@ -1,3 +1,5 @@
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CancelInviteUseCase } from 'src/invites/use-cases/cancel-invite.use-case';
 import { PrismaService } from 'src/infra/database/prisma.service';
@@ -21,6 +23,7 @@ describe('CancelInviteUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        { provide: IAuditLogService, useClass: PrismaAuditLogService },
         CancelInviteUseCase,
         FindInviteByIdUseCase,
         {
@@ -56,7 +59,7 @@ describe('CancelInviteUseCase - Integration', () => {
     const invite = await factories.internalUserInvite.create({
       organizationId: authenticatedUser.organizationId,
       isActive: true,
-      expiresAt: new Date('2026-01-01'),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       createdById: authenticatedUser.id,
     });
 

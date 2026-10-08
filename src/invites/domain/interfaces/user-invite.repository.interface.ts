@@ -3,12 +3,18 @@ import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.
 import {
   CreateInviteData,
   FindInvitesFilters,
+  InviteContext,
+  InviteWithAuthor,
   UpdateInviteData,
 } from './invite.interface';
 import { Prisma } from '@prisma/client';
+import { PageBounds } from 'src/infra/http/pagination';
 
 export abstract class IUserInviteRepository {
-  abstract create(invite: CreateInviteData): Promise<UserInvite>;
+  abstract create(
+    invite: CreateInviteData,
+    tx?: Prisma.TransactionClient,
+  ): Promise<UserInvite>;
 
   abstract update(
     invite: Partial<UpdateInviteData>,
@@ -26,6 +32,14 @@ export abstract class IUserInviteRepository {
     organizationId: string,
     filters?: FindInvitesFilters,
   ): Promise<UserInvite[]>;
+
+  abstract findPageByOrganization(
+    organizationId: string,
+    filters: FindInvitesFilters,
+    bounds: PageBounds,
+  ): Promise<{ items: InviteWithAuthor[]; total: number }>;
+
+  abstract findContextByToken(token: string): Promise<InviteContext | null>;
 
   abstract findActiveInvite(
     email: string,

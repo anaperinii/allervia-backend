@@ -1,4 +1,7 @@
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service';
 import { Test, TestingModule } from '@nestjs/testing';
+import { IEmailService } from 'src/infra/email/email.service';
 import { CreateInviteUseCase } from 'src/invites/use-cases/create-invite.use-case';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
@@ -27,6 +30,15 @@ describe('CreateInviteUseCase - Integration', () => {
 
     module = await Test.createTestingModule({
       providers: [
+        { provide: IAuditLogService, useClass: PrismaAuditLogService },
+        {
+          provide: IEmailService,
+          useValue: {
+            sendPasswordResetLink: () => Promise.resolve(),
+            sendPasswordChangedNotification: () => Promise.resolve(),
+            sendInviteLink: () => Promise.resolve(),
+          },
+        },
         CreateInviteUseCase,
         InviteStrategyContext,
         InviteStrategyFactory,
@@ -80,7 +92,9 @@ describe('CreateInviteUseCase - Integration', () => {
     expect(result.email).toBe(dto.email);
     expect(result.fullName).toBe(dto.fullName);
     expect(result.role).toBe(dto.userRole);
-    expect(result.organizationId).toBe(authenticatedUser.organizationId);
+    expect(result.status).toBe('ACTIVE');
+    expect(result.createdBy?.id).toBe(authenticatedUser.id);
+    expect(result).not.toHaveProperty('token');
   });
 
   it('should throw conflict exception when active invite already exists', async () => {
@@ -88,8 +102,9 @@ describe('CreateInviteUseCase - Integration', () => {
 
     const invite = await factories.internalUserInvite.create({
       email: 'existing@test.com',
+      organizationId: authenticatedUser.organizationId,
       isActive: true,
-      expiresAt: new Date('2026-01-01'),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       createdById: authenticatedUser.id,
     });
 
@@ -106,10 +121,13 @@ describe('CreateInviteUseCase - Integration', () => {
 
   it('should throw exception when user already exists and is active', async () => {
     const authenticatedUser = await factories.users.createAuthenticatedAdmin();
-    const existingUser = await factories.users.create({
-      email: 'existing@test.com',
-      isActive: true,
-    });
+    const existingUser = await factories.users.createInOrganization(
+      authenticatedUser.organizationId,
+      {
+        email: 'existing@test.com',
+        isActive: true,
+      },
+    );
 
     const dto: CreateInviteDto = {
       email: existingUser.email,
