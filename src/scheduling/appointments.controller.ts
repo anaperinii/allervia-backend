@@ -7,12 +7,14 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import { AppointmentsService } from './appointments.service';
 import {
+  AppointmentPageDto,
+  AppointmentResponseDto,
   CreateAppointmentDto,
   ListAppointmentsQueryDto,
   UpdateAppointmentDto,
@@ -25,6 +27,7 @@ export class AppointmentsController {
 
   @Get()
   @CheckPolicies({ action: 'read', subject: 'Appointment' })
+  @ApiOkResponse({ type: AppointmentPageDto })
   list(
     @Query() query: ListAppointmentsQueryDto,
     @CurrentUser() user: AuthenticatedUserPayload,
@@ -34,6 +37,7 @@ export class AppointmentsController {
 
   @Post()
   @CheckPolicies({ action: 'create', subject: 'Appointment' })
+  @ApiCreatedResponse({ type: AppointmentResponseDto })
   create(
     @Body() dto: CreateAppointmentDto,
     @CurrentUser() user: AuthenticatedUserPayload,
@@ -43,6 +47,7 @@ export class AppointmentsController {
 
   @Patch(':id')
   @CheckPolicies({ action: 'update', subject: 'Appointment' })
+  @ApiOkResponse({ type: AppointmentResponseDto })
   update(
     @Param('id') id: string,
     @Body() dto: UpdateAppointmentDto,

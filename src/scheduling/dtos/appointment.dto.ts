@@ -10,7 +10,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { AppointmentStatus } from '@prisma/client';
+import { AppointmentStatus, DoseStatus, Profession } from '@prisma/client';
 import { PageQueryDto } from 'src/infra/http/pagination';
 
 const OFFSET = /T.*(?:Z|[+-]\d{2}:\d{2})$/;
@@ -90,6 +90,106 @@ export class UpdateAppointmentDto {
   @IsString()
   @MaxLength(2000)
   notes?: string;
+}
+
+export class AppointmentPatientDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  fullName: string;
+
+  @ApiProperty()
+  phoneNumber: string;
+}
+
+export class AppointmentDoseDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty({ format: 'date-time' })
+  scheduledAt: Date;
+
+  @ApiProperty({ enum: DoseStatus })
+  status: DoseStatus;
+}
+
+export class AppointmentProfessionalDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  fullName: string;
+
+  @ApiProperty({ enum: Profession })
+  profession: Profession;
+}
+
+export class AppointmentResponseDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  organizationId: string;
+
+  @ApiProperty()
+  patientId: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  doseId: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  title: string | null;
+
+  @ApiProperty({ format: 'date-time' })
+  startsAt: Date;
+
+  @ApiProperty({ format: 'date-time' })
+  endsAt: Date;
+
+  @ApiProperty({ enum: AppointmentStatus })
+  status: AppointmentStatus;
+
+  @ApiProperty({ type: String, nullable: true })
+  notes: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  statusReason: string | null;
+
+  @ApiProperty({ description: 'Revisão de concorrência do compromisso' })
+  revision: number;
+
+  @ApiProperty({ format: 'date-time' })
+  createdAt: Date;
+
+  @ApiProperty({ format: 'date-time' })
+  updatedAt: Date;
+
+  @ApiProperty({ type: String, nullable: true })
+  professionalId: string | null;
+
+  @ApiProperty({ type: AppointmentPatientDto })
+  patient: AppointmentPatientDto;
+
+  @ApiProperty({ type: AppointmentDoseDto, nullable: true })
+  dose: AppointmentDoseDto | null;
+
+  @ApiProperty({ type: AppointmentProfessionalDto, nullable: true })
+  professional: AppointmentProfessionalDto | null;
+}
+
+export class AppointmentPageDto {
+  @ApiProperty({ type: [AppointmentResponseDto] })
+  items: AppointmentResponseDto[];
+
+  @ApiProperty()
+  page: number;
+
+  @ApiProperty()
+  pageSize: number;
+
+  @ApiProperty({ description: 'Total de registros no escopo da consulta' })
+  total: number;
 }
 
 export class ListAppointmentsQueryDto extends PageQueryDto {

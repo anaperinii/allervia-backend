@@ -9,5 +9,7 @@ import { AppointmentsService } from './appointments.service';
   imports: [PrismaModule, AuditModule, PermissionsModule],
   providers: [AppointmentsService],
   controllers: [AppointmentsController],
+
+  exports: [AppointmentsService],
 })
 export class SchedulingModule {}
