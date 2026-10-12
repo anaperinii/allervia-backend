@@ -105,6 +105,26 @@ export function validateProtocolDefinition(
     if (step.nextStepId !== null && !ids.has(step.nextStepId))
       return fail('protocol.steps', `Unknown successor for ${step.id}`);
   }
+  const byId = new Map(steps.map((step) => [step.id, step]));
+  steps.forEach((step, index) => {
+    if (step.phase !== 'BUILD_UP') return;
+    const visited = new Set<string>();
+    let cursor: ProtocolStep | undefined = step;
+    while (
+      cursor &&
+      cursor.phase !== 'MAINTENANCE' &&
+      !visited.has(cursor.id)
+    ) {
+      visited.add(cursor.id);
+      cursor =
+        cursor.nextStepId === null ? undefined : byId.get(cursor.nextStepId);
+    }
+    if (!cursor || cursor.phase !== 'MAINTENANCE')
+      fail(
+        `protocol.steps[${index}].nextStepId`,
+        `BUILD_UP_WITHOUT_MAINTENANCE_PATH: step "${step.id}" has no path to a MAINTENANCE step`,
+      );
+  });
   return {
     schemaVersion: 1,
     engineVersion: '1',

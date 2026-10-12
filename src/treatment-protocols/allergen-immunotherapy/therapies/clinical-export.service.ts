@@ -72,7 +72,9 @@ export class ClinicalExportService {
     const ability = this.abilities.createForUser(user);
     const bounds = resolvePage(query);
     if (!ability.can('read', 'Dose')) throw new NotFoundException();
-    const asOf = new Date(query.asOf);
+    if (!query.asOf && bounds.page > 1)
+      throw new BadRequestException('INVALID_AS_OF');
+    const asOf = query.asOf ? new Date(query.asOf) : new Date();
     if (!Number.isFinite(asOf.getTime()) || asOf.getTime() > Date.now())
       throw new BadRequestException('INVALID_AS_OF');
 
@@ -96,34 +98,45 @@ export class ClinicalExportService {
       ],
     };
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.dose.findMany({
-        where,
-        select: EXPORT_SELECT,
-        orderBy: [{ id: 'asc' }],
-        skip: bounds.skip,
-        take: bounds.take,
-      }),
-      this.prisma.dose.count({ where }),
-    ]);
+    const [items, total] = await this.prisma.$transaction(
+      async (tx) => {
+        const page = await tx.dose.findMany({
+          where,
+          select: EXPORT_SELECT,
+          orderBy: [{ id: 'asc' }],
+          skip: bounds.skip,
+          take: bounds.take,
+        });
+        const count = await tx.dose.count({ where });
 
-    if (bounds.page === 1)
-      await this.audit.record({
-        userId: user.id,
-        organizationId: user.organizationId,
-        entityType: 'Organization',
-        entityId: user.organizationId,
-        action: 'EXPORT_GENERATED',
-        newValues: {
-          kind: 'CLINICAL_DOSES',
-          asOf: asOf.toISOString(),
-          filters: {
-            status: query.status ?? null,
-            responsiblePhysicianId: query.responsiblePhysicianId ?? null,
+        await this.audit.record(
+          {
+            userId: user.id,
+            organizationId: user.organizationId,
+            entityType: 'Organization',
+            entityId: user.organizationId,
+            action: 'EXPORT_GENERATED',
+            newValues: {
+              kind: 'CLINICAL_DOSES',
+              asOf: asOf.toISOString(),
+              page: bounds.page,
+              pageSize: bounds.pageSize,
+              rows: page.length,
+              filters: {
+                status: query.status ?? null,
+                responsiblePhysicianId: query.responsiblePhysicianId ?? null,
+              },
+              justification: query.justification ?? null,
+              rowCount: count,
+            },
           },
-          rowCount: total,
-        },
-      });
+          tx,
+        );
+
+        return [page, count] as const;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
 
     const rows = items.map((dose) => {
       const resolved = dose.prescription?.resolved as

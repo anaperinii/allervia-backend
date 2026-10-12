@@ -28,6 +28,8 @@ import {
 export function json(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
+
+export const MAX_DRAFT_JSON_LENGTH = 256 * 1024;
 export function requireClinicalAuthor(user: AuthenticatedUserPayload) {
   if (
     !user.organizationId ||
@@ -40,9 +42,7 @@ export function requireProtocolManager(user: AuthenticatedUserPayload) {
   if (
     !user.organizationId ||
     !user.professionalId ||
-    !user.roles.some(
-      (role) => role === 'PHYSICIAN' || role === 'ADMINISTRATOR',
-    )
+    !user.roles.some((role) => role === 'PHYSICIAN' || role === 'ADMINISTRATOR')
   )
     throw new ForbiddenException('PROTOCOL_MANAGER_REQUIRED');
 }
@@ -101,7 +101,13 @@ export class ProtocolCatalogService {
         ['PHYSICIAN', 'NURSE', 'ADMINISTRATOR'].includes(role),
       )
     )
-      throw new ForbiddenException();
+      throw new ForbiddenException('CLINICAL_READ_REQUIRED');
+  }
+
+  private assertDraftSize(definition: unknown) {
+    if (JSON.stringify(definition ?? {}).length > MAX_DRAFT_JSON_LENGTH) {
+      throw new BadRequestException('DRAFT_TOO_LARGE');
+    }
   }
   list(user: AuthenticatedUserPayload) {
     this.readAccess(user);
@@ -121,6 +127,7 @@ export class ProtocolCatalogService {
   }
   async create(dto: CreateProtocolDto, user: AuthenticatedUserPayload) {
     requireProtocolManager(user);
+    this.assertDraftSize(dto.definition);
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR NO KEY UPDATE`;
       const protocol = await tx.treatmentProtocol.create({
@@ -156,6 +163,7 @@ export class ProtocolCatalogService {
     user: AuthenticatedUserPayload,
   ) {
     requireProtocolManager(user);
+    this.assertDraftSize(definition);
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR NO KEY UPDATE`;
       const rows = await tx.$queryRaw<
@@ -193,6 +201,7 @@ export class ProtocolCatalogService {
     definition?: EditProtocolVersionDto['definition'],
   ) {
     requireProtocolManager(user);
+    if (operation === 'edit') this.assertDraftSize(definition);
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${user.organizationId} FOR NO KEY UPDATE`;
       const initial = await tx.protocolVersion.findFirst({
@@ -337,7 +346,9 @@ export class ProtocolCatalogService {
         where: { protocolId: version.protocolId },
       });
       if (remaining === 0)
-        await tx.treatmentProtocol.delete({ where: { id: version.protocolId } });
+        await tx.treatmentProtocol.delete({
+          where: { id: version.protocolId },
+        });
 
       return {
         discardedVersionId: id,
@@ -368,6 +379,7 @@ export class ProtocolCatalogService {
       enabled: organization.automationEnabled,
       timeZone: organization.timeZone,
       defaults: organization.protocolDefaults,
+      revision: organization.revision,
     };
   }
   async settings(dto: AutomationSettingsDto, user: AuthenticatedUserPayload) {
@@ -394,9 +406,18 @@ export class ProtocolCatalogService {
       const before = await tx.organization.findUniqueOrThrow({
         where: { id: user.organizationId },
       });
+      if (
+        dto.expectedRevision !== undefined &&
+        before.revision !== dto.expectedRevision
+      )
+        throw new ConflictException('STALE_ORGANIZATION_REVISION');
       const result = await tx.organization.update({
         where: { id: user.organizationId },
-        data: { automationEnabled: dto.enabled, timeZone: dto.timeZone },
+        data: {
+          automationEnabled: dto.enabled,
+          timeZone: dto.timeZone,
+          revision: { increment: 1 },
+        },
       });
       await this.record(
         tx,
@@ -412,7 +433,11 @@ export class ProtocolCatalogService {
           changedFields: ['automationEnabled', 'timeZone'],
         },
       );
-      return { enabled: result.automationEnabled, timeZone: result.timeZone };
+      return {
+        enabled: result.automationEnabled,
+        timeZone: result.timeZone,
+        revision: result.revision,
+      };
     });
   }
   private record(

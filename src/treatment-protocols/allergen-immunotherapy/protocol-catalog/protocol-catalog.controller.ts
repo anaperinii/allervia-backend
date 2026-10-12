@@ -10,7 +10,13 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
@@ -22,6 +28,18 @@ import {
   ProtocolRevisionDto,
   SimulateProtocolDto,
   AutomationSettingsDto,
+  AutomationSettingsResultDto,
+  AutomationSettingsViewDto,
+  BindLegacyDryRunResultDto,
+  BindLegacyResultDto,
+  CreateProtocolResultDto,
+  DiscardDraftResultDto,
+  MigrationInventoryDto,
+  ProtocolVersionDto,
+  SimulationEndOfSequenceDto,
+  SimulationRecommendedDto,
+  SimulationUnresolvedDto,
+  TreatmentProtocolDto,
 } from './protocol-catalog.dto';
 
 @ApiTags('treatment-protocols')
@@ -33,11 +51,13 @@ export class ProtocolCatalogController {
   ) {}
   @Get()
   @CheckPolicies({ action: 'read', subject: 'TreatmentProtocol' })
+  @ApiOkResponse({ type: TreatmentProtocolDto, isArray: true })
   list(@CurrentUser() user: AuthenticatedUserPayload) {
     return this.catalog.list(user);
   }
   @Post()
   @CheckPolicies({ action: 'create', subject: 'TreatmentProtocol' })
+  @ApiCreatedResponse({ type: CreateProtocolResultDto })
   create(
     @Body() dto: CreateProtocolDto,
     @CurrentUser() user: AuthenticatedUserPayload,
@@ -46,6 +66,7 @@ export class ProtocolCatalogController {
   }
   @Patch('automation')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  @ApiOkResponse({ type: AutomationSettingsResultDto })
   settings(
     @Body() dto: AutomationSettingsDto,
     @CurrentUser() user: AuthenticatedUserPayload,
@@ -54,6 +75,7 @@ export class ProtocolCatalogController {
   }
   @Post(':id/versions')
   @CheckPolicies({ action: 'create', subject: 'TreatmentProtocol' })
+  @ApiCreatedResponse({ type: ProtocolVersionDto })
   version(
     @Param('id') id: string,
     @Body() dto: CreateProtocolVersionDto,
@@ -63,11 +85,13 @@ export class ProtocolCatalogController {
   }
   @Get('versions/:id')
   @CheckPolicies({ action: 'read', subject: 'TreatmentProtocol' })
+  @ApiOkResponse({ type: ProtocolVersionDto })
   read(@Param('id') id: string, @CurrentUser() user: AuthenticatedUserPayload) {
     return this.catalog.read(id, user);
   }
   @Patch('versions/:id')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  @ApiOkResponse({ type: ProtocolVersionDto })
   edit(
     @Param('id') id: string,
     @Body() dto: EditProtocolVersionDto,
@@ -83,6 +107,7 @@ export class ProtocolCatalogController {
   }
   @Delete('versions/:id')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  @ApiOkResponse({ type: DiscardDraftResultDto })
   discard(
     @Param('id') id: string,
     @Body() dto: ProtocolRevisionDto,
@@ -92,6 +117,7 @@ export class ProtocolCatalogController {
   }
   @Post('versions/:id/publish')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  @ApiCreatedResponse({ type: ProtocolVersionDto })
   publish(
     @Param('id') id: string,
     @Body() dto: ProtocolRevisionDto,
@@ -101,6 +127,7 @@ export class ProtocolCatalogController {
   }
   @Post('versions/:id/retire')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  @ApiCreatedResponse({ type: ProtocolVersionDto })
   retire(
     @Param('id') id: string,
     @Body() dto: ProtocolRevisionDto,
@@ -110,6 +137,7 @@ export class ProtocolCatalogController {
   }
   @Post('versions/:id/default')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  @ApiCreatedResponse({ type: ProtocolVersionDto })
   defaults(
     @Param('id') id: string,
     @Body() dto: ProtocolRevisionDto,
@@ -119,6 +147,20 @@ export class ProtocolCatalogController {
   }
   @Post('versions/:id/simulate')
   @CheckPolicies({ action: 'read', subject: 'TreatmentProtocol' })
+  @ApiExtraModels(
+    SimulationRecommendedDto,
+    SimulationEndOfSequenceDto,
+    SimulationUnresolvedDto,
+  )
+  @ApiCreatedResponse({
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(SimulationRecommendedDto) },
+        { $ref: getSchemaPath(SimulationEndOfSequenceDto) },
+        { $ref: getSchemaPath(SimulationUnresolvedDto) },
+      ],
+    },
+  })
   simulate(
     @Param('id') id: string,
     @Body() dto: SimulateProtocolDto,
@@ -129,16 +171,27 @@ export class ProtocolCatalogController {
 
   @Get('migration/inventory')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  @ApiOkResponse({ type: MigrationInventoryDto })
   inventory(@CurrentUser() user: AuthenticatedUserPayload) {
     return this.migration.inventory(user);
   }
   @Post('migration/origin-draft')
   @CheckPolicies({ action: 'create', subject: 'TreatmentProtocol' })
+  @ApiCreatedResponse({ type: TreatmentProtocolDto })
   origin(@CurrentUser() user: AuthenticatedUserPayload) {
     return this.migration.createOriginDraft(user);
   }
   @Post('migration/therapies/:id')
   @CheckPolicies({ action: 'update', subject: 'TreatmentProtocol' })
+  @ApiExtraModels(BindLegacyDryRunResultDto, BindLegacyResultDto)
+  @ApiCreatedResponse({
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(BindLegacyDryRunResultDto) },
+        { $ref: getSchemaPath(BindLegacyResultDto) },
+      ],
+    },
+  })
   bind(
     @Param('id') id: string,
     @Body() dto: BindLegacyProtocolDto,
@@ -156,6 +209,7 @@ export class ProtocolCatalogController {
 
   @Get('automation')
   @CheckPolicies({ action: 'read', subject: 'TreatmentProtocol' })
+  @ApiOkResponse({ type: AutomationSettingsViewDto })
   readSettings(@CurrentUser() user: AuthenticatedUserPayload) {
     return this.catalog.readSettings(user);
   }

@@ -80,4 +80,14 @@ export class TherapyLifecycleDto {
   @ValidateNested()
   @Type(() => LifecycleRecommendationsDto)
   recommendations?: LifecycleRecommendationsDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Stable key reused for retries of this exact command. When present, repeating the same key and body returns the original result without creating a second lifecycle event; the same key with a different body is rejected with 409 IDEMPOTENCY_KEY_REUSED.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  idempotencyKey?: string;
 }

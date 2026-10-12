@@ -1,8 +1,4 @@
 import { DoseStatus, Prisma } from '@prisma/client';
-import { DoseAlreadyArchivedException } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/dose-already-archived.exception';
-import { UpdateDoseData } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
-import { UpdateDoseStatusDto } from 'src/treatment-protocols/allergen-immunotherapy/dosing/dtos/update-dose-status.dto';
-import { InvalidDoseStatusException } from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/exceptions/invalid-dose-status.exception';
 
 export interface DoseProps {
   revision?: number;
@@ -95,90 +91,5 @@ export class Dose {
     this.archivedAt = props.archivedAt;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
-  }
-
-  static createNew(props: CreateDoseProps) {
-    return {
-      concentration: props.concentration,
-      volume: props.volume,
-      scheduledAt: props.scheduledAt,
-      administeredAt: props.administeredAt || null,
-      nextIntervalInDays: props.nextIntervalInDays,
-      betweenDosesReport: props.betweenDosesReport ?? '',
-      status: DoseStatus.SCHEDULED,
-      immunotherapyId: props.immunotherapyId,
-      administeredById: props.administeredById || null,
-      createdById: props.createdById,
-      updatedById: props.updatedById,
-      isArchived: false,
-    };
-  }
-
-  administered(props: Partial<UpdateDoseData>): void {
-    const administeredAt = props.administeredAt ?? this.administeredAt;
-    if (administeredAt && this.status === 'SCHEDULED') {
-      const administeredDate = new Date(administeredAt);
-      const scheduledDate = new Date(this.scheduledAt);
-
-      const administeredDateStr = administeredDate.toISOString().split('T')[0];
-      const scheduledDateStr = scheduledDate.toISOString().split('T')[0];
-
-      const isSameDate = administeredDateStr === scheduledDateStr;
-
-      if (isSameDate) {
-        this.status = 'ADMINISTERED_ON_SCHEDULE';
-      } else {
-        this.status = 'ADMINISTERED_OFF_SCHEDULE';
-      }
-    }
-  }
-
-  changeStatus(props: UpdateDoseStatusDto): void {
-    const newStatus = props.status;
-
-    if (
-      String(this.status).startsWith('ADMINISTERED') &&
-      newStatus !== 'ENTERED_IN_ERROR'
-    ) {
-      throw new InvalidDoseStatusException(
-        'Doses administradas podem ser alteradas apenas para registro errôneo',
-      );
-    }
-
-    if (this.status === 'ENTERED_IN_ERROR') {
-      throw new InvalidDoseStatusException(
-        'Doses registradas erroneamente e arquivadas não podem ter status alterado',
-      );
-    }
-
-    if (this.status === 'SCHEDULED' && newStatus === 'ENTERED_IN_ERROR') {
-      throw new InvalidDoseStatusException(
-        'Doses agendadas não podem ser marcadas como registros errôneos, caso seja necessário, edite os dados diretamente.',
-      );
-    }
-
-    if (
-      String(this.status).startsWith('ADMINISTERED') &&
-      newStatus === 'ENTERED_IN_ERROR'
-    ) {
-      this.status = newStatus;
-      this.archive();
-      return;
-    }
-
-    if (props.status === this.status) {
-      throw new InvalidDoseStatusException(
-        `Esta dose já possui o status ${props.status}`,
-      );
-    }
-
-    this.status = newStatus;
-  }
-
-  archive(): void {
-    if (this.isArchived) {
-      throw new DoseAlreadyArchivedException();
-    }
-    this.isArchived = true;
   }
 }

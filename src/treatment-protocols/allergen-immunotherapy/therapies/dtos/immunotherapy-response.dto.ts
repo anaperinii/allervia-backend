@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AdministrationRoute, TherapyStatus } from '@prisma/client';
+import { PrescriptionSnapshotDto } from './immunotherapy-registration-response.dto';
 
 export class ImmunotherapyResponseDto {
   @ApiPropertyOptional({
@@ -7,28 +8,44 @@ export class ImmunotherapyResponseDto {
   })
   revision?: number;
   @ApiPropertyOptional({
-    type: Object,
+    type: PrescriptionSnapshotDto,
     nullable: true,
     description:
       'Immutable prescription snapshot: versionId, revision and resolved step selection',
   })
-  prescription?: unknown;
+  prescription?: PrescriptionSnapshotDto | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
+  currentPrescriptionId?: string | null;
+
   @ApiProperty({ description: 'ID da imunoterapia' })
   id: string;
 
   @ApiProperty({ description: 'Tipo de imunoterapia' })
   immunoType: string;
 
-  @ApiProperty({ description: 'Rota de administração' })
+  @ApiProperty({
+    enum: AdministrationRoute,
+    description: 'Rota de administração',
+  })
   administrationRoute: AdministrationRoute;
 
   @ApiProperty({ description: 'Extrato' })
   extract: string;
 
-  @ApiProperty({ description: 'Data de início da indução' })
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'Data de início da indução',
+  })
   inductionStartDate: Date;
 
-  @ApiProperty({ description: 'Data de início da manutenção' })
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Data de início da manutenção',
+  })
   maintenanceStartDate: Date | null;
 
   @ApiProperty({ description: 'Concentração alvo' })
@@ -46,24 +63,45 @@ export class ImmunotherapyResponseDto {
   @ApiProperty({ description: 'Indica se a imunoterapia está arquivada' })
   isArchived: boolean;
 
-  @ApiProperty({ description: 'Status da terapia' })
+  @ApiProperty({ enum: TherapyStatus, description: 'Status da terapia' })
   status: TherapyStatus;
 
-  @ApiProperty({ description: 'Data de criação' })
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'Data de criação',
+  })
   createdAt: Date;
 
-  @ApiProperty({ description: 'Data da última atualização' })
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'Data da última atualização',
+  })
   updatedAt: Date;
 
   @ApiProperty({ description: 'ID do usuário que criou' })
   createdById: string;
 
-  @ApiProperty({ description: 'ID do usuário que atualizou pela última vez' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'ID do usuário que atualizou pela última vez',
+  })
   updatedById: string | null;
 
-  @ApiProperty({ description: 'ID do usuário que arquivou' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'ID do usuário que arquivou',
+  })
   archivedById: string | null;
 
-  @ApiProperty({ description: 'Data em que foi arquivada' })
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Data em que foi arquivada',
+  })
   archivedAt: Date | null;
 }
