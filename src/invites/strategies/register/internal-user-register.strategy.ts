@@ -1,5 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
+import { INVITE_MESSAGES } from 'src/invites/invite.messages';
+import { UserInviteAlreadyUsedException } from 'src/invites/domain/exceptions/user-invite-already-used.exception';
 import { IUserRepository } from 'src/account/user.repository';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 import { CreateProfessionalUseCase } from 'src/professionals/use-cases/create-professional.use-case';
@@ -27,8 +30,39 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
     invite: UserInvite,
     dto: ProfileInternalUserDto,
   ): Promise<RegisterUser> {
+    const hashedPassword = await this.hashingService.hash(dto.password);
+
+    try {
+      return await this.register(invite, dto, hashedPassword);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(INVITE_MESSAGES.emailAlreadyActive);
+      }
+
+      throw error;
+    }
+  }
+
+  private async register(
+    invite: UserInvite,
+    dto: ProfileInternalUserDto,
+    hashedPassword: string,
+  ): Promise<RegisterUser> {
     return this.prisma.$transaction(async (tx) => {
-      const hashedPassword = await this.hashingService.hash(dto.password);
+      invite.markAsUsed();
+
+      const consumed = await this.inviteRepository.markAsUsed(
+        invite.id,
+        invite.usedAt!,
+        tx,
+      );
+
+      if (!consumed) {
+        throw new UserInviteAlreadyUsedException();
+      }
 
       const user = await this.userRepository.create(
         {
@@ -66,9 +100,6 @@ export class InternalUserRegisterStrategy implements RegisterStrategy {
         },
         tx,
       );
-
-      invite.markAsUsed();
-      await this.inviteRepository.update(invite, tx);
 
       return {
         userId: user.id,

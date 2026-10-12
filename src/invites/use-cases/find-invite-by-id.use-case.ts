@@ -15,7 +15,7 @@ export class FindInviteByIdUseCase {
     const invite = await this.inviteRepository.findById(inviteId, currentUser);
 
     if (!invite) {
-      throw new NotFoundException(INVITE_MESSAGES.notFound(inviteId));
+      throw new NotFoundException(INVITE_MESSAGES.notFound);
     }
 
     return invite;

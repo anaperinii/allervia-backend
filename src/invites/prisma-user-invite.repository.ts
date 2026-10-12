@@ -50,6 +50,26 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
     return new UserInvite(updated);
   }
 
+  async markAsUsed(
+    id: string,
+    usedAt: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<boolean> {
+    const prismaClient = tx ?? this.prismaService;
+
+    const result = await prismaClient.internalUserInvite.updateMany({
+      where: {
+        id,
+        usedAt: null,
+        isActive: true,
+        expiresAt: { gt: new Date() },
+      },
+      data: { isActive: false, usedAt },
+    });
+
+    return result.count === 1;
+  }
+
   async findById(
     id: string,
     currentUser: AuthenticatedUserPayload,
@@ -67,32 +87,6 @@ export class PrismaUserInviteRepository extends IUserInviteRepository {
     });
 
     return invite ? new UserInvite(invite) : null;
-  }
-
-  async findByOrganization(
-    organizationId: string,
-    filters?: FindInvitesFilters,
-  ): Promise<UserInvite[]> {
-    const where: Prisma.InternalUserInviteWhereInput = { organizationId };
-
-    if (filters?.role) {
-      where.role = filters.role;
-    }
-
-    if (filters?.onlyActive) {
-      where.isActive = true;
-    }
-
-    if (!filters?.includeExpired) {
-      where.expiresAt = { gte: new Date() };
-    }
-
-    const invites = await this.prismaService.internalUserInvite.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return invites.map((i) => new UserInvite(i));
   }
 
   async findPageByOrganization(

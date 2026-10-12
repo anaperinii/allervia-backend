@@ -16,11 +16,11 @@ import { IUserInviteRepository } from 'src/invites/domain/interfaces/user-invite
 import { PrismaUserInviteRepository } from 'src/invites/prisma-user-invite.repository';
 import { AdminInviteStrategy } from './strategies/invites/admin-invite.strategy';
 import { FindInviteByIdUseCase } from './use-cases/find-invite-by-id.use-case';
-import { FindInviteByOrgUseCase } from './use-cases/find-invite-by-org.use-case';
 import { FindInviteByTokenUseCase } from './use-cases/find-invite-by-token.use-case';
 import { ValidateInviteForRegisterUseCase } from './use-cases/validate-invite-for-registration.use-case';
 import { FindActiveInviteUseCase } from './use-cases/find-active-invite.use-case';
 import { FindInviteContextUseCase } from './use-cases/find-invite-context.use-case';
+import { ResendInviteUseCase } from './use-cases/resend-invite.use-case';
 import { RegisterStrategyContext } from './strategies/register/register-strategy.context';
 import { InternalUserRegisterStrategy } from './strategies/register/internal-user-register.strategy';
 import { ProfessionalsModule } from 'src/professionals/professionals.module';
@@ -40,11 +40,11 @@ import { ProfessionalsModule } from 'src/professionals/professionals.module';
     CancelInviteUseCase,
     ListInvitesUseCase,
     FindInviteByIdUseCase,
-    FindInviteByOrgUseCase,
     FindInviteByTokenUseCase,
     ValidateInviteForRegisterUseCase,
     FindActiveInviteUseCase,
     FindInviteContextUseCase,
+    ResendInviteUseCase,
 
     InviteStrategyContext,
     InviteStrategyFactory,

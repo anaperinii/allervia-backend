@@ -11,7 +11,7 @@ export class FindInviteByTokenUseCase {
     const invite = await this.inviteRepository.findByToken(inviteToken);
 
     if (!invite) {
-      throw new NotFoundException(INVITE_MESSAGES.notFound(inviteToken));
+      throw new NotFoundException(INVITE_MESSAGES.notFound);
     }
 
     return invite;
