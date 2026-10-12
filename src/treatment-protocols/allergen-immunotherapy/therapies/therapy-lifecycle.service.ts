@@ -11,6 +11,12 @@ import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { json } from '../protocol-catalog/protocol-catalog.service';
+import {
+  clinicalCommandHash,
+  clinicalCommandKey,
+  commitClinicalCommand,
+  replayClinicalCommand,
+} from '../clinical-command';
 import { ConfiguredDoseService } from '../dosing/configured-dose.service';
 import { enqueueOutbox } from 'src/notifications/notifications.service';
 import { TherapyLifecycleDto } from './dtos/therapy-lifecycle.dto';
@@ -55,8 +61,16 @@ export class TherapyLifecycleService {
       throw new BadRequestException('RETURN_FORECAST_ONLY_ON_SUSPENSION');
     if (dto.recommendations && dto.action !== 'COMPLETE')
       throw new BadRequestException('RECOMMENDATIONS_ONLY_ON_COMPLETION');
+    if (dto.category && dto.action !== 'SUSPEND')
+      throw new BadRequestException('CATEGORY_ONLY_ON_SUSPENSION');
+    const hash = dto.idempotencyKey
+      ? clinicalCommandHash('THERAPY_LIFECYCLE', dto)
+      : null;
     return this.prisma.$transaction(async (tx) => {
       const therapy = await this.clinical.lockTherapy(tx, id, user);
+      const key = clinicalCommandKey(user, id, dto.idempotencyKey);
+      const previous = await replayClinicalCommand(tx, key, hash);
+      if (previous) return previous.result as never;
       if (therapy.revision !== dto.expectedRevision)
         throw new ConflictException('STALE_CLINICAL_REVISION');
       if (therapy.status !== transition.from)
@@ -138,12 +152,12 @@ export class TherapyLifecycleService {
           reason: dto.reason,
           recipientProfessionalId: therapy.patient.responsiblePhysicianId,
         });
-      return {
+      return commitClinicalCommand(tx, key, hash, {
         event,
         status: updated.status,
         revision: updated.revision,
         archivedDoseIds,
-      };
+      });
     });
   }
 

@@ -50,9 +50,7 @@ export class UpdatePatientStatusUseCase {
             organizationId: currentUser.organizationId,
             entityType: AUDIT_ENTITY_TYPES.PATIENT,
             entityId: patient.id,
-            action: updated.isArchived
-              ? AUDIT_ACTIONS.PATIENT_ARCHIVED
-              : AUDIT_ACTIONS.PATIENT_STATUS_CHANGED,
+            action: AUDIT_ACTIONS.PATIENT_STATUS_CHANGED,
             ...diff,
           },
           tx,

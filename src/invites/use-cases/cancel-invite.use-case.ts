@@ -27,6 +27,10 @@ export class CancelInviteUseCase {
       currentUser,
     );
 
+    if (invite.isDeactive()) {
+      return invite;
+    }
+
     const before = snapshotFields(
       invite as unknown as Record<string, unknown>,
       AUDITED_INVITE_FIELDS,
@@ -35,7 +39,22 @@ export class CancelInviteUseCase {
     invite.deactive();
 
     return this.prisma.$transaction(async (tx) => {
-      const updated = await this.inviteRepository.update(invite, tx);
+
+      const changed = await tx.internalUserInvite.updateMany({
+        where: {
+          id: invite.id,
+          organizationId: currentUser.organizationId,
+          isActive: true,
+          usedAt: null,
+        },
+        data: { isActive: false },
+      });
+      const updated = new UserInvite(
+        await tx.internalUserInvite.findUniqueOrThrow({
+          where: { id: invite.id },
+        }),
+      );
+      if (!changed.count) return updated;
 
       await this.auditLog.record(
         {

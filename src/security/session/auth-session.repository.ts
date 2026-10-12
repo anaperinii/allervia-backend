@@ -11,9 +11,9 @@ import {
 } from './session.types';
 
 export abstract class IAuthSessionRepository {
-  abstract loadContextByUserId(userId: string): Promise<AuthContext | null>;
 
-  abstract loadContextByEmail(email: string): Promise<AuthContext | null>;
+  abstract withTransaction<T>(work: () => Promise<T>): Promise<T>;
+  abstract loadContextByUserId(userId: string): Promise<AuthContext | null>;
 
   abstract findPasswordHashByEmail(
     email: string,
@@ -76,13 +76,19 @@ export abstract class IAuthSessionRepository {
     keyVersion: number;
   }): Promise<StoredMfaCredential>;
 
-  abstract confirmMfaCredential(credentialId: string, at: Date): Promise<void>;
+  abstract confirmMfaCredentialAtomically(
+    credentialId: string,
+    userId: string,
+    counter: bigint,
+    at: Date,
+    recoveryCodeHashes: string[],
+  ): Promise<boolean>;
 
   abstract registerMfaCredentialUse(
     credentialId: string,
     counter: bigint,
     at: Date,
-  ): Promise<void>;
+  ): Promise<boolean>;
 
   abstract revokeMfaCredential(credentialId: string, at: Date): Promise<void>;
 

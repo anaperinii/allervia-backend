@@ -69,8 +69,6 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
       status: true,
     };
 
-    console.log(patient);
-
     const result = await updatePatientStatusUseCase.execute(
       patient.id,
       dto,
@@ -105,6 +103,18 @@ describe('UpdatePatientStatusUseCase - Integration', () => {
 
     expect(result).toBeDefined();
     expect(result.isActive).toBeFalsy();
+
+    const audit = await prisma.auditLog.findFirst({
+      where: { entityId: patient.id },
+    });
+    expect(audit?.action).toBe('PATIENT_STATUS_CHANGED');
+    expect(audit?.oldValues).toMatchObject({ isActive: true });
+    expect(audit?.newValues).toMatchObject({ isActive: false });
+    expect(
+      await prisma.auditLog.count({
+        where: { entityId: patient.id, action: 'PATIENT_ARCHIVED' },
+      }),
+    ).toBe(0);
   });
 
   it('should throw a not found exception when updating status of a non-existent patient', async () => {

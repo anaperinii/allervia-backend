@@ -38,9 +38,9 @@ export class HttpErrorFilter implements ExceptionFilter {
     const envelope = this.toEnvelope(exception, requestId);
 
     if (envelope.statusCode >= (HttpStatus.INTERNAL_SERVER_ERROR as number)) {
+
       this.logger.error(
-        `${request.method} ${request.url} failed (requestId=${requestId ?? 'none'})`,
-        exception instanceof Error ? exception.stack : String(exception),
+        `${request.method} request failed (requestId=${requestId ?? 'none'}, status=${envelope.statusCode}, code=${envelope.code})`,
       );
     }
 
@@ -82,7 +82,11 @@ export class HttpErrorFilter implements ExceptionFilter {
       const messageIsCode = /^[A-Z][A-Z0-9_]{2,}$/.test(text);
       const code =
         body.code ?? (messageIsCode ? text : defaultCodeForStatus(status));
-      const needsCopy = messageIsCode || text === STATUS_CODES[status];
+
+      const needsCopy =
+        messageIsCode ||
+        text === STATUS_CODES[status] ||
+        text === `${STATUS_CODES[status]} Exception`;
 
       return {
         statusCode: status,

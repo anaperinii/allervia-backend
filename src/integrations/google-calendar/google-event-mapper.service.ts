@@ -4,6 +4,8 @@ import { AppointmentStatus } from '@prisma/client';
 import { GoogleEventPayload } from './google-calendar.client';
 
 export const ALLERVIA_APPOINTMENT_ID_KEY = 'allerviaAppointmentId';
+export const GOOGLE_EVENT_SUMMARY = 'Consulta (Allervia)';
+export const GOOGLE_EVENT_DESCRIPTION = 'Detalhes no Allervia';
 
 export interface MappableAppointment {
   id: string;
@@ -12,7 +14,6 @@ export interface MappableAppointment {
   startsAt: Date;
   endsAt: Date;
   status: AppointmentStatus;
-  patientFirstName: string;
   timeZone: string;
 }
 
@@ -20,8 +21,8 @@ export interface MappableAppointment {
 export class GoogleEventMapperService {
   toEventPayload(appointment: MappableAppointment): GoogleEventPayload {
     return {
-      summary: this.summary(appointment),
-      description: appointment.notes ?? '',
+      summary: GOOGLE_EVENT_SUMMARY,
+      description: GOOGLE_EVENT_DESCRIPTION,
       start: {
         dateTime: appointment.startsAt.toISOString(),
         timeZone: appointment.timeZone,
@@ -39,8 +40,8 @@ export class GoogleEventMapperService {
 
   contentHash(appointment: MappableAppointment): string {
     return this.hashParts(
-      this.summary(appointment),
-      appointment.notes ?? '',
+      GOOGLE_EVENT_SUMMARY,
+      GOOGLE_EVENT_DESCRIPTION,
       appointment.startsAt.toISOString(),
       appointment.endsAt.toISOString(),
       appointment.status,
@@ -52,17 +53,12 @@ export class GoogleEventMapperService {
     incoming: { startsAt: Date; endsAt: Date; cancelled: boolean },
   ): string {
     return this.hashParts(
-      this.summary(appointment),
-      appointment.notes ?? '',
+      GOOGLE_EVENT_SUMMARY,
+      GOOGLE_EVENT_DESCRIPTION,
       incoming.startsAt.toISOString(),
       incoming.endsAt.toISOString(),
       incoming.cancelled ? 'CANCELLED' : appointment.status,
     );
-  }
-
-  private summary(appointment: MappableAppointment): string {
-    if (appointment.title?.trim()) return appointment.title.trim();
-    return `Consulta — ${appointment.patientFirstName}`;
   }
 
   private hashParts(...parts: string[]): string {

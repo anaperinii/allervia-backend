@@ -15,8 +15,21 @@ import { GoogleTokenBoxService } from '../../google-token-box.service';
 import { CalendarSyncService } from '../../calendar-sync.service';
 import { CalendarInboundSyncService } from '../../calendar-inbound-sync.service';
 import { GoogleCalendarWebhookController } from '../../google-calendar-webhook.controller';
-import { ALLERVIA_APPOINTMENT_ID_KEY } from '../../google-event-mapper.service';
+import {
+  ALLERVIA_APPOINTMENT_ID_KEY,
+  GOOGLE_EVENT_SUMMARY,
+} from '../../google-event-mapper.service';
 import { FakeGoogleCalendarClient } from './fake-google-calendar.client';
+import type { CalendarSyncJob } from '@prisma/client';
+
+interface SyncInternals {
+  complete(job: CalendarSyncJob, attemptId: string): Promise<void>;
+  scheduleRetry(
+    job: CalendarSyncJob,
+    attemptId: string,
+    error: unknown,
+  ): Promise<void>;
+}
 
 describe('Google Calendar sync - Integration', () => {
   let module: TestingModule;
@@ -180,7 +193,8 @@ describe('Google Calendar sync - Integration', () => {
     let link = await prisma.googleCalendarEventLink.findUnique({
       where: { appointmentId: appointment.id },
     });
-    expect(link?.googleEventId).toBe('evt-1');
+    expect(link?.googleEventId).toEqual(expect.any(String));
+    expect(fakeClient.events.has(link!.googleEventId)).toBe(true);
     expect(link?.lastSyncedHash).toBeTruthy();
 
     await sync.processPending();
@@ -238,6 +252,117 @@ describe('Google Calendar sync - Integration', () => {
     expect(job.attempts).toBe(1);
     expect(job.nextAttemptAt.getTime()).toBeGreaterThan(Date.now());
     expect(job.lastError).toContain('unavailable');
+  });
+
+  it('ignores completion and retry from a worker that lost the job', async () => {
+    await createConnection();
+    const appointment = await createAppointment();
+    const job = await prisma.calendarSyncJob.findFirstOrThrow({
+      where: { kind: 'PUSH_SYNC', appointmentId: appointment.id },
+    });
+
+    await prisma.calendarSyncJob.update({
+      where: { id: job.id },
+      data: {
+        attemptId: 'attempt-a',
+        leaseUntil: new Date(Date.now() + 60_000),
+        pendingKey: null,
+      },
+    });
+    await prisma.calendarSyncJob.update({
+      where: { id: job.id },
+      data: { leaseUntil: new Date(Date.now() - 1_000) },
+    });
+
+    const result = await sync.processPending();
+    expect(result.processed).toBe(1);
+    const afterB = await prisma.calendarSyncJob.findUniqueOrThrow({
+      where: { id: job.id },
+    });
+    expect(afterB.processedAt).not.toBeNull();
+    expect(afterB.attemptId).not.toBe('attempt-a');
+
+    const internals = sync as unknown as SyncInternals;
+    await internals.complete(job, 'attempt-a');
+    await internals.scheduleRetry(job, 'attempt-a', new Error('late failure'));
+
+    const final = await prisma.calendarSyncJob.findUniqueOrThrow({
+      where: { id: job.id },
+    });
+    expect(final.processedAt).toEqual(afterB.processedAt);
+    expect(final.attempts).toBe(0);
+    expect(final.lastError).toBeNull();
+    expect(final.attemptId).toBe(afterB.attemptId);
+  });
+
+  it('accepts new local changes while a job is in flight', async () => {
+    await createConnection();
+    const appointment = await createAppointment();
+    const first = await prisma.calendarSyncJob.findFirstOrThrow({
+      where: { kind: 'PUSH_SYNC', appointmentId: appointment.id },
+    });
+
+    await prisma.calendarSyncJob.update({
+      where: { id: first.id },
+      data: {
+        attemptId: 'attempt-a',
+        leaseUntil: new Date(Date.now() + 60_000),
+        pendingKey: null,
+      },
+    });
+
+    await appointments.update(
+      appointment.id,
+      {
+        expectedRevision: 0,
+        startsAt: '2026-11-10T16:00:00.000Z',
+        endsAt: '2026-11-10T16:30:00.000Z',
+      },
+      physician,
+    );
+
+    const pending = await prisma.calendarSyncJob.findMany({
+      where: {
+        kind: 'PUSH_SYNC',
+        appointmentId: appointment.id,
+        processedAt: null,
+      },
+    });
+    expect(pending).toHaveLength(2);
+    const second = pending.find((candidate) => candidate.id !== first.id);
+    expect(second?.pendingKey).toBe(`PUSH:${appointment.id}`);
+
+    const internals = sync as unknown as SyncInternals;
+    await internals.complete(first, 'attempt-a');
+    await sync.processPending();
+
+    const stored = await prisma.calendarSyncJob.findMany({
+      where: { kind: 'PUSH_SYNC', appointmentId: appointment.id },
+    });
+    expect(stored.every((candidate) => candidate.processedAt !== null)).toBe(
+      true,
+    );
+    const inserted = fakeClient.callsTo('insertEvent');
+    expect(inserted).toHaveLength(1);
+    expect(
+      (inserted[0].args[1] as { start: { dateTime: string } }).start.dateTime,
+    ).toBe('2026-11-10T16:00:00.000Z');
+  });
+
+  it('dead-letters immediately on a non-retryable Google error', async () => {
+    await createConnection();
+    const appointment = await createAppointment();
+    fakeClient.nextError = new GoogleApiError(403, null, null, 'forbidden');
+
+    const result = await sync.processPending();
+    expect(result.failed).toBe(1);
+
+    const job = await prisma.calendarSyncJob.findFirstOrThrow({
+      where: { kind: 'PUSH_SYNC', appointmentId: appointment.id },
+    });
+    expect(job.processedAt).not.toBeNull();
+    expect(job.attempts).toBe(1);
+    expect(job.lastError).toContain('forbidden');
   });
 
   it('marks the connection BROKEN on invalid_grant', async () => {
@@ -333,6 +458,7 @@ describe('Google Calendar sync - Integration', () => {
       id: 'job-test',
       organizationId: physician.organizationId,
       kind: 'PULL_INCREMENTAL',
+      attemptId: null,
       connectionId: connection.id,
       appointmentId: null,
       payload: null,
@@ -376,6 +502,7 @@ describe('Google Calendar sync - Integration', () => {
       id: 'job-test',
       organizationId: physician.organizationId,
       kind: 'PULL_INCREMENTAL',
+      attemptId: null,
       connectionId: connection.id,
       appointmentId: null,
       payload: null,
@@ -418,6 +545,7 @@ describe('Google Calendar sync - Integration', () => {
       id: 'job-test',
       organizationId: physician.organizationId,
       kind: 'PULL_INCREMENTAL',
+      attemptId: null,
       connectionId: connection.id,
       appointmentId: null,
       payload: null,
@@ -465,6 +593,7 @@ describe('Google Calendar sync - Integration', () => {
       id: 'job-test',
       organizationId: physician.organizationId,
       kind: 'PULL_INCREMENTAL',
+      attemptId: null,
       connectionId: connection.id,
       appointmentId: null,
       payload: null,
@@ -490,19 +619,22 @@ describe('Google Calendar sync - Integration', () => {
     await sync.processPending();
     const patchCalls = fakeClient.callsTo('patchEvent');
     expect(patchCalls).toHaveLength(1);
-    const patient = await prisma.patient.findUniqueOrThrow({
-      where: { id: patientId },
-    });
-    expect((patchCalls[0].args[2] as { summary: string }).summary).toBe(
-      `Consulta — ${patient.fullName.trim().split(/\s+/)[0]}`,
-    );
+    const payload = patchCalls[0].args[2] as {
+      summary: string;
+      description: string;
+    };
+    expect(payload.summary).toBe(GOOGLE_EVENT_SUMMARY);
+    expect(payload.description).not.toContain('Aplicar dose');
   });
 
   it('lets Allervia win when both sides changed', async () => {
     const { connection, appointment, link } = await pushedAppointment();
     await prisma.appointment.update({
       where: { id: appointment.id },
-      data: { notes: 'Nota alterada internamente' },
+      data: {
+        startsAt: new Date('2026-11-10T14:00:00.000Z'),
+        endsAt: new Date('2026-11-10T14:30:00.000Z'),
+      },
     });
     fakeClient.listPages = [
       {
@@ -520,6 +652,7 @@ describe('Google Calendar sync - Integration', () => {
       id: 'job-test',
       organizationId: physician.organizationId,
       kind: 'PULL_INCREMENTAL',
+      attemptId: null,
       connectionId: connection.id,
       appointmentId: null,
       payload: null,
@@ -535,7 +668,7 @@ describe('Google Calendar sync - Integration', () => {
     const stored = await prisma.appointment.findUniqueOrThrow({
       where: { id: appointment.id },
     });
-    expect(stored.startsAt.toISOString()).toBe('2026-11-10T13:00:00.000Z');
+    expect(stored.startsAt.toISOString()).toBe('2026-11-10T14:00:00.000Z');
     expect(
       await prisma.calendarSyncJob.count({
         where: { kind: 'PUSH_SYNC', processedAt: null },
@@ -551,6 +684,7 @@ describe('Google Calendar sync - Integration', () => {
       id: 'job-test',
       organizationId: physician.organizationId,
       kind: 'PULL_INCREMENTAL',
+      attemptId: null,
       connectionId: connection.id,
       appointmentId: null,
       payload: null,

@@ -12,6 +12,8 @@ export interface GoogleEventDateTime {
 }
 
 export interface GoogleEventPayload {
+
+  id?: string;
   summary?: string;
   description?: string;
   start?: GoogleEventDateTime;
@@ -77,7 +79,18 @@ export class GoogleApiError extends Error {
   }
 
   get isRetryable(): boolean {
-    return this.status === 429 || this.status >= 500;
+    if (this.status === 429 || this.status >= 500) return true;
+
+    return (
+      this.status === 403 &&
+      ['rateLimitExceeded', 'userRateLimitExceeded', 'quotaExceeded'].includes(
+        this.errorCode ?? '',
+      )
+    );
+  }
+
+  static network(message: string): GoogleApiError {
+    return new GoogleApiError(503, 'network', null, message);
   }
 }
 

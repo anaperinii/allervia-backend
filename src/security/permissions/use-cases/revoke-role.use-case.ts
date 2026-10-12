@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { IRoleRepository } from 'src/security/permissions/role.repository';
 import { ROLE_MESSAGES } from 'src/security/permissions/role.messages';
 import { PrismaService } from 'src/infra/database/prisma.service';
@@ -37,6 +41,23 @@ export class RevokeRoleUseCase {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      if (role.role === 'ADMINISTRATOR') {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${actor.organizationId}))`;
+        const remainingAdministrators = await tx.professionalRole.count({
+          where: {
+            id: { not: role.id },
+            role: 'ADMINISTRATOR',
+            revokedAt: null,
+            professional: {
+              organizationId: actor.organizationId,
+              user: { isActive: true, isArchived: false },
+            },
+          },
+        });
+        if (remainingAdministrators === 0) {
+          throw new ConflictException('LAST_ADMINISTRATOR');
+        }
+      }
       const revoked = await this.roleRepository.revoke(
         id,
         actor.professionalId,

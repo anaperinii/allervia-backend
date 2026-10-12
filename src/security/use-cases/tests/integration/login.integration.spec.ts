@@ -65,6 +65,24 @@ describe('Unified login - Integration', () => {
     expect(result.issued.sessionSecret).toBeDefined();
   });
 
+  it('preserva login de credencial legada mais longa que a política atual', async () => {
+    const legacyPassword = 'L'.repeat(100);
+    const hashedPassword = await bcrypt.hash(legacyPassword, 10);
+
+    const user = await factories.users.createAuthenticatedPhysicianProfessional(
+      { email: 'legado@example.com', password: hashedPassword },
+    );
+
+    const result = await loginUseCase.execute({
+      email: user.email,
+      password: legacyPassword,
+      device: { userAgent: null, ipAddressHash: null },
+      clientIp: null,
+    });
+
+    expect(result.status).toBe('AUTHENTICATED');
+  });
+
   it('rejects a professional without an organization', async () => {
     const hashedPassword = await bcrypt.hash('password123', 10);
 

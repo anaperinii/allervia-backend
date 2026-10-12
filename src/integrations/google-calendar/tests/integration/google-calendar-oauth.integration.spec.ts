@@ -99,7 +99,11 @@ describe('Google Calendar OAuth flow - Integration', () => {
       await connections.buildAuthorizationUrl(physician);
     const state = new URL(authorizationUrl).searchParams.get('state')!;
 
-    const redirect = await connections.handleCallback('auth-code', state);
+    const redirect = await connections.handleCallback(
+      'auth-code',
+      state,
+      physician.id,
+    );
     expect(redirect).toContain('status=connected');
 
     const connection = await prisma.googleCalendarConnection.findUniqueOrThrow({
@@ -121,9 +125,62 @@ describe('Google Calendar OAuth flow - Integration', () => {
   });
 
   it('redirects with an error code on invalid state', async () => {
-    const redirect = await connections.handleCallback('auth-code', 'lixo');
+    const redirect = await connections.handleCallback(
+      'auth-code',
+      'lixo',
+      physician.id,
+    );
     expect(redirect).toContain('status=error');
     expect(redirect).toContain('GOOGLE_OAUTH_STATE_INVALID');
+    expect(await prisma.googleCalendarConnection.count()).toBe(0);
+  });
+
+  it('rejects a replayed state', async () => {
+    const { authorizationUrl } =
+      await connections.buildAuthorizationUrl(physician);
+    const state = new URL(authorizationUrl).searchParams.get('state')!;
+
+    const first = await connections.handleCallback(
+      'auth-code',
+      state,
+      physician.id,
+    );
+    expect(first).toContain('status=connected');
+
+    const replay = await connections.handleCallback(
+      'auth-code',
+      state,
+      physician.id,
+    );
+    expect(replay).toContain('status=error');
+    expect(replay).toContain('GOOGLE_OAUTH_STATE_INVALID');
+    expect(fakeClient.callsTo('exchangeCode')).toHaveLength(1);
+  });
+
+  it('rejects the callback without a browser session', async () => {
+    const { authorizationUrl } =
+      await connections.buildAuthorizationUrl(physician);
+    const state = new URL(authorizationUrl).searchParams.get('state')!;
+
+    const redirect = await connections.handleCallback('auth-code', state, null);
+    expect(redirect).toContain('status=error');
+    expect(redirect).toContain('GOOGLE_OAUTH_SESSION_INVALID');
+    expect(await prisma.googleCalendarConnection.count()).toBe(0);
+  });
+
+  it('rejects a state issued to another user', async () => {
+    const other =
+      await factories.users.createAuthenticatedPhysicianProfessional();
+    const { authorizationUrl } = await connections.buildAuthorizationUrl(other);
+    const state = new URL(authorizationUrl).searchParams.get('state')!;
+
+    const redirect = await connections.handleCallback(
+      'auth-code',
+      state,
+      physician.id,
+    );
+    expect(redirect).toContain('status=error');
+    expect(redirect).toContain('GOOGLE_OAUTH_SESSION_INVALID');
     expect(await prisma.googleCalendarConnection.count()).toBe(0);
   });
 
@@ -135,7 +192,11 @@ describe('Google Calendar OAuth flow - Integration', () => {
     const { authorizationUrl } =
       await connections.buildAuthorizationUrl(physician);
     const state = new URL(authorizationUrl).searchParams.get('state')!;
-    const redirect = await connections.handleCallback('auth-code', state);
+    const redirect = await connections.handleCallback(
+      'auth-code',
+      state,
+      physician.id,
+    );
     expect(redirect).toContain('GOOGLE_REFRESH_TOKEN_MISSING');
   });
 
@@ -143,7 +204,7 @@ describe('Google Calendar OAuth flow - Integration', () => {
     const { authorizationUrl } =
       await connections.buildAuthorizationUrl(physician);
     const state = new URL(authorizationUrl).searchParams.get('state')!;
-    await connections.handleCallback('auth-code', state);
+    await connections.handleCallback('auth-code', state, physician.id);
 
     await expect(connections.buildAuthorizationUrl(physician)).rejects.toThrow(
       ConflictException,
@@ -156,8 +217,59 @@ describe('Google Calendar OAuth flow - Integration', () => {
     const { authorizationUrl } =
       await connections.buildAuthorizationUrl(target);
     const state = new URL(authorizationUrl).searchParams.get('state')!;
-    await connections.handleCallback('auth-code', state);
+    await connections.handleCallback('auth-code', state, target.id);
   }
+
+  it('enqueues a full resync when reconnecting a broken connection', async () => {
+    await connect();
+    const connection = await prisma.googleCalendarConnection.findUniqueOrThrow({
+      where: { professionalId: physician.professionalId! },
+    });
+    await prisma.googleCalendarConnection.update({
+      where: { id: connection.id },
+      data: { status: 'BROKEN', brokenReason: 'invalid_grant' },
+    });
+
+    const patient = await factories.patients.create({
+      organizationId: physician.organizationId,
+      responsiblePhysicianId: physician.professionalId!,
+      createdById: physician.id,
+      updatedById: physician.id,
+    });
+    const appointment = await factories.appointments.create({
+      organizationId: physician.organizationId,
+      patientId: patient.id,
+      professionalId: physician.professionalId!,
+      createdById: physician.id,
+      updatedById: physician.id,
+    });
+    await prisma.googleCalendarEventLink.create({
+      data: {
+        organizationId: physician.organizationId,
+        appointmentId: appointment.id,
+        connectionId: connection.id,
+        googleEventId: 'evt-orfao',
+        lastSyncedHash: 'hash-antigo',
+      },
+    });
+    await prisma.calendarSyncJob.deleteMany({});
+
+    await connect();
+
+    const reconnected = await prisma.googleCalendarConnection.findUniqueOrThrow(
+      {
+        where: { id: connection.id },
+      },
+    );
+    expect(reconnected.status).toBe('ACTIVE');
+    expect(reconnected.syncToken).toBeNull();
+
+    const jobs = await prisma.calendarSyncJob.findMany({
+      where: { kind: 'PULL_FULL_RESYNC', processedAt: null },
+    });
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].connectionId).toBe(connection.id);
+  });
 
   it('lets an administrator list the connections of the organization', async () => {
     await connect();
@@ -228,7 +340,7 @@ describe('Google Calendar OAuth flow - Integration', () => {
     expect(await prisma.googleCalendarConnection.count()).toBe(1);
   });
 
-  it('disconnects when a user is deactivated or archived', async () => {
+  it('deactivation flags durable teardown; dispatcher completes it after commit', async () => {
     await connect();
     const admin = await factories.users.createColleagueWithRoles(
       physician.organizationId,
@@ -236,11 +348,35 @@ describe('Google Calendar OAuth flow - Integration', () => {
     );
 
     await updateStatus.execute(physician.id, { isActive: false }, admin);
+    const flagged = await prisma.googleCalendarConnection.findFirstOrThrow();
+    expect(flagged.teardownRequestedAt).not.toBeNull();
+    expect(fakeClient.callsTo('revokeToken')).toHaveLength(0);
+    const deactivated = await prisma.user.findUniqueOrThrow({
+      where: { id: physician.id },
+    });
+    expect(deactivated.isActive).toBe(false);
+
+    delete process.env.SYSTEM_USER_ID;
+    await connections.processPendingTeardowns();
+    expect(await prisma.googleCalendarConnection.count()).toBe(1);
+
+    process.env.SYSTEM_USER_ID = admin.id;
+    await connections.processPendingTeardowns();
     expect(await prisma.googleCalendarConnection.count()).toBe(0);
     expect(fakeClient.callsTo('revokeToken')).toHaveLength(1);
 
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'GOOGLE_CALENDAR_DISCONNECTED' },
+    });
+    expect(audit?.userId).toBe(admin.id);
+  });
+
+  it('archiving still tears the connection down inline', async () => {
     await connect();
-    expect(await prisma.googleCalendarConnection.count()).toBe(1);
+    const admin = await factories.users.createColleagueWithRoles(
+      physician.organizationId,
+      ['ADMINISTRATOR'],
+    );
     await archiveUser.execute(physician.id, admin);
     expect(await prisma.googleCalendarConnection.count()).toBe(0);
   });
@@ -259,7 +395,7 @@ describe('Google Calendar OAuth flow - Integration', () => {
     const { authorizationUrl } =
       await connections.buildAuthorizationUrl(physician);
     const state = new URL(authorizationUrl).searchParams.get('state')!;
-    await connections.handleCallback('auth-code', state);
+    await connections.handleCallback('auth-code', state, physician.id);
 
     const result = await connections.disconnect(physician, false);
     expect(result).toEqual({ disconnected: true });

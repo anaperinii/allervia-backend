@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
+import { PrismaService } from 'src/infra/database/prisma.service';
 import { GoogleCalendarConfig } from './google-calendar.config';
 import { GoogleTokenBoxService } from './google-token-box.service';
 import { OAuthStateService } from './oauth-state.service';
@@ -9,7 +10,11 @@ function buildService(ttlMs = 600_000): OAuthStateService {
     tokenEncryptionKey: randomBytes(32),
     oauthStateTtlMs: ttlMs,
   } as GoogleCalendarConfig;
-  return new OAuthStateService(config, new GoogleTokenBoxService(config));
+  return new OAuthStateService(
+    config,
+    new GoogleTokenBoxService(config),
+    {} as PrismaService,
+  );
 }
 
 const input = {

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { PreAuthPurpose, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuthSessionRepository } from './auth-session.repository';
@@ -75,6 +76,17 @@ type ContextRow = Prisma.UserGetPayload<{ select: typeof contextSelection }>;
 
 @Injectable()
 export class PrismaAuthSessionRepository extends IAuthSessionRepository {
+  private readonly transactions =
+    new AsyncLocalStorage<Prisma.TransactionClient>();
+
+  private get client(): Prisma.TransactionClient {
+    return this.transactions.getStore() ?? this.prisma;
+  }
+
+  withTransaction<T>(work: () => Promise<T>): Promise<T> {
+    if (this.transactions.getStore()) return work();
+    return this.prisma.$transaction((tx) => this.transactions.run(tx, work));
+  }
   constructor(private readonly prisma: PrismaService) {
     super();
   }
@@ -105,27 +117,17 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   }
 
   async loadContextByUserId(userId: string): Promise<AuthContext | null> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.client.user.findUnique({
       where: { id: userId },
       select: contextSelection,
     });
     return user ? this.toContext(user) : null;
   }
 
-  async loadContextByEmail(email: string): Promise<AuthContext | null> {
-    const users = await this.prisma.user.findMany({
-      where: { email: { equals: email, mode: 'insensitive' } },
-      take: 2,
-      select: contextSelection,
-    });
-
-    return users.length === 1 ? this.toContext(users[0]) : null;
-  }
-
   async findPasswordHashByEmail(
     email: string,
   ): Promise<{ userId: string; passwordHash: string } | null> {
-    const users = await this.prisma.user.findMany({
+    const users = await this.client.user.findMany({
       where: { email: { equals: email, mode: 'insensitive' } },
       take: 2,
       select: { id: true, password: true },
@@ -137,7 +139,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   }
 
   async findPasswordHashByUserId(userId: string): Promise<string | null> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.client.user.findUnique({
       where: { id: userId },
       select: { password: true },
     });
@@ -145,7 +147,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   }
 
   async createSession(params: CreateSessionParams): Promise<StoredSession> {
-    return this.prisma.authSession.create({
+    return this.client.authSession.create({
       data: {
         userId: params.userId,
         secretHash: params.secretHash,
@@ -163,7 +165,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   async findSessionByHash(
     secretHash: string,
   ): Promise<SessionWithContext | null> {
-    const found = await this.prisma.authSession.findUnique({
+    const found = await this.client.authSession.findUnique({
       where: { secretHash },
       select: { ...sessionSelection, user: { select: contextSelection } },
     });
@@ -175,7 +177,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   }
 
   async markReauthenticated(sessionId: string, at: Date): Promise<void> {
-    await this.prisma.authSession.update({
+    await this.client.authSession.update({
       where: { id: sessionId },
       data: { reauthenticatedAt: at, lastInteractiveAt: at },
     });
@@ -185,7 +187,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     sessionId: string,
     reason: SessionRevokeReason,
   ): Promise<void> {
-    await this.prisma.authSession.updateMany({
+    await this.client.authSession.updateMany({
       where: { id: sessionId, revokedAt: null },
       data: { revokedAt: new Date(), revokedReason: reason },
     });
@@ -196,7 +198,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     reason: SessionRevokeReason,
     exceptSessionId?: string,
   ): Promise<number> {
-    const result = await this.prisma.authSession.updateMany({
+    const result = await this.client.authSession.updateMany({
       where: {
         userId,
         revokedAt: null,
@@ -208,7 +210,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   }
 
   async listActiveSessions(userId: string): Promise<StoredSession[]> {
-    return this.prisma.authSession.findMany({
+    return this.client.authSession.findMany({
       where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
       orderBy: [{ lastInteractiveAt: 'desc' }, { id: 'desc' }],
       select: sessionSelection,
@@ -219,7 +221,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     sessionId: string,
     userId: string,
   ): Promise<StoredSession | null> {
-    return this.prisma.authSession.findFirst({
+    return this.client.authSession.findFirst({
       where: { id: sessionId, userId },
       select: sessionSelection,
     });
@@ -228,7 +230,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   async createPreAuthChallenge(
     params: CreatePreAuthChallengeParams,
   ): Promise<StoredPreAuthChallenge> {
-    return this.prisma.preAuthChallenge.create({
+    return this.client.preAuthChallenge.create({
       data: {
         userId: params.userId,
         secretHash: params.secretHash,
@@ -254,7 +256,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     secretHash: string,
     purpose: PreAuthPurpose,
   ): Promise<StoredPreAuthChallenge | null> {
-    return this.prisma.preAuthChallenge.findFirst({
+    return this.client.preAuthChallenge.findFirst({
       where: { secretHash, purpose },
       select: {
         id: true,
@@ -270,7 +272,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   }
 
   async incrementPreAuthAttempt(challengeId: string): Promise<number> {
-    const updated = await this.prisma.preAuthChallenge.update({
+    const updated = await this.client.preAuthChallenge.update({
       where: { id: challengeId },
       data: { attemptCount: { increment: 1 } },
       select: { attemptCount: true },
@@ -279,15 +281,19 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
   }
 
   async consumePreAuthChallenge(challengeId: string): Promise<boolean> {
-    const result = await this.prisma.preAuthChallenge.updateMany({
-      where: { id: challengeId, consumedAt: null },
+    const result = await this.client.preAuthChallenge.updateMany({
+      where: {
+        id: challengeId,
+        consumedAt: null,
+        expiresAt: { gt: new Date() },
+      },
       data: { consumedAt: new Date() },
     });
     return result.count === 1;
   }
 
   async listMfaCredentials(userId: string): Promise<StoredMfaCredential[]> {
-    return this.prisma.mfaCredential.findMany({
+    return this.client.mfaCredential.findMany({
       where: { userId, revokedAt: null },
       orderBy: { createdAt: 'asc' },
       select: credentialSelection,
@@ -298,7 +304,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     credentialId: string,
     userId: string,
   ): Promise<StoredMfaCredential | null> {
-    return this.prisma.mfaCredential.findFirst({
+    return this.client.mfaCredential.findFirst({
       where: { id: credentialId, userId, revokedAt: null },
       select: credentialSelection,
     });
@@ -312,16 +318,39 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     secretAuthTag: string;
     keyVersion: number;
   }): Promise<StoredMfaCredential> {
-    return this.prisma.mfaCredential.create({
+    return this.client.mfaCredential.create({
       data: params,
       select: credentialSelection,
     });
   }
 
-  async confirmMfaCredential(credentialId: string, at: Date): Promise<void> {
-    await this.prisma.mfaCredential.update({
-      where: { id: credentialId },
-      data: { confirmedAt: at },
+  async confirmMfaCredentialAtomically(
+    credentialId: string,
+    userId: string,
+    counter: bigint,
+    at: Date,
+    recoveryCodeHashes: string[],
+  ): Promise<boolean> {
+    return this.withTransaction(async () => {
+      const tx = this.client;
+      const confirmed = await tx.mfaCredential.updateMany({
+        where: {
+          id: credentialId,
+          userId,
+          revokedAt: null,
+          confirmedAt: null,
+          OR: [{ lastUsedCounter: null }, { lastUsedCounter: { lt: counter } }],
+        },
+        data: { confirmedAt: at, lastUsedCounter: counter, lastUsedAt: at },
+      });
+      if (confirmed.count !== 1) return false;
+      await tx.mfaRecoveryCode.deleteMany({
+        where: { userId, consumedAt: null },
+      });
+      await tx.mfaRecoveryCode.createMany({
+        data: recoveryCodeHashes.map((codeHash) => ({ userId, codeHash })),
+      });
+      return true;
     });
   }
 
@@ -329,15 +358,20 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     credentialId: string,
     counter: bigint,
     at: Date,
-  ): Promise<void> {
-    await this.prisma.mfaCredential.update({
-      where: { id: credentialId },
+  ): Promise<boolean> {
+    const result = await this.client.mfaCredential.updateMany({
+      where: {
+        id: credentialId,
+        revokedAt: null,
+        OR: [{ lastUsedCounter: null }, { lastUsedCounter: { lt: counter } }],
+      },
       data: { lastUsedCounter: counter, lastUsedAt: at },
     });
+    return result.count === 1;
   }
 
   async revokeMfaCredential(credentialId: string, at: Date): Promise<void> {
-    await this.prisma.mfaCredential.update({
+    await this.client.mfaCredential.update({
       where: { id: credentialId },
       data: { revokedAt: at },
     });
@@ -347,18 +381,18 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     userId: string,
     codeHashes: string[],
   ): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.mfaRecoveryCode.deleteMany({
+    await this.withTransaction(async () => {
+      await this.client.mfaRecoveryCode.deleteMany({
         where: { userId, consumedAt: null },
-      }),
-      this.prisma.mfaRecoveryCode.createMany({
+      });
+      await this.client.mfaRecoveryCode.createMany({
         data: codeHashes.map((codeHash) => ({ userId, codeHash })),
-      }),
-    ]);
+      });
+    });
   }
 
   async countAvailableRecoveryCodes(userId: string): Promise<number> {
-    return this.prisma.mfaRecoveryCode.count({
+    return this.client.mfaRecoveryCode.count({
       where: { userId, consumedAt: null },
     });
   }
@@ -367,7 +401,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     userId: string,
     codeHash: string,
   ): Promise<boolean> {
-    const result = await this.prisma.mfaRecoveryCode.updateMany({
+    const result = await this.client.mfaRecoveryCode.updateMany({
       where: { userId, codeHash, consumedAt: null },
       data: { consumedAt: new Date() },
     });
@@ -380,7 +414,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     operation: string;
     succeeded: boolean;
   }): Promise<void> {
-    await this.prisma.authAttempt.create({ data: params });
+    await this.client.authAttempt.create({ data: params });
   }
 
   async countFailedAttempts(
@@ -388,7 +422,7 @@ export class PrismaAuthSessionRepository extends IAuthSessionRepository {
     operation: string,
     since: Date,
   ): Promise<number> {
-    return this.prisma.authAttempt.count({
+    return this.client.authAttempt.count({
       where: {
         identifierHash,
         operation,

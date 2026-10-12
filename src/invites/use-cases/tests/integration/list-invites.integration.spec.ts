@@ -3,7 +3,6 @@ import { ListInvitesUseCase } from 'src/invites/use-cases/list-invites.use-case'
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestFactories } from 'test/factories';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
-import { FindInviteByOrgUseCase } from 'src/invites/use-cases/find-invite-by-org.use-case';
 import { FindUserByIdUseCase } from 'src/account/use-cases/find-user-by-id.use-case';
 import { IUserRepository } from 'src/account/user.repository';
 import { PrismaUserRepository } from 'src/account/prisma-user.repository';
@@ -23,7 +22,6 @@ describe('ListInvitesUseCase - Integration', () => {
     module = await Test.createTestingModule({
       providers: [
         ListInvitesUseCase,
-        FindInviteByOrgUseCase,
         FindUserByIdUseCase,
         {
           provide: PrismaService,

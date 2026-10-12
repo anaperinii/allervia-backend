@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { AuthSessionRevokeReason, VerificationPurpose } from '@prisma/client';
@@ -16,6 +17,8 @@ import { AUTH_MESSAGES } from '../auth.messages';
 
 @Injectable()
 export class PasswordResetConfirmUseCase {
+  private readonly logger = new Logger(PasswordResetConfirmUseCase.name);
+
   constructor(
     private readonly authRepository: IUserAuthRepository,
     private readonly hashingService: IPasswordHashingService,
@@ -72,6 +75,11 @@ export class PasswordResetConfirmUseCase {
       );
     });
 
-    await this.emailService.sendPasswordChangedNotification(token.userEmail);
+    try {
+      await this.emailService.sendPasswordChangedNotification(token.userEmail);
+    } catch {
+
+      this.logger.error('Falha ao notificar redefinição de senha por e-mail.');
+    }
   }
 }

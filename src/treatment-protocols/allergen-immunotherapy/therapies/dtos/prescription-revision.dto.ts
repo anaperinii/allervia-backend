@@ -9,11 +9,13 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { ResolvedPrescriptionInputDto } from '../../protocol-catalog/protocol-catalog.dto';
 
 export class PrescriptionRevisionDto {
   @ApiProperty() @IsString() @IsNotEmpty() targetVersionId: string;
 
   @ApiProperty({
+    type: ResolvedPrescriptionInputDto,
     description:
       'Resolved prescription over the target version (stepIds, starting, target)',
   })
@@ -39,4 +41,14 @@ export class PrescriptionRevisionDto {
   @IsOptional()
   @IsBoolean()
   dryRun?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Stable key reused for retries of this exact command. Only effective when dryRun is false: repeating the same key and body returns the original result without creating a second snapshot; the same key with a different body is rejected with 409 IDEMPOTENCY_KEY_REUSED. Ignored on dry-run.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  idempotencyKey?: string;
 }

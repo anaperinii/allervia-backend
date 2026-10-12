@@ -36,6 +36,18 @@ interface ProvisionedBody {
     role: string;
     expiresAt: string;
   };
+  inviteEmailDelivered: boolean;
+}
+
+interface ResendBody {
+  administratorInvite: {
+    id: string;
+    email: string;
+    role: string;
+    expiresAt: string;
+  };
+  inviteEmailDelivered: boolean;
+  reissued: boolean;
 }
 
 interface RegisteredBody {
@@ -64,6 +76,7 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
   let prisma: PrismaService;
   let factories: TestFactories;
   const delivered: InviteEmailParams[] = [];
+  let failInviteEmail = false;
 
   beforeAll(async () => {
     process.env.AUTH_INSECURE_COOKIES = 'true';
@@ -79,6 +92,9 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       sendPasswordChangedNotification: () => Promise.resolve(),
       sendDemoRequest: () => Promise.resolve(),
       sendInviteLink: (params: InviteEmailParams) => {
+        if (failInviteEmail) {
+          return Promise.reject(new Error('SMTP indisponível'));
+        }
         delivered.push(params);
         return Promise.resolve();
       },
@@ -102,6 +118,7 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
 
   beforeEach(async () => {
     delivered.length = 0;
+    failInviteEmail = false;
     await TestDatabaseManager.cleanAll();
     await prisma.user.create({
       data: {
@@ -227,10 +244,141 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
     const me = await server()
       .get('/account/me')
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .expect(200);
 
     expect(readBody<{ roles: string[] }>(me).roles).toEqual(['ADMINISTRATOR']);
+  });
+
+  it('mantém a organização criada e sinaliza quando o e-mail do convite falha', async () => {
+    failInviteEmail = true;
+
+    const response = await server()
+      .post('/admin/provisioning/organizations')
+      .set('X-Provisioning-Key', PROVISIONING_KEY)
+      .send(provisionPayload('20'))
+      .expect(201);
+
+    const provisioned = readBody<ProvisionedBody>(response);
+    expect(provisioned.inviteEmailDelivered).toBe(false);
+    expect(delivered).toHaveLength(0);
+    expect(await prisma.organization.count()).toBe(1);
+    expect(
+      await prisma.internalUserInvite.count({
+        where: { organizationId: provisioned.organization.id, isActive: true },
+      }),
+    ).toBe(1);
+
+    failInviteEmail = false;
+    const resent = await server()
+      .post(
+        `/admin/provisioning/organizations/${provisioned.organization.id}/resend-invite`,
+      )
+      .set('X-Provisioning-Key', PROVISIONING_KEY)
+      .expect(200);
+
+    const body = readBody<ResendBody>(resent);
+    expect(body.inviteEmailDelivered).toBe(true);
+    expect(body.reissued).toBe(false);
+    expect(body.administratorInvite.id).toBe(
+      provisioned.administratorInvite.id,
+    );
+    expect(delivered).toHaveLength(1);
+    expect(delivered[0].email).toBe(provisioned.administratorInvite.email);
+  });
+
+  it('reenvia o convite ativo sem criar convite novo', async () => {
+    const provisioned = await provisionOnly('21');
+    const firstToken = delivered[0].token;
+
+    const resent = await server()
+      .post(
+        `/admin/provisioning/organizations/${provisioned.organization.id}/resend-invite`,
+      )
+      .set('X-Provisioning-Key', PROVISIONING_KEY)
+      .expect(200);
+
+    const body = readBody<ResendBody>(resent);
+    expect(body.reissued).toBe(false);
+    expect(body.administratorInvite.id).toBe(
+      provisioned.administratorInvite.id,
+    );
+    expect(delivered).toHaveLength(2);
+    expect(delivered[1].token).toBe(firstToken);
+    expect(
+      await prisma.internalUserInvite.count({
+        where: { organizationId: provisioned.organization.id },
+      }),
+    ).toBe(1);
+  });
+
+  it('reemite convite expirado invalidando o anterior na mesma transação', async () => {
+    const provisioned = await provisionOnly('22');
+    const firstToken = delivered[0].token;
+    await prisma.internalUserInvite.update({
+      where: { id: provisioned.administratorInvite.id },
+      data: { expiresAt: new Date(Date.now() - 60_000) },
+    });
+
+    const resent = await server()
+      .post(
+        `/admin/provisioning/organizations/${provisioned.organization.id}/resend-invite`,
+      )
+      .set('X-Provisioning-Key', PROVISIONING_KEY)
+      .expect(200);
+
+    const body = readBody<ResendBody>(resent);
+    expect(body.reissued).toBe(true);
+    expect(body.administratorInvite.id).not.toBe(
+      provisioned.administratorInvite.id,
+    );
+    expect(
+      new Date(body.administratorInvite.expiresAt).getTime(),
+    ).toBeGreaterThan(Date.now());
+    expect(delivered).toHaveLength(2);
+    expect(delivered[1].token).not.toBe(firstToken);
+
+    const invites = await prisma.internalUserInvite.findMany({
+      where: { organizationId: provisioned.organization.id },
+    });
+    expect(invites).toHaveLength(2);
+    expect(
+      invites.find((invite) => invite.id === provisioned.administratorInvite.id)
+        ?.isActive,
+    ).toBe(false);
+    expect(
+      invites.find((invite) => invite.id === body.administratorInvite.id)
+        ?.isActive,
+    ).toBe(true);
+
+    await server()
+      .post(`/onboarding/registration/${delivered[1].token}`)
+      .set('Origin', ORIGIN)
+      .send({
+        fullName: 'Administrador 22',
+        password: PASSWORD,
+        profession: 'RECEPTIONIST',
+        phoneNumber: '62999999999',
+      })
+      .expect(201);
+  });
+
+  it('responde 404 ao reenvio quando não há convite de administrador pendente', async () => {
+    const own = await provisionOrganization('23');
+
+    await server()
+      .post(
+        `/admin/provisioning/organizations/${own.organization.id}/resend-invite`,
+      )
+      .set('X-Provisioning-Key', PROVISIONING_KEY)
+      .expect(404);
+
+    await server()
+      .post(
+        `/admin/provisioning/organizations/${own.organization.id}/resend-invite`,
+      )
+      .expect(401);
   });
 
   it('não deixa a organização existir sem administrador quando o e-mail já é usado', async () => {
@@ -266,7 +414,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
     const listed = await server()
       .get('/professionals?pageSize=10')
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const page = readBody<TeamPageBody>(listed);
@@ -297,14 +446,16 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
     const byRole = await server()
       .get('/professionals?role=NURSE')
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .expect(200);
     expect(readBody<TeamPageBody>(byRole).total).toBe(1);
 
     const bySearch = await server()
       .get('/professionals?search=jaqueline')
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .expect(200);
     expect(readBody<TeamPageBody>(bySearch).items[0].fullName).toBe(
       'Jaqueline Oliveira',
@@ -326,7 +477,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       .patch(`/professionals/${colleague.professionalId}/access`)
       .set('Origin', ORIGIN)
       .set('Cookie', admin.cookie)
-      .set('Cookie', admin.cookie).set('X-Session-Context', admin.sessionId)
+      .set('Cookie', admin.cookie)
+      .set('X-Session-Context', admin.sessionId)
       .set('X-CSRF-Token', admin.csrfToken)
       .send({ isActive: false })
       .expect(200);
@@ -334,7 +486,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
     await server()
       .get('/account/me')
       .set('Cookie', colleagueSession.cookie)
-      .set('Cookie', colleagueSession.cookie).set('X-Session-Context', colleagueSession.sessionId)
+      .set('Cookie', colleagueSession.cookie)
+      .set('X-Session-Context', colleagueSession.sessionId)
       .expect(401);
 
     const stored = await prisma.professional.findUnique({
@@ -360,7 +513,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       .patch(`/professionals/${own.administrator.professionalId}/access`)
       .set('Origin', ORIGIN)
       .set('Cookie', admin.cookie)
-      .set('Cookie', admin.cookie).set('X-Session-Context', admin.sessionId)
+      .set('Cookie', admin.cookie)
+      .set('X-Session-Context', admin.sessionId)
       .set('X-CSRF-Token', admin.csrfToken)
       .send({ isActive: false })
       .expect(403);
@@ -375,7 +529,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       .patch(`/professionals/${other.administrator.professionalId}`)
       .set('Origin', ORIGIN)
       .set('Cookie', admin.cookie)
-      .set('Cookie', admin.cookie).set('X-Session-Context', admin.sessionId)
+      .set('Cookie', admin.cookie)
+      .set('X-Session-Context', admin.sessionId)
       .set('X-CSRF-Token', admin.csrfToken)
       .send({ fullName: 'Nome alterado indevidamente' })
       .expect(404);
@@ -384,7 +539,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       .post('/roles')
       .set('Origin', ORIGIN)
       .set('Cookie', admin.cookie)
-      .set('Cookie', admin.cookie).set('X-Session-Context', admin.sessionId)
+      .set('Cookie', admin.cookie)
+      .set('X-Session-Context', admin.sessionId)
       .set('X-CSRF-Token', admin.csrfToken)
       .send({
         professionalId: other.administrator.professionalId,
@@ -407,7 +563,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       .patch('/professionals/me')
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({
         fullName: 'Carla Souza',
@@ -423,7 +580,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
     const me = await server()
       .get('/account/me')
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .expect(200);
     expect(readBody<{ roles: string[] }>(me).roles).toEqual(['ADMINISTRATOR']);
   });
@@ -436,7 +594,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       .patch('/organization/me')
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ name: 'Clínica Integrada', timeZone: 'America/Manaus' })
       .expect(200);
@@ -449,7 +608,8 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       .patch('/organization/me')
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ timeZone: 'Marte/Olympus' })
       .expect(400);

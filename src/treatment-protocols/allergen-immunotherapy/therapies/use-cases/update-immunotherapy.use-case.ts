@@ -30,6 +30,9 @@ export class UpdateImmunotherapyUseCase {
       const therapy = await this.clinical.lockTherapy(tx, id, user);
       if (therapy.revision !== dto.expectedRevision)
         throw new ConflictException('STALE_CLINICAL_REVISION');
+
+      if (therapy.status !== 'IN_PROGRESS' || therapy.isArchived)
+        throw new ConflictException('TREATMENT_NOT_ACTIVE');
       const updated = await tx.immunotherapy.update({
         where: { id },
         data: {

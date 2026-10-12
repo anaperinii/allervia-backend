@@ -88,13 +88,13 @@ export class SessionStateDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
-  @ApiProperty()
+  @ApiProperty({ type: String, format: 'date-time' })
   expiresAt: Date;
 
-  @ApiProperty()
+  @ApiProperty({ type: String, format: 'date-time' })
   lastInteractiveAt: Date;
 
   @ApiProperty()
@@ -103,14 +103,16 @@ export class SessionStateDto {
   @ApiProperty({
     description:
       'Momento da última reautenticação; ações sensíveis comparam com a própria política.',
+    type: String,
+    format: 'date-time',
     nullable: true,
   })
   reauthenticatedAt: Date | null;
 }
 
 export class SessionEnvelopeDto {
-  @ApiProperty()
-  authenticated: boolean;
+  @ApiProperty({ oneOf: [{ type: 'boolean', enum: [true] }] })
+  authenticated: true;
 
   @ApiProperty({
     description: 'Token sincronizador para o header X-CSRF-Token.',
@@ -121,40 +123,60 @@ export class SessionEnvelopeDto {
   session: SessionStateDto;
 }
 
+export class MfaEnrollmentStartDto {
+  @ApiProperty()
+  credentialId: string;
+
+  @ApiProperty({ description: 'Exibido uma única vez.' })
+  secret: string;
+
+  @ApiProperty()
+  keyUri: string;
+}
+
 export class MfaChallengeDto {
-  @ApiProperty({ enum: ['MFA_REQUIRED', 'MFA_ENROLLMENT_REQUIRED'] })
-  status: 'MFA_REQUIRED' | 'MFA_ENROLLMENT_REQUIRED';
+  @ApiProperty({ enum: ['MFA_REQUIRED'] })
+  status: 'MFA_REQUIRED';
 
   @ApiProperty()
   challengeToken: string;
 
+  @ApiProperty({ type: String, format: 'date-time' })
+  expiresAt: Date;
+}
+
+export class MfaEnrollmentChallengeDto {
+  @ApiProperty({ enum: ['MFA_ENROLLMENT_REQUIRED'] })
+  status: 'MFA_ENROLLMENT_REQUIRED';
+
   @ApiProperty()
+  challengeToken: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
   expiresAt: Date;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
+    type: MfaEnrollmentStartDto,
     description: 'Presente apenas no cadastro inicial do segundo fator.',
   })
-  enrollment?: {
-    credentialId: string;
-    secret: string;
-    keyUri: string;
-  };
+  enrollment: MfaEnrollmentStartDto;
 }
 
 export class DeviceSessionDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
-  @ApiProperty()
+  @ApiProperty({ type: String, format: 'date-time' })
   lastInteractiveAt: Date;
 
-  @ApiProperty()
+  @ApiProperty({ type: String, format: 'date-time' })
   expiresAt: Date;
 
   @ApiProperty({
+    type: String,
     nullable: true,
     description:
       'Descrição aproximada do dispositivo, sem localização inferida.',
@@ -176,21 +198,38 @@ export class MfaFactorDto {
   confirmed: boolean;
 }
 
-export class MfaEnrollmentStartDto {
-  @ApiProperty()
-  credentialId: string;
-
-  @ApiProperty({ description: 'Exibido uma única vez.' })
-  secret: string;
-
-  @ApiProperty()
-  keyUri: string;
-}
-
 export class RecoveryCodesDto {
   @ApiProperty({
     type: [String],
     description: 'Exibidos uma única vez; o servidor guarda apenas o hash.',
   })
   recoveryCodes: string[];
+}
+
+export class MfaVerifiedSessionDto extends SessionEnvelopeDto {
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Presentes apenas quando a verificação conclui o cadastro do segundo fator.',
+  })
+  recoveryCodes?: string[];
+}
+
+export class ReauthenticationResponseDto {
+  @ApiProperty({ type: String, format: 'date-time' })
+  reauthenticatedAt: Date;
+
+  @ApiProperty({
+    description:
+      'Janela, em segundos, em que a reautenticação permanece válida.',
+  })
+  maxAgeSeconds: number;
+}
+
+export class MfaFactorsResponseDto {
+  @ApiProperty({ type: [MfaFactorDto] })
+  factors: MfaFactorDto[];
+
+  @ApiProperty()
+  recoveryCodesRemaining: number;
 }

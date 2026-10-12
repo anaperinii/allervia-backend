@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { generateSecret, generateURI, verifySync } from 'otplib';
 
 const PERIOD_SECONDS = 30;
@@ -11,6 +11,8 @@ export interface TotpVerification {
 
 @Injectable()
 export class TotpService {
+  private readonly logger = new Logger(TotpService.name);
+
   generateSecret(): string {
     return generateSecret();
   }
@@ -43,7 +45,11 @@ export class TotpService {
           ? {}
           : { afterTimeStep: Number(lastUsedTimeStep) }),
       });
-    } catch {
+    } catch (error) {
+
+      this.logger.warn(
+        `TOTP verification error: ${error instanceof Error ? error.name : 'unknown'}`,
+      );
       return { valid: false, timeStep: null };
     }
 

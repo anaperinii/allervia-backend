@@ -9,6 +9,7 @@ import { accessibleBy } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { buildPage, resolvePage } from 'src/infra/http/pagination';
@@ -69,9 +70,11 @@ export class AppointmentsService {
           organizationId: user.organizationId,
           isArchived: false,
         },
-        select: { id: true, isActive: true, responsiblePhysicianId: true },
+        select: { id: true, isActive: true },
       });
       if (!patient) throw new NotFoundException('PATIENT_NOT_FOUND');
+
+      if (!patient.isActive) throw new ConflictException('PATIENT_INACTIVE');
       if (!dto.professionalId)
         throw new BadRequestException('APPOINTMENT_PROFESSIONAL_REQUIRED');
       const professional = await tx.professional.findFirst({
@@ -133,11 +136,11 @@ export class AppointmentsService {
         {
           userId: user.id,
           organizationId: user.organizationId,
-          entityType: 'Patient',
-          entityId: dto.patientId,
+          entityType: AUDIT_ENTITY_TYPES.APPOINTMENT,
+          entityId: appointment.id,
           action: 'APPOINTMENT_CREATED',
           newValues: {
-            appointmentId: appointment.id,
+            patientId: dto.patientId,
             doseId: dto.doseId ?? null,
             professionalId: dto.professionalId,
             startsAt: window.from.toISOString(),
@@ -234,18 +237,20 @@ export class AppointmentsService {
         {
           userId: user.id,
           organizationId: user.organizationId,
-          entityType: 'Patient',
-          entityId: appointment.patientId,
+          entityType: AUDIT_ENTITY_TYPES.APPOINTMENT,
+          entityId: id,
           action: 'APPOINTMENT_UPDATED',
           oldValues: {
             status: appointment.status,
+            statusReason: appointment.statusReason,
             startsAt: appointment.startsAt.toISOString(),
             professionalId: appointment.professionalId,
           },
           newValues: {
-            appointmentId: id,
+            patientId: appointment.patientId,
             status: nextStatus,
-            statusReason: dto.statusReason ?? null,
+
+            statusReason: updated.statusReason,
             startsAt: updated.startsAt.toISOString(),
             professionalId: updated.professionalId,
           },
@@ -261,6 +266,68 @@ export class AppointmentsService {
       }
       return updated;
     });
+  }
+
+  async applyExternalReschedule(
+    tx: Prisma.TransactionClient,
+    appointmentId: string,
+    window: { startsAt: Date; endsAt: Date },
+    actorUserId: string,
+    source: { googleEventId: string },
+  ) {
+    if (
+      !Number.isFinite(window.startsAt.getTime()) ||
+      !Number.isFinite(window.endsAt.getTime()) ||
+      window.startsAt >= window.endsAt
+    ) {
+      throw new BadRequestException('INVALID_PERIOD');
+    }
+    if (!actorUserId) {
+      throw new Error(
+        'SYSTEM_USER_ID ausente: reagendamento externo exige ator na trilha',
+      );
+    }
+
+    const appointment = await tx.appointment.findUnique({
+      where: { id: appointmentId },
+    });
+    if (!appointment) return null;
+    if (appointment.status !== 'SCHEDULED') {
+      throw new ConflictException('APPOINTMENT_ALREADY_CLOSED');
+    }
+
+    const updated = await tx.appointment.update({
+      where: { id: appointment.id },
+      data: {
+        startsAt: window.startsAt,
+        endsAt: window.endsAt,
+        revision: { increment: 1 },
+        updatedById: actorUserId,
+      },
+    });
+
+    await this.audit.record(
+      {
+        userId: actorUserId,
+        organizationId: appointment.organizationId,
+        entityType: AUDIT_ENTITY_TYPES.APPOINTMENT,
+        entityId: appointment.id,
+        action: 'APPOINTMENT_UPDATED_FROM_GOOGLE',
+        oldValues: {
+          startsAt: appointment.startsAt.toISOString(),
+          endsAt: appointment.endsAt.toISOString(),
+        },
+        newValues: {
+          patientId: appointment.patientId,
+          startsAt: updated.startsAt.toISOString(),
+          endsAt: updated.endsAt.toISOString(),
+          googleEventId: source.googleEventId,
+        },
+      },
+      tx,
+    );
+
+    return updated;
   }
 
   async list(query: ListAppointmentsQueryDto, user: AuthenticatedUserPayload) {

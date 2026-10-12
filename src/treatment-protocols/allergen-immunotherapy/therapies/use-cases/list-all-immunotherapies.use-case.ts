@@ -44,13 +44,15 @@ const LIST_SELECT = {
   },
 } satisfies Prisma.ImmunotherapySelect;
 
-/// Fase vigente sai do snapshot planejado da previsão em aberto; sem ele, a
-/// data de início da manutenção já responde em qual fase o tratamento está.
 export function resolvePhase(
   plannedValues: Prisma.JsonValue | null | undefined,
   maintenanceStartDate: Date | null,
 ): ProtocolPhase {
-  if (plannedValues && typeof plannedValues === 'object' && !Array.isArray(plannedValues)) {
+  if (
+    plannedValues &&
+    typeof plannedValues === 'object' &&
+    !Array.isArray(plannedValues)
+  ) {
     const phase = (plannedValues as Record<string, unknown>).phase;
     if (phase === 'BUILD_UP' || phase === 'MAINTENANCE') return phase;
   }

@@ -19,6 +19,11 @@ export class OrganizationResponseDto {
   @ApiProperty({ description: 'Automação de protocolo habilitada' })
   automationEnabled: boolean;
 
+  @ApiProperty({
+    description: 'Revisão para lock otimista das configurações organizacionais',
+  })
+  revision: number;
+
   @ApiProperty()
   createdAt: Date;
 

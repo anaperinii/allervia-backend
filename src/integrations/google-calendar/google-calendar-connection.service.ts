@@ -28,6 +28,7 @@ import { OAuthStateService } from './oauth-state.service';
 import { ChannelLifecycleService } from './channel-lifecycle.service';
 import { GoogleAuthService } from './google-auth.service';
 import { MAX_ATTEMPTS } from './calendar-sync.service';
+import { enqueueCalendarSync } from './calendar-sync.enqueue';
 
 const AUTHORIZATION_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const CODE_PATTERN = /^[A-Z][A-Z0-9_]{2,}$/;
@@ -83,10 +84,18 @@ export class GoogleCalendarConnectionService {
     return { authorizationUrl: `${AUTHORIZATION_URL}?${params.toString()}` };
   }
 
-  async handleCallback(code: string, state: string): Promise<string> {
+  async handleCallback(
+    code: string,
+    state: string,
+    sessionUserId: string | null,
+  ): Promise<string> {
     const settingsUrl = this.config.frontendSettingsUrl;
     try {
       const payload = this.oauthState.open(state);
+      if (!sessionUserId || sessionUserId !== payload.userId) {
+        throw new BadRequestException('GOOGLE_OAUTH_SESSION_INVALID');
+      }
+      await this.oauthState.consume(payload);
       const redirectUri = this.config.oauthRedirectUrl;
       if (!redirectUri) {
         throw new ServiceUnavailableException('GOOGLE_TOKEN_KEY_UNAVAILABLE');
@@ -111,40 +120,54 @@ export class GoogleCalendarConnectionService {
       const sealed = this.tokenBox.seal(tokens.refresh_token);
       const email = this.emailFromIdToken(tokens.id_token) ?? 'desconhecido';
 
-      const connection = await this.prisma.googleCalendarConnection.upsert({
-        where: { professionalId: payload.professionalId },
-        create: {
+      const connection = await this.prisma.$transaction(async (tx) => {
+        const saved = await tx.googleCalendarConnection.upsert({
+          where: { professionalId: payload.professionalId },
+          create: {
+            organizationId: payload.organizationId,
+            professionalId: payload.professionalId,
+            googleAccountEmail: email,
+            grantedScopes: tokens.scope ?? GOOGLE_CALENDAR_SCOPE,
+            refreshTokenCiphertext: sealed.ciphertext,
+            refreshTokenIv: sealed.iv,
+            refreshTokenAuthTag: sealed.authTag,
+            keyVersion: sealed.keyVersion,
+          },
+          update: {
+            googleAccountEmail: email,
+            grantedScopes: tokens.scope ?? GOOGLE_CALENDAR_SCOPE,
+            refreshTokenCiphertext: sealed.ciphertext,
+            refreshTokenIv: sealed.iv,
+            refreshTokenAuthTag: sealed.authTag,
+            keyVersion: sealed.keyVersion,
+            status: 'ACTIVE',
+            brokenReason: null,
+            syncToken: null,
+            teardownRequestedAt: null,
+          },
+        });
+
+        await enqueueCalendarSync(tx, {
           organizationId: payload.organizationId,
-          professionalId: payload.professionalId,
-          googleAccountEmail: email,
-          grantedScopes: tokens.scope ?? GOOGLE_CALENDAR_SCOPE,
-          refreshTokenCiphertext: sealed.ciphertext,
-          refreshTokenIv: sealed.iv,
-          refreshTokenAuthTag: sealed.authTag,
-          keyVersion: sealed.keyVersion,
-        },
-        update: {
-          googleAccountEmail: email,
-          grantedScopes: tokens.scope ?? GOOGLE_CALENDAR_SCOPE,
-          refreshTokenCiphertext: sealed.ciphertext,
-          refreshTokenIv: sealed.iv,
-          refreshTokenAuthTag: sealed.authTag,
-          keyVersion: sealed.keyVersion,
-          status: 'ACTIVE',
-          brokenReason: null,
-          syncToken: null,
-        },
+          kind: 'PULL_FULL_RESYNC',
+          connectionId: saved.id,
+        });
+
+        await this.audit.record(
+          {
+            userId: payload.userId,
+            organizationId: payload.organizationId,
+            entityType: 'Professional',
+            entityId: payload.professionalId,
+            action: 'GOOGLE_CALENDAR_CONNECTED',
+            newValues: { googleAccountEmail: email },
+          },
+          tx,
+        );
+
+        return saved;
       });
       this.auth.evict(connection.id);
-
-      await this.audit.record({
-        userId: payload.userId,
-        organizationId: payload.organizationId,
-        entityType: 'Professional',
-        entityId: payload.professionalId,
-        action: 'GOOGLE_CALENDAR_CONNECTED',
-        newValues: { googleAccountEmail: email },
-      });
 
       try {
         await this.channels.ensureChannel(connection);
@@ -186,7 +209,11 @@ export class GoogleCalendarConnectionService {
         },
       }),
       this.prisma.calendarSyncJob.count({
-        where: { ...jobScope, attempts: { gte: MAX_ATTEMPTS } },
+        where: {
+          ...jobScope,
+          processedAt: { not: null },
+          lastError: { not: null },
+        },
       }),
     ]);
 
@@ -271,6 +298,32 @@ export class GoogleCalendarConnectionService {
     return { disconnected: true };
   }
 
+  async processPendingTeardowns(limit = 3): Promise<void> {
+    const pending = await this.prisma.googleCalendarConnection.findMany({
+      where: { teardownRequestedAt: { not: null } },
+      take: limit,
+    });
+    if (!pending.length) return;
+
+    const systemUserId = process.env.SYSTEM_USER_ID?.trim() || null;
+    if (!systemUserId) {
+      this.logger.warn(
+        `pending Google teardown deferred: SYSTEM_USER_ID not configured (${pending.length} connection(s) waiting)`,
+      );
+      return;
+    }
+
+    for (const connection of pending) {
+      try {
+        await this.teardown(connection, systemUserId, false);
+      } catch (error) {
+        this.logger.warn(
+          `deferred teardown failed for connection ${connection.id}: ${String(error)}`,
+        );
+      }
+    }
+  }
+
   async disconnectByUserId(
     userId: string,
     actor: { id: string; organizationId: string },
@@ -350,14 +403,25 @@ export class GoogleCalendarConnectionService {
       where: { id: connectionId },
     });
     if (!connection) return;
-    const links = await this.prisma.googleCalendarEventLink.findMany({
-      where: {
-        connectionId,
-        deletedAt: null,
-        appointment: { status: 'SCHEDULED', startsAt: { gt: new Date() } },
-      },
-      take: 200,
-    });
+
+    const links: Array<{ id: string; googleEventId: string }> = [];
+    let cursor: string | undefined;
+    for (;;) {
+      const page = await this.prisma.googleCalendarEventLink.findMany({
+        where: {
+          connectionId,
+          deletedAt: null,
+          appointment: { status: 'SCHEDULED', startsAt: { gt: new Date() } },
+        },
+        select: { id: true, googleEventId: true },
+        orderBy: { id: 'asc' },
+        take: 200,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      });
+      links.push(...page);
+      if (page.length < 200) break;
+      cursor = page[page.length - 1].id;
+    }
     if (!links.length) return;
     try {
       const accessToken = await this.auth.getAccessToken(connection);

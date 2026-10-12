@@ -1,8 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { accessibleBy } from '@casl/prisma';
 import { AuditLog } from '@prisma/client';
+import { CodedHttpException } from 'src/infra/exceptions/coded.exception';
+import { messageForCode } from 'src/infra/errors/error-catalog';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import {
+  AUDIT_ENTITY_TYPES,
   AuditAction,
   AuditEntityType,
   AuditLogQuery,
@@ -25,6 +28,24 @@ export class ListAuditLogsUseCase {
     const ability = this.abilityFactory.createForUser(currentUser);
     if (!ability.can('read', 'AuditLog')) throw new NotFoundException();
     const where = accessibleBy(ability, 'read').ofType('AuditLog');
+
+    if (
+      dto.entityType !== undefined &&
+      !Object.values(AUDIT_ENTITY_TYPES).includes(
+        dto.entityType as AuditEntityType,
+      )
+    ) {
+      throw new CodedHttpException(
+        HttpStatus.BAD_REQUEST,
+        'VALIDATION_ERROR',
+        messageForCode('VALIDATION_ERROR')!,
+        {
+          entityType: [
+            `Tipo desconhecido. Use um de: ${Object.values(AUDIT_ENTITY_TYPES).join(', ')}`,
+          ],
+        },
+      );
+    }
 
     const query: AuditLogQuery = {
       entityType: dto.entityType as AuditEntityType | undefined,

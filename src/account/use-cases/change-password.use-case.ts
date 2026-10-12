@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -17,6 +18,8 @@ import { AuthSessionRevokeReason } from '@prisma/client';
 
 @Injectable()
 export class ChangePasswordUseCase {
+  private readonly logger = new Logger(ChangePasswordUseCase.name);
+
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly hashingService: IPasswordHashingService,
@@ -68,6 +71,14 @@ export class ChangePasswordUseCase {
       AuthSessionRevokeReason.PASSWORD_CHANGED,
     );
 
-    await this.emailService.sendPasswordChangedNotification(user.email);
+    try {
+      await this.emailService.sendPasswordChangedNotification(user.email);
+    } catch (error) {
+
+      this.logger.error(
+        'Falha ao notificar troca de senha por e-mail.',
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }

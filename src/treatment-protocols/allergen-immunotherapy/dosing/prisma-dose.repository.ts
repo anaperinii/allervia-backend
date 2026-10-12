@@ -2,85 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { Dose } from './domain/entities/dose.entity';
 import { IDoseRepository } from './domain/interfaces/dose.repository.interface';
-import {
-  CreateDoseData,
-  UpdateDoseData,
-} from 'src/treatment-protocols/allergen-immunotherapy/dosing/domain/interfaces/doses.interface';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaDoseRepository extends IDoseRepository {
   constructor(private readonly prismaService: PrismaService) {
     super();
-  }
-
-  async create(
-    dose: CreateDoseData,
-    tx?: Prisma.TransactionClient,
-  ): Promise<Dose> {
-    const prismaClient = tx ?? this.prismaService;
-
-    const created = await prismaClient.dose.create({
-      data: {
-        immunotherapyId: dose.immunotherapyId,
-        concentration: dose.concentration,
-        volume: dose.volume,
-        scheduledAt: dose.scheduledAt
-          ? new Date(dose.scheduledAt)
-          : dose.scheduledAt,
-        administeredAt: dose.administeredAt,
-        nextIntervalInDays: dose.nextIntervalInDays,
-        betweenDosesReport: dose.betweenDosesReport ?? '',
-        status: dose.status,
-        administeredById: dose.administeredById,
-        isArchived: dose.isArchived,
-        updatedById: dose.updatedById,
-        createdById: dose.createdById,
-      },
-    });
-
-    return new Dose(created);
-  }
-
-  async update(
-    doseId: string,
-    dose: Partial<UpdateDoseData>,
-    tx?: Prisma.TransactionClient,
-  ): Promise<Dose> {
-    const client = tx ?? this.prismaService;
-
-    const updated = await client.dose.update({
-      where: { id: doseId },
-      data: {
-        concentration: dose.concentration,
-        volume: dose.volume,
-        scheduledAt: dose.scheduledAt ? new Date(dose.scheduledAt) : undefined,
-        administeredAt: dose.administeredAt
-          ? new Date(dose.administeredAt)
-          : undefined,
-        nextIntervalInDays: dose.nextIntervalInDays,
-        betweenDosesReport: dose.betweenDosesReport ?? undefined,
-        status: dose.status,
-        administeredById: dose.administeredById,
-        isArchived: dose.isArchived,
-        updatedById: dose.updatedById,
-        archivedById: dose.archivedById,
-        archivedAt: dose.archivedAt,
-      },
-    });
-
-    return new Dose(updated);
-  }
-
-  async findByIdAccessible(
-    id: string,
-    where: Prisma.DoseWhereInput,
-  ): Promise<Dose | null> {
-    const dose = await this.prismaService.dose.findFirst({
-      where: { AND: [{ id }, where] },
-    });
-
-    return dose ? new Dose(dose) : null;
   }
 
   async findByImmunotherapyAccessible(
@@ -93,13 +20,5 @@ export class PrismaDoseRepository extends IDoseRepository {
     });
 
     return doses.map((dose) => new Dose(dose));
-  }
-
-  async exists(id: string): Promise<boolean> {
-    const count = await this.prismaService.dose.count({
-      where: { id },
-    });
-
-    return count > 0;
   }
 }

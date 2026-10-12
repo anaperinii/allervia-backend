@@ -1,5 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CodedUnauthorizedException } from 'src/infra/exceptions/coded.exception';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  CodedHttpException,
+  CodedUnauthorizedException,
+} from 'src/infra/exceptions/coded.exception';
 import { AUTH_ERROR_CODES, AUTH_MESSAGES } from '../auth.messages';
 import { IAuthSessionRepository } from './auth-session.repository';
 import { SecretBoxService } from './secret-box.service';
@@ -79,6 +82,14 @@ export class MfaService {
       keyVersion: credential.keyVersion,
     });
 
+    if (credential.confirmedAt) {
+      throw new CodedHttpException(
+        HttpStatus.CONFLICT,
+        AUTH_ERROR_CODES.mfaAlreadyConfirmed,
+        AUTH_MESSAGES.mfaAlreadyConfirmed,
+      );
+    }
+
     const verification = this.totp.verify(
       code,
       secret,
@@ -92,17 +103,38 @@ export class MfaService {
       );
     }
 
-    const now = new Date();
-    if (!credential.confirmedAt) {
-      await this.repository.confirmMfaCredential(credential.id, now);
-    }
-    await this.repository.registerMfaCredentialUse(
-      credential.id,
-      BigInt(verification.timeStep),
-      now,
+    const codes = Array.from({ length: RECOVERY_CODE_COUNT }, () =>
+      generateRecoveryCode(),
     );
 
-    return { recoveryCodes: await this.regenerateRecoveryCodes(userId) };
+    const confirmed = await this.repository.confirmMfaCredentialAtomically(
+      credential.id,
+      userId,
+      BigInt(verification.timeStep),
+      new Date(),
+      codes.map((item) => hashOpaqueSecret(normalizeRecoveryCode(item))),
+    );
+
+    if (!confirmed) {
+
+      const current = await this.repository.findMfaCredential(
+        credential.id,
+        userId,
+      );
+      if (current?.confirmedAt) {
+        throw new CodedHttpException(
+          HttpStatus.CONFLICT,
+          AUTH_ERROR_CODES.mfaAlreadyConfirmed,
+          AUTH_MESSAGES.mfaAlreadyConfirmed,
+        );
+      }
+      throw new CodedUnauthorizedException(
+        AUTH_ERROR_CODES.mfaCodeInvalid,
+        AUTH_MESSAGES.mfaCodeInvalid,
+      );
+    }
+
+    return { recoveryCodes: codes };
   }
 
   async regenerateRecoveryCodes(userId: string): Promise<string[]> {
@@ -137,12 +169,12 @@ export class MfaService {
       );
 
       if (verification.valid && verification.timeStep !== null) {
-        await this.repository.registerMfaCredentialUse(
+
+        return this.repository.registerMfaCredentialUse(
           credential.id,
           BigInt(verification.timeStep),
           new Date(),
         );
-        return true;
       }
     }
 

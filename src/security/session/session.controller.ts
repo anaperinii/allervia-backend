@@ -18,7 +18,13 @@ import {
   Res,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { AuthSessionRevokeReason } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { AUTH_MESSAGES } from '../auth.messages';
@@ -35,10 +41,13 @@ import {
   DeviceSessionDto,
   EnrollMfaDto,
   MfaChallengeDto,
+  MfaEnrollmentChallengeDto,
   MfaEnrollmentStartDto,
-  MfaFactorDto,
+  MfaFactorsResponseDto,
+  MfaVerifiedSessionDto,
   RecoveryCodesDto,
   ReauthenticateDto,
+  ReauthenticationResponseDto,
   SessionEnvelopeDto,
   StartSessionDto,
   VerifyMfaDto,
@@ -90,11 +99,25 @@ export class SessionController {
   @Post('sessions')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @ApiExtraModels(
+    SessionEnvelopeDto,
+    MfaChallengeDto,
+    MfaEnrollmentChallengeDto,
+  )
+  @ApiOkResponse({
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(SessionEnvelopeDto) },
+        { $ref: getSchemaPath(MfaChallengeDto) },
+        { $ref: getSchemaPath(MfaEnrollmentChallengeDto) },
+      ],
+    },
+  })
   async createSession(
     @Body() dto: StartSessionDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<SessionEnvelopeDto | MfaChallengeDto> {
+  ): Promise<SessionEnvelopeDto | MfaChallengeDto | MfaEnrollmentChallengeDto> {
     response.setHeader('Cache-Control', 'no-store');
 
     const result = await this.startSession.execute({
@@ -134,11 +157,12 @@ export class SessionController {
   @Post('mfa/verify')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: MfaVerifiedSessionDto })
   async verifySecondFactor(
     @Body() dto: VerifyMfaDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<SessionEnvelopeDto & { recoveryCodes?: string[] }> {
+  ): Promise<MfaVerifiedSessionDto> {
     response.setHeader('Cache-Control', 'no-store');
 
     const result = await this.verifyMfaChallenge.execute({
@@ -158,6 +182,7 @@ export class SessionController {
 
   @Get('session')
   @AuthenticatedOnly()
+  @ApiOkResponse({ type: SessionEnvelopeDto })
   readSession(
     @CurrentSession() session: StoredSession,
     @Res({ passthrough: true }) response: Response,
@@ -178,6 +203,7 @@ export class SessionController {
 
   @Get('sessions')
   @AuthenticatedOnly()
+  @ApiOkResponse({ type: DeviceSessionDto, isArray: true })
   async listDevices(
     @CurrentSession() session: StoredSession,
     @CurrentAuthContext() context: AuthContext,
@@ -290,12 +316,13 @@ export class SessionController {
   @Post('reauthenticate')
   @AuthenticatedOnly()
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: ReauthenticationResponseDto })
   async confirmIdentity(
     @Body() dto: ReauthenticateDto,
     @CurrentSession() session: StoredSession,
     @CurrentAuthContext() context: AuthContext,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<{ reauthenticatedAt: Date; maxAgeSeconds: number }> {
+  ): Promise<ReauthenticationResponseDto> {
     response.setHeader('Cache-Control', 'no-store');
     const reauthenticatedAt = await this.reauthenticate.execute({
       session,
@@ -312,10 +339,11 @@ export class SessionController {
 
   @Get('mfa/factors')
   @AuthenticatedOnly()
+  @ApiOkResponse({ type: MfaFactorsResponseDto })
   async listFactors(
     @CurrentAuthContext() context: AuthContext,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<{ factors: MfaFactorDto[]; recoveryCodesRemaining: number }> {
+  ): Promise<MfaFactorsResponseDto> {
     response.setHeader('Cache-Control', 'no-store');
     return {
       factors: await this.mfaService.listFactors(context.userId),
@@ -328,15 +356,19 @@ export class SessionController {
   @Post('mfa/enroll')
   @AuthenticatedOnly()
   @HttpCode(HttpStatus.CREATED)
+  @ApiCreatedResponse({ type: MfaEnrollmentStartDto })
   async enrollFactor(
     @Body() dto: EnrollMfaDto,
     @CurrentAuthContext() context: AuthContext,
+    @CurrentSession() session: StoredSession,
     @Res({ passthrough: true }) response: Response,
   ): Promise<MfaEnrollmentStartDto> {
     response.setHeader('Cache-Control', 'no-store');
     if (!this.mfaService.available) {
       throw new ServiceUnavailableException(AUTH_MESSAGES.mfaKeyUnavailable);
     }
+
+    this.sessionService.assertRecentReauthentication(session);
 
     return this.mfaService.startEnrollment(
       context.userId,
@@ -348,6 +380,7 @@ export class SessionController {
   @Post('mfa/enroll/confirm')
   @AuthenticatedOnly()
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: RecoveryCodesDto })
   async confirmFactor(
     @Body() dto: ConfirmMfaEnrollmentDto,
     @CurrentAuthContext() context: AuthContext,
@@ -355,6 +388,7 @@ export class SessionController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<RecoveryCodesDto> {
     response.setHeader('Cache-Control', 'no-store');
+    this.sessionService.assertRecentReauthentication(session);
     const confirmation = await this.mfaService.confirmEnrollment(
       context.userId,
       dto.credentialId,
@@ -394,6 +428,7 @@ export class SessionController {
   @Post('mfa/recovery-codes')
   @AuthenticatedOnly()
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: RecoveryCodesDto })
   async regenerateRecoveryCodes(
     @CurrentAuthContext() context: AuthContext,
     @CurrentSession() session: StoredSession,

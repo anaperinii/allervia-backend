@@ -15,21 +15,29 @@ export interface GuardianColumns {
   guardianPhoneNumber: string | null;
 }
 
-export function isMinor(
-  birthDate: Date,
-  reference: Date = new Date(),
-): boolean {
-  const eighteenth = new Date(birthDate);
-  eighteenth.setFullYear(eighteenth.getFullYear() + LEGAL_AGE_IN_YEARS);
-  return reference < eighteenth;
+export function todayCivilDate(
+  timeZone: string,
+  now: Date = new Date(),
+): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone }).format(now);
+}
+
+export function birthCivilDate(birthDate: Date): string {
+  return birthDate.toISOString().slice(0, 10);
+}
+
+export function isMinor(birthDate: Date, todayCivil: string): boolean {
+  const birth = birthCivilDate(birthDate);
+  const eighteenthBirthday = `${Number(birth.slice(0, 4)) + LEGAL_AGE_IN_YEARS}${birth.slice(4)}`;
+  return todayCivil < eighteenthBirthday;
 }
 
 export function guardianColumns(
   guardian: GuardianInput | null | undefined,
   birthDate: Date,
-  reference: Date = new Date(),
+  todayCivil: string,
 ): GuardianColumns {
-  const minor = isMinor(birthDate, reference);
+  const minor = isMinor(birthDate, todayCivil);
 
   if (minor && !guardian)
     throw new BadRequestException('GUARDIAN_REQUIRED_FOR_MINOR');

@@ -12,6 +12,7 @@ import { OrganizationController } from './organization.controller';
 import { ProvisioningController } from './provisioning/provisioning.controller';
 import { ProvisioningGuard } from './provisioning/provisioning.guard';
 import { ProvisionOrganizationUseCase } from './provisioning/provision-organization.use-case';
+import { ResendOrganizationInviteUseCase } from './provisioning/resend-organization-invite.use-case';
 
 @Module({
   imports: [PrismaModule, ConfigModule, AuditModule, AuthModule, EmailModule],
@@ -19,6 +20,7 @@ import { ProvisionOrganizationUseCase } from './provisioning/provision-organizat
     FindOrganizationUseCase,
     UpdateOrganizationUseCase,
     ProvisionOrganizationUseCase,
+    ResendOrganizationInviteUseCase,
     ProvisioningGuard,
     {
       provide: OrganizationRepository,

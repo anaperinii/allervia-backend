@@ -97,6 +97,8 @@ export class ChannelLifecycleService {
     const expiring = await this.prisma.googleCalendarConnection.findMany({
       where: {
         status: 'ACTIVE',
+
+        teardownRequestedAt: null,
         OR: [
           { channelExpiresAt: { lt: new Date(Date.now() + RENEW_WINDOW_MS) } },
           { channelId: null },

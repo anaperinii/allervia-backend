@@ -3,6 +3,7 @@ import { AdministrationRoute, DoseStatus, TherapyStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PageQueryDto } from 'src/infra/http/pagination';
+import { TherapyPrescriptionRefDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/immunotherapy-read.dto';
 
 export class ListPatientsQueryDto extends PageQueryDto {
   @ApiPropertyOptional({ description: 'Busca por nome ou telefone' })
@@ -31,11 +32,22 @@ export class ResponsiblePhysicianDto {
   @ApiProperty()
   fullName: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   councilNumber: string | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   councilUf: string | null;
+}
+
+export class TherapySummaryNextDoseDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  scheduledAt: Date;
+
+  @ApiProperty({ enum: DoseStatus })
+  status: DoseStatus;
 }
 
 export class TherapySummaryDto {
@@ -60,10 +72,11 @@ export class TherapySummaryDto {
   @ApiProperty()
   inductionStartDate: Date;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
   maintenanceStartDate: Date | null;
 
   @ApiPropertyOptional({
+    type: TherapyPrescriptionRefDto,
     nullable: true,
     description: 'Versão de protocolo fixada na prescrição',
   })
@@ -72,7 +85,7 @@ export class TherapySummaryDto {
     revision: number;
   } | null;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: TherapySummaryNextDoseDto, nullable: true })
   nextDose: {
     id: string;
     scheduledAt: Date;
@@ -88,6 +101,7 @@ export class PatientGuardianDto {
   fullName: string;
 
   @ApiProperty({
+    type: String,
     nullable: true,
     description:
       'Documento completo; presente apenas quando o ator pode editar o cadastro',
@@ -105,7 +119,11 @@ export class PatientListItemDto {
   @ApiProperty()
   fullName: string;
 
-  @ApiProperty({ nullable: true, description: 'Documento mascarado' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Documento mascarado',
+  })
   cpfMasked: string | null;
 
   @ApiProperty()
@@ -133,8 +151,23 @@ export class PatientListItemDto {
   createdAt: Date;
 }
 
+export class PatientListPageDto {
+  @ApiProperty({ type: [PatientListItemDto] })
+  items: PatientListItemDto[];
+
+  @ApiProperty()
+  page: number;
+
+  @ApiProperty()
+  pageSize: number;
+
+  @ApiProperty({ description: 'Total de registros no escopo da consulta' })
+  total: number;
+}
+
 export class PatientDetailDto extends PatientListItemDto {
   @ApiPropertyOptional({
+    type: String,
     nullable: true,
     description:
       'Documento completo; presente apenas quando o ator pode editar o cadastro',

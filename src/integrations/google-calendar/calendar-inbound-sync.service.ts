@@ -7,6 +7,8 @@ import {
 } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
+import { AppointmentsService } from 'src/scheduling/appointments.service';
 import {
   GoogleApiError,
   GoogleCalendarClient,
@@ -23,7 +25,6 @@ import { enqueueCalendarSync } from './calendar-sync.enqueue';
 const LINK_INCLUDE = {
   appointment: {
     include: {
-      patient: { select: { fullName: true } },
       organization: { select: { timeZone: true } },
     },
   },
@@ -43,6 +44,7 @@ export class CalendarInboundSyncService {
     private readonly auth: GoogleAuthService,
     private readonly mapper: GoogleEventMapperService,
     private readonly audit: IAuditLogService,
+    private readonly appointments: AppointmentsService,
     private readonly config: ConfigService,
   ) {}
 
@@ -200,8 +202,21 @@ export class CalendarInboundSyncService {
       !startsAt ||
       !endsAt ||
       !Number.isFinite(startsAt.getTime()) ||
-      !Number.isFinite(endsAt.getTime())
+      !Number.isFinite(endsAt.getTime()) ||
+      startsAt >= endsAt
     ) {
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.googleCalendarEventLink.update({
+          where: { id: link.id },
+          data: { etag: event.etag ?? link.etag, lastSyncedHash: null },
+        });
+        await enqueueCalendarSync(tx, {
+          organizationId: link.organizationId,
+          kind: 'PUSH_SYNC',
+          appointmentId: link.appointmentId,
+        });
+      });
       return;
     }
 
@@ -213,14 +228,17 @@ export class CalendarInboundSyncService {
       (event.description !== undefined &&
         (event.description ?? '') !== (expected.description ?? ''));
     if (contentDrifted) {
-      await this.prisma.googleCalendarEventLink.update({
-        where: { id: link.id },
-        data: { etag: event.etag ?? link.etag, lastSyncedHash: null },
-      });
-      await enqueueCalendarSync(this.prisma, {
-        organizationId: link.organizationId,
-        kind: 'PUSH_SYNC',
-        appointmentId: link.appointmentId,
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.googleCalendarEventLink.update({
+          where: { id: link.id },
+          data: { etag: event.etag ?? link.etag, lastSyncedHash: null },
+        });
+        await enqueueCalendarSync(tx, {
+          organizationId: link.organizationId,
+          kind: 'PUSH_SYNC',
+          appointmentId: link.appointmentId,
+        });
       });
       return;
     }
@@ -239,6 +257,11 @@ export class CalendarInboundSyncService {
     }
 
     const systemUserId = this.systemUserId();
+    if (!systemUserId) {
+      throw new Error(
+        'SYSTEM_USER_ID ausente: inbound do Google não aplica mudanças sem ator auditável',
+      );
+    }
     await this.prisma.$transaction(async (tx) => {
       const appointment = await tx.appointment.findUnique({
         where: { id: link.appointmentId },
@@ -271,38 +294,14 @@ export class CalendarInboundSyncService {
         return;
       }
 
-      const updated = await tx.appointment.update({
-        where: { id: appointment.id },
-        data: {
-          startsAt,
-          endsAt,
-          revision: { increment: 1 },
-          ...(systemUserId ? { updatedById: systemUserId } : {}),
-        },
-      });
-
-      if (systemUserId) {
-        await this.audit.record(
-          {
-            userId: systemUserId,
-            organizationId: link.organizationId,
-            entityType: 'Patient',
-            entityId: appointment.patientId,
-            action: 'APPOINTMENT_UPDATED_FROM_GOOGLE',
-            oldValues: {
-              startsAt: appointment.startsAt.toISOString(),
-              endsAt: appointment.endsAt.toISOString(),
-            },
-            newValues: {
-              appointmentId: appointment.id,
-              startsAt: updated.startsAt.toISOString(),
-              endsAt: updated.endsAt.toISOString(),
-              googleEventId: event.id,
-            },
-          },
-          tx,
-        );
-      }
+      const updated = await this.appointments.applyExternalReschedule(
+        tx,
+        appointment.id,
+        { startsAt, endsAt },
+        systemUserId,
+        { googleEventId: event.id },
+      );
+      if (!updated) return;
 
       await tx.googleCalendarEventLink.update({
         where: { id: link.id },
@@ -335,6 +334,11 @@ export class CalendarInboundSyncService {
     }
 
     const systemUserId = this.systemUserId();
+    if (!systemUserId) {
+      throw new Error(
+        'SYSTEM_USER_ID ausente: restauração de evento exige ator auditável',
+      );
+    }
     await this.prisma.$transaction(async (tx) => {
       await tx.googleCalendarEventLink.delete({ where: { id: link.id } });
       await enqueueCalendarSync(tx, {
@@ -342,22 +346,20 @@ export class CalendarInboundSyncService {
         kind: 'PUSH_SYNC',
         appointmentId: link.appointmentId,
       });
-      if (systemUserId) {
-        await this.audit.record(
-          {
-            userId: systemUserId,
-            organizationId: link.organizationId,
-            entityType: 'Patient',
-            entityId: link.appointment.patientId,
-            action: 'GOOGLE_EVENT_RESTORED',
-            newValues: {
-              appointmentId: link.appointmentId,
-              googleEventId: link.googleEventId,
-            },
+      await this.audit.record(
+        {
+          userId: systemUserId,
+          organizationId: link.organizationId,
+          entityType: AUDIT_ENTITY_TYPES.APPOINTMENT,
+          entityId: link.appointmentId,
+          action: 'GOOGLE_EVENT_RESTORED',
+          newValues: {
+            patientId: link.appointment.patientId,
+            googleEventId: link.googleEventId,
           },
-          tx,
-        );
-      }
+        },
+        tx,
+      );
     });
     this.logger.log(
       `event deleted on Google; re-push enqueued for appointment ${link.appointmentId}`,
@@ -373,8 +375,6 @@ export class CalendarInboundSyncService {
       startsAt: appointment.startsAt,
       endsAt: appointment.endsAt,
       status: appointment.status,
-      patientFirstName:
-        appointment.patient.fullName.trim().split(/\s+/)[0] ?? 'Paciente',
       timeZone: appointment.organization.timeZone,
     };
   }

@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PreAuthPurpose } from '@prisma/client';
-import { CodedUnauthorizedException } from 'src/infra/exceptions/coded.exception';
+import {
+  CodedHttpException,
+  CodedUnauthorizedException,
+} from 'src/infra/exceptions/coded.exception';
 import { AUTH_ERROR_CODES, AUTH_MESSAGES } from 'src/security/auth.messages';
 import { IAuthSessionRepository } from '../auth-session.repository';
 import {
@@ -76,72 +79,102 @@ export class VerifyMfaChallengeUseCase {
       );
     }
 
-    const isEnrollment = challenge.purpose === PreAuthPurpose.MFA_ENROLLMENT;
-    let recoveryCodes: string[] | undefined;
+    try {
+      return await this.repository.withTransaction(async () => {
+        const isEnrollment =
+          challenge.purpose === PreAuthPurpose.MFA_ENROLLMENT;
+        let recoveryCodes: string[] | undefined;
 
-    if (isEnrollment) {
-      if (!challenge.credentialId) {
-        throw new CodedUnauthorizedException(
-          AUTH_ERROR_CODES.mfaChallengeInvalid,
-          AUTH_MESSAGES.mfaChallengeInvalid,
+        if (isEnrollment) {
+          if (!challenge.credentialId) {
+            throw new CodedUnauthorizedException(
+              AUTH_ERROR_CODES.mfaChallengeInvalid,
+              AUTH_MESSAGES.mfaChallengeInvalid,
+            );
+          }
+          try {
+            const confirmation = await this.mfaService.confirmEnrollment(
+              challenge.userId,
+              challenge.credentialId,
+              input.code,
+            );
+            recoveryCodes = confirmation.recoveryCodes;
+          } catch (error) {
+            if (
+              error instanceof CodedHttpException &&
+              error.code === AUTH_ERROR_CODES.mfaAlreadyConfirmed
+            ) {
+
+              await this.repository.consumePreAuthChallenge(challenge.id);
+              throw new CodedUnauthorizedException(
+                AUTH_ERROR_CODES.mfaChallengeInvalid,
+                AUTH_MESSAGES.mfaChallengeInvalid,
+              );
+            }
+            throw error;
+          }
+        } else {
+          const accepted = await this.mfaService.verifyCode(
+            challenge.userId,
+            input.code,
+          );
+
+          if (!accepted) {
+            throw new CodedUnauthorizedException(
+              AUTH_ERROR_CODES.mfaCodeInvalid,
+              AUTH_MESSAGES.mfaCodeInvalid,
+            );
+          }
+        }
+
+        if (!(await this.repository.consumePreAuthChallenge(challenge.id))) {
+          throw new CodedUnauthorizedException(
+            AUTH_ERROR_CODES.mfaChallengeInvalid,
+            AUTH_MESSAGES.mfaChallengeInvalid,
+          );
+        }
+
+        await this.rateLimit.record(
+          challenge.userId,
+          'account',
+          AUTH_OPERATIONS.mfaVerify,
+          true,
         );
-      }
-      const confirmation = await this.mfaService.confirmEnrollment(
-        challenge.userId,
-        challenge.credentialId,
-        input.code,
-      );
-      recoveryCodes = confirmation.recoveryCodes;
-    } else {
-      const accepted = await this.mfaService.verifyCode(
-        challenge.userId,
-        input.code,
-      );
 
-      if (!accepted) {
+        const context = await this.repository.loadContextByUserId(
+          challenge.userId,
+        );
+        if (!context) {
+          throw new CodedUnauthorizedException(
+            AUTH_ERROR_CODES.invalidCredentials,
+            AUTH_MESSAGES.invalidCredentials,
+          );
+        }
+
+        await this.sessionService.assertAccountUsable(context);
+
+        const issued = await this.sessionService.issue(
+          context,
+          input.device,
+          new Date(),
+        );
+
+        return { issued, context, recoveryCodes };
+      });
+    } catch (error) {
+      if (
+        (error instanceof CodedHttpException ||
+          error instanceof CodedUnauthorizedException) &&
+        error.code === AUTH_ERROR_CODES.mfaCodeInvalid
+      ) {
         await this.rateLimit.record(
           challenge.userId,
           'account',
           AUTH_OPERATIONS.mfaVerify,
           false,
         );
-        throw new CodedUnauthorizedException(
-          AUTH_ERROR_CODES.mfaCodeInvalid,
-          AUTH_MESSAGES.mfaCodeInvalid,
-        );
       }
+      throw error;
     }
-
-    if (!(await this.repository.consumePreAuthChallenge(challenge.id))) {
-      throw new CodedUnauthorizedException(
-        AUTH_ERROR_CODES.mfaChallengeInvalid,
-        AUTH_MESSAGES.mfaChallengeInvalid,
-      );
-    }
-
-    await this.rateLimit.record(
-      challenge.userId,
-      'account',
-      AUTH_OPERATIONS.mfaVerify,
-      true,
-    );
-
-    const context = await this.repository.loadContextByUserId(challenge.userId);
-    if (!context) {
-      throw new CodedUnauthorizedException(
-        AUTH_ERROR_CODES.invalidCredentials,
-        AUTH_MESSAGES.invalidCredentials,
-      );
-    }
-
-    await this.sessionService.assertAccountUsable(context);
-
-    const issued = await this.sessionService.issue(
-      context,
-      input.device,
-      new Date(),
-    );
-
-    return { issued, context, recoveryCodes };
   }
 }

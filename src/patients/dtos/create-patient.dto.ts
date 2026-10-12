@@ -6,7 +6,7 @@ import {
   Min,
   Max,
   Matches,
-} from '@nestjs/class-validator';
+} from 'class-validator';
 import { IsOptional, Validate, ValidateNested } from 'class-validator';
 import {
   ValidatorConstraint,

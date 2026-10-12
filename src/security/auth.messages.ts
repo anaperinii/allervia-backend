@@ -9,8 +9,6 @@ export const AUTH_MESSAGES = {
   forbidden: 'Acesso negado.',
   userNotAuthenticated: 'Usuário não autenticado.',
   organizationNotSet: 'Organização não definida para o usuário.',
-  professionalWithoutOrganization: 'Profissional sem organização vinculada.',
-  patientWithoutOrganization: 'Paciente sem organização vinculada.',
   accountDisabled: 'Conta desativada.',
   organizationDisabled: 'Organização desativada.',
   tooManyAttempts: 'Muitas tentativas. Tente novamente mais tarde.',
@@ -41,6 +39,7 @@ export const AUTH_ERROR_CODES = {
   mfaEnrollmentRequired: 'MFA_ENROLLMENT_REQUIRED',
   mfaChallengeInvalid: 'MFA_CHALLENGE_INVALID',
   mfaCodeInvalid: 'MFA_CODE_INVALID',
+  mfaAlreadyConfirmed: 'MFA_ALREADY_CONFIRMED',
   mfaUnavailable: 'MFA_UNAVAILABLE',
   reauthenticationRequired: 'REAUTHENTICATION_REQUIRED',
 } as const;

@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export const SUPPORTED_TIME_ZONES = [
   'America/Sao_Paulo',
@@ -30,4 +37,13 @@ export class UpdateOrganizationDto {
   @IsOptional()
   @IsIn(SUPPORTED_TIME_ZONES)
   timeZone?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Revisão esperada da organização (lock otimista; 409 STALE_ORGANIZATION_REVISION em divergência). Mesmo contador usado pelas configurações de automação.',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  expectedRevision?: number;
 }

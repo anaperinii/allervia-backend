@@ -16,7 +16,9 @@ import { PageDto } from 'src/infra/http/pagination';
 import { ProfessionalResponseDto } from './dtos/professional-response.dto';
 import {
   ListTeamQueryDto,
+  MemberAccessStatusDto,
   TeamMemberDto,
+  TeamMemberPageDto,
   UpdateMemberAccessDto,
   UpdateOwnProfileDto,
   UpdateTeamMemberDto,
@@ -39,6 +41,7 @@ export class ProfessionalsController {
 
   @Get()
   @CheckPolicies({ action: 'read', subject: 'Professional' })
+  @ApiOkResponse({ type: TeamMemberPageDto })
   async list(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Query() query: ListTeamQueryDto,
@@ -94,6 +97,7 @@ export class ProfessionalsController {
 
   @Patch(':id/access')
   @CheckPolicies({ action: 'manage', subject: 'Professional' })
+  @ApiOkResponse({ type: MemberAccessStatusDto })
   async changeAccess(
     @Param('id') id: string,
     @Body() dto: UpdateMemberAccessDto,

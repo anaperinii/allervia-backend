@@ -1,10 +1,6 @@
-import {
-  ConflictException,
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
@@ -15,11 +11,14 @@ import {
   ProvisionOrganizationDto,
   ProvisionedOrganizationDto,
 } from './dtos/provision-organization.dto';
+import { resolveSystemActor } from './system-actor';
 
 const INVITE_TTL_DAYS = 7;
 
 @Injectable()
 export class ProvisionOrganizationUseCase {
+  private readonly logger = new Logger(ProvisionOrganizationUseCase.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLog: IAuditLogService,
@@ -40,7 +39,7 @@ export class ProvisionOrganizationUseCase {
     expiresAt.setDate(expiresAt.getDate() + INVITE_TTL_DAYS);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const systemUserId = await this.resolveSystemActor(tx);
+      const systemUserId = await resolveSystemActor(tx, this.config);
       const organization = await tx.organization.create({
         data: { name: dto.organization.name, taxId },
         select: { id: true, name: true, taxId: true },
@@ -79,13 +78,21 @@ export class ProvisionOrganizationUseCase {
       return { organization, invite };
     });
 
-    await this.emailService.sendInviteLink({
-      email,
-      fullName: dto.administrator.fullName,
-      organizationName: result.organization.name,
-      token,
-      expiresAt,
-    });
+    let inviteEmailDelivered = true;
+    try {
+      await this.emailService.sendInviteLink({
+        email,
+        fullName: dto.administrator.fullName,
+        organizationName: result.organization.name,
+        token,
+        expiresAt,
+      });
+    } catch {
+      inviteEmailDelivered = false;
+      this.logger.error(
+        `Falha ao enviar convite de administrador da organização ${result.organization.id} (convite ${result.invite.id}); use o reenvio de convite.`,
+      );
+    }
 
     return {
       organization: result.organization,
@@ -95,28 +102,8 @@ export class ProvisionOrganizationUseCase {
         role: result.invite.role,
         expiresAt: result.invite.expiresAt,
       },
+      inviteEmailDelivered,
     };
-  }
-
-  private async resolveSystemActor(
-    tx: Prisma.TransactionClient,
-  ): Promise<string> {
-    const systemUserId = this.config.get<string>('SYSTEM_USER_ID')?.trim();
-    if (!systemUserId) {
-      throw new ServiceUnavailableException(
-        ORGANIZATION_MESSAGES.provisioningUnavailable,
-      );
-    }
-    const actor = await tx.user.findUnique({
-      where: { id: systemUserId },
-      select: { id: true },
-    });
-    if (!actor) {
-      throw new ServiceUnavailableException(
-        ORGANIZATION_MESSAGES.provisioningUnavailable,
-      );
-    }
-    return actor.id;
   }
 
   private async assertAvailable(

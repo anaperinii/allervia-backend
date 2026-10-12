@@ -89,7 +89,10 @@ export class ClinicalScheduleService {
             { administeredAt: null, scheduledAt: { gte: from, lte: to } },
           ],
         },
-        ...(query.status ? [{ status: query.status }] : []),
+
+        ...(query.status
+          ? [{ status: query.status }]
+          : [{ status: { not: 'ENTERED_IN_ERROR' as const } }]),
         ...(query.search
           ? [
               {
@@ -168,6 +171,7 @@ export class ClinicalScheduleService {
           },
           scope,
           { isArchived: false },
+          { status: { not: 'ENTERED_IN_ERROR' } },
           {
             OR: [
               { administeredAt: { gte: from, lte: to } },
