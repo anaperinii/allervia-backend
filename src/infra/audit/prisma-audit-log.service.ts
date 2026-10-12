@@ -50,7 +50,8 @@ export class PrismaAuditLogService extends IAuditLogService {
           },
         ],
       },
-      orderBy: { timestamp: 'desc' },
+
+      orderBy: [{ timestamp: 'desc' }, { id: 'desc' }],
       take: limit,
       skip: query.cursor ? 1 : 0,
       cursor: query.cursor ? { id: query.cursor } : undefined,

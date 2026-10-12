@@ -20,6 +20,10 @@ import { SchedulingModule } from './scheduling/scheduling.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PublicRequestsModule } from './public-requests/public-requests.module';
 import { GoogleCalendarModule } from './integrations/google-calendar/google-calendar.module';
+import { RateLimitModule } from './security/rate-limit/rate-limit.module';
+import { RateLimitGuard } from './security/rate-limit/rate-limit.guard';
+import { PrismaModule } from './infra/database/prisma.module';
+import { HealthController } from './infra/health/health.controller';
 
 @Module({
   imports: [
@@ -40,8 +44,10 @@ import { GoogleCalendarModule } from './integrations/google-calendar/google-cale
     NotificationsModule,
     PublicRequestsModule,
     GoogleCalendarModule,
+    RateLimitModule,
+    PrismaModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [
     {
       provide: APP_FILTER,
@@ -58,6 +64,10 @@ import { GoogleCalendarModule } from './integrations/google-calendar/google-cale
     {
       provide: APP_GUARD,
       useClass: PoliciesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
     },
   ],
 })
