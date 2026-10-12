@@ -66,7 +66,7 @@ describe('ListDosesByImmunotherapy - Integration', () => {
       patientId: patient.id,
     });
 
-    const doses = await factories.doses.createMany(5, {
+    await factories.doses.createMany(5, {
       administeredAt: new Date('2026-01-16'),
       scheduledAt: new Date('2026-01-16'),
       immunotherapyId: immunotherapy.id,
@@ -75,15 +75,12 @@ describe('ListDosesByImmunotherapy - Integration', () => {
       updatedById: authenticatedUser.id,
     });
 
-    console.log(doses);
-
     const result = await listDosesByTherapyUseCase.execute(
       immunotherapy.id,
       authenticatedUser,
     );
 
     expect(result).toBeDefined();
-    console.log(result);
     expect(
       result.every((dose) => dose.immunotherapyId === immunotherapy.id),
     ).toBe(true);
@@ -116,7 +113,7 @@ describe('ListDosesByImmunotherapy - Integration', () => {
     expect(result).toEqual([]);
   });
 
-  it('should return an empty list when querying with another organization id', async () => {
+  it('should reject with THERAPY_NOT_FOUND when querying with another organization id', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();
 
@@ -147,11 +144,11 @@ describe('ListDosesByImmunotherapy - Integration', () => {
       updatedById: authenticatedUser.id,
     });
 
-    const result = await listDosesByTherapyUseCase.execute(
-      immunotherapy.id,
-      authenticatedUserAnotherOrg,
-    );
-
-    expect(result).toEqual([]);
+    await expect(
+      listDosesByTherapyUseCase.execute(
+        immunotherapy.id,
+        authenticatedUserAnotherOrg,
+      ),
+    ).rejects.toMatchObject({ message: 'THERAPY_NOT_FOUND' });
   });
 });

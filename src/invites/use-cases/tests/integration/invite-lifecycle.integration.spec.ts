@@ -52,6 +52,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
   let prisma: PrismaService;
   let factories: TestFactories;
   const delivered: InviteEmailParams[] = [];
+  let failNextInviteEmail = false;
 
   beforeAll(async () => {
     process.env.AUTH_INSECURE_COOKIES = 'true';
@@ -65,6 +66,10 @@ describe('Ciclo do convite - Integração HTTP', () => {
       sendPasswordChangedNotification: () => Promise.resolve(),
       sendDemoRequest: () => Promise.resolve(),
       sendInviteLink: (params: InviteEmailParams) => {
+        if (failNextInviteEmail) {
+          failNextInviteEmail = false;
+          return Promise.reject(new Error('SMTP indisponível (teste)'));
+        }
         delivered.push(params);
         return Promise.resolve();
       },
@@ -88,6 +93,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
 
   beforeEach(async () => {
     delivered.length = 0;
+    failNextInviteEmail = false;
     await TestDatabaseManager.cleanAll();
   });
 
@@ -129,7 +135,8 @@ describe('Ciclo do convite - Integração HTTP', () => {
       .post('/onboarding/invites')
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .send({ email, fullName: 'Convidado Teste', userRole: role })
       .expect(201);
@@ -150,7 +157,8 @@ describe('Ciclo do convite - Integração HTTP', () => {
     const listed = await server()
       .get('/onboarding/invites/list')
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .expect(200);
 
     const page = readBody<InvitePageBody>(listed);
@@ -227,6 +235,191 @@ describe('Ciclo do convite - Integração HTTP', () => {
     expect(readBody<ErrorBody>(reused).code).toBe('USER_INVITE_ALREADY_USED');
   });
 
+  it('AC-22: falha de SMTP não desfaz o convite nem vira 500; o reenvio recupera a entrega', async () => {
+    const session = await loginAsAdmin();
+    failNextInviteEmail = true;
+
+    const created = await server()
+      .post('/onboarding/invites')
+      .set('Origin', ORIGIN)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
+      .set('X-CSRF-Token', session.csrfToken)
+      .send({
+        email: 'smtp-fora@clinica.com.br',
+        fullName: 'Convidado SMTP',
+        userRole: 'NURSE',
+      })
+      .expect(201);
+
+    const body = readBody<InviteBody & { emailDelivered: boolean }>(created);
+    expect(body.emailDelivered).toBe(false);
+    expect(body.status).toBe('ACTIVE');
+    expect(delivered).toHaveLength(0);
+    expect(
+      await prisma.internalUserInvite.count({
+        where: { email: 'smtp-fora@clinica.com.br', isActive: true },
+      }),
+    ).toBe(1);
+
+    const resent = await server()
+      .post(`/onboarding/invites/${body.id}/resend`)
+      .set('Origin', ORIGIN)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
+      .set('X-CSRF-Token', session.csrfToken)
+      .send({})
+      .expect(200);
+
+    const resentBody = readBody<
+      InviteBody & { emailDelivered: boolean; reissued: boolean }
+    >(resent);
+    expect(resentBody.emailDelivered).toBe(true);
+    expect(resentBody.reissued).toBe(false);
+    expect(delivered).toHaveLength(1);
+    expect(delivered[0].email).toBe('smtp-fora@clinica.com.br');
+    expect(JSON.stringify(resentBody)).not.toContain(delivered[0].token);
+  });
+
+  it('AC-25: reenvio de convite expirado cancela e reemite com token novo', async () => {
+    const session = await loginAsAdmin();
+    const created = await invite(session, 'expira-reenvia@clinica.com.br');
+    const oldToken = delivered[0].token;
+    await prisma.internalUserInvite.update({
+      where: { id: created.id },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    const resent = await server()
+      .post(`/onboarding/invites/${created.id}/resend`)
+      .set('Origin', ORIGIN)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
+      .set('X-CSRF-Token', session.csrfToken)
+      .send({})
+      .expect(200);
+
+    const body = readBody<InviteBody & { reissued: boolean }>(resent);
+    expect(body.reissued).toBe(true);
+    expect(body.id).not.toBe(created.id);
+    expect(delivered).toHaveLength(2);
+    expect(delivered[1].token).not.toBe(oldToken);
+
+    const reusedOld = await server()
+      .get(`/onboarding/invites/context/${oldToken}`)
+      .expect(409);
+    expect(readBody<ErrorBody>(reusedOld).code).toBe('USER_INVITE_EXPIRED');
+  });
+
+  it('AC-23: convite usado não pode ser reenviado nem cancelado', async () => {
+    const session = await loginAsAdmin();
+    const created = await invite(session, 'consumido@clinica.com.br');
+    const token = delivered[0].token;
+
+    await server()
+      .post(`/onboarding/registration/${token}`)
+      .set('Origin', ORIGIN)
+      .send({
+        fullName: 'Pessoa Consumida',
+        password: PASSWORD,
+        profession: 'NURSE',
+        phoneNumber: '62994315582',
+      })
+      .expect(201);
+
+    await server()
+      .post(`/onboarding/invites/${created.id}/resend`)
+      .set('Origin', ORIGIN)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
+      .set('X-CSRF-Token', session.csrfToken)
+      .send({})
+      .expect(409);
+
+    const cancelUsed = await server()
+      .delete(`/onboarding/invites/${created.id}`)
+      .set('Origin', ORIGIN)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
+      .set('X-CSRF-Token', session.csrfToken)
+      .expect(409);
+    expect(readBody<ErrorBody>(cancelUsed).code).toBe(
+      'USER_INVITE_ALREADY_USED',
+    );
+  });
+
+  it('AC-24: e-mail de usuário desativado não é convidável; erro orienta reativação', async () => {
+    const session = await loginAsAdmin();
+
+    const disabled = await factories.users.createInOrganization(
+      session.admin.organizationId,
+      { isActive: false, email: 'ex.colaborador@clinica.com.br' },
+    );
+
+    const response = await server()
+      .post('/onboarding/invites')
+      .set('Origin', ORIGIN)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
+      .set('X-CSRF-Token', session.csrfToken)
+      .send({
+        email: disabled.email,
+        fullName: 'Ex Colaborador',
+        userRole: 'NURSE',
+      })
+      .expect(409);
+
+    expect(readBody<ErrorBody>(response).message).toContain('desativado');
+    expect(
+      await prisma.internalUserInvite.count({
+        where: { email: disabled.email },
+      }),
+    ).toBe(0);
+  });
+
+  it('aplica a política de senha no registro público (mínimo 8, máximo 72 bytes)', async () => {
+    const session = await loginAsAdmin();
+    await invite(session, 'politica-senha@clinica.com.br');
+    const token = delivered[0].token;
+
+    const base = {
+      fullName: 'Pessoa Convidada',
+      profession: 'NURSE',
+      phoneNumber: '62994315582',
+    };
+
+    const tooShort = await server()
+      .post(`/onboarding/registration/${token}`)
+      .set('Origin', ORIGIN)
+      .send({ ...base, password: 'a' })
+      .expect(400);
+    expect(readBody<ErrorBody>(tooShort).code).toBe('VALIDATION_ERROR');
+    expect(readBody<ErrorBody>(tooShort).fieldErrors).toHaveProperty(
+      'password',
+    );
+
+    const tooManyBytes = await server()
+      .post(`/onboarding/registration/${token}`)
+      .set('Origin', ORIGIN)
+      .send({ ...base, password: 'á'.repeat(37) })
+      .expect(400);
+    expect(readBody<ErrorBody>(tooManyBytes).fieldErrors).toHaveProperty(
+      'password',
+    );
+
+    expect(
+      await prisma.user.findFirst({
+        where: { email: 'politica-senha@clinica.com.br' },
+      }),
+    ).toBeNull();
+
+    await server()
+      .post(`/onboarding/registration/${token}`)
+      .set('Origin', ORIGIN)
+      .send({ ...base, password: 'b'.repeat(72) })
+      .expect(201);
+  });
+
   it('recusa convite expirado e convite cancelado com códigos distintos', async () => {
     const session = await loginAsAdmin();
 
@@ -252,7 +445,8 @@ describe('Ciclo do convite - Integração HTTP', () => {
       .delete(`/onboarding/invites/${cancelled.id}`)
       .set('Origin', ORIGIN)
       .set('Cookie', session.cookie)
-      .set('Cookie', session.cookie).set('X-Session-Context', session.sessionId)
+      .set('Cookie', session.cookie)
+      .set('X-Session-Context', session.sessionId)
       .set('X-CSRF-Token', session.csrfToken)
       .expect(204);
 

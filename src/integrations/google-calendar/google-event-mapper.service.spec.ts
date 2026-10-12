@@ -1,6 +1,8 @@
 import { AppointmentStatus } from '@prisma/client';
 import {
   ALLERVIA_APPOINTMENT_ID_KEY,
+  GOOGLE_EVENT_DESCRIPTION,
+  GOOGLE_EVENT_SUMMARY,
   GoogleEventMapperService,
   MappableAppointment,
 } from './google-event-mapper.service';
@@ -15,18 +17,24 @@ describe('GoogleEventMapperService', () => {
     startsAt: new Date('2026-10-05T13:00:00.000Z'),
     endsAt: new Date('2026-10-05T13:30:00.000Z'),
     status: AppointmentStatus.SCHEDULED,
-    patientFirstName: 'Maria',
     timeZone: 'America/Sao_Paulo',
   };
 
-  it('uses first name fallback when there is no title', () => {
-    const payload = mapper.toEventPayload(base);
-    expect(payload.summary).toBe('Consulta — Maria');
+  it('uses a generic summary without patient data', () => {
+    expect(mapper.toEventPayload(base).summary).toBe(GOOGLE_EVENT_SUMMARY);
+    expect(mapper.toEventPayload({ ...base, title: 'Retorno' }).summary).toBe(
+      GOOGLE_EVENT_SUMMARY,
+    );
+    expect(JSON.stringify(mapper.toEventPayload(base))).not.toContain('Maria');
   });
 
-  it('prefers the appointment title when present', () => {
-    const payload = mapper.toEventPayload({ ...base, title: '  Retorno  ' });
-    expect(payload.summary).toBe('Retorno');
+  it('never carries clinical notes in the description', () => {
+    expect(mapper.toEventPayload(base).description).toBe(
+      GOOGLE_EVENT_DESCRIPTION,
+    );
+    expect(mapper.toEventPayload({ ...base, notes: null }).description).toBe(
+      GOOGLE_EVENT_DESCRIPTION,
+    );
   });
 
   it('maps times with the organization time zone and private visibility', () => {
@@ -42,24 +50,28 @@ describe('GoogleEventMapperService', () => {
     });
   });
 
-  it('copies notes into the description', () => {
-    expect(mapper.toEventPayload(base).description).toBe('Aplicar dose 3');
-    expect(mapper.toEventPayload({ ...base, notes: null }).description).toBe(
-      '',
-    );
-  });
-
   it('produces a stable content hash', () => {
     expect(mapper.contentHash(base)).toBe(mapper.contentHash({ ...base }));
   });
 
+  it('ignores unsynced fields in the hash', () => {
+    const reference = mapper.contentHash(base);
+    expect(mapper.contentHash({ ...base, notes: 'outro' })).toBe(reference);
+    expect(mapper.contentHash({ ...base, title: 'Retorno' })).toBe(reference);
+  });
+
   it('changes the hash when synced fields change', () => {
     const reference = mapper.contentHash(base);
-    expect(mapper.contentHash({ ...base, notes: 'outro' })).not.toBe(reference);
     expect(
       mapper.contentHash({
         ...base,
         startsAt: new Date('2026-10-05T14:00:00.000Z'),
+      }),
+    ).not.toBe(reference);
+    expect(
+      mapper.contentHash({
+        ...base,
+        endsAt: new Date('2026-10-05T14:30:00.000Z'),
       }),
     ).not.toBe(reference);
     expect(

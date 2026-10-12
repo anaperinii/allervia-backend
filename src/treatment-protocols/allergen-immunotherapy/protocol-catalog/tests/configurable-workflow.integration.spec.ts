@@ -1,13 +1,11 @@
-﻿import cookieParser from 'cookie-parser';
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import {
-  INestApplication,
-  ValidationPipe,
   ConflictException,
   BadRequestException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SessionService } from 'src/security/session/session.service';
 import { IAuthSessionRepository } from 'src/security/session/auth-session.repository';
 import { Prisma } from '@prisma/client';
@@ -16,7 +14,7 @@ import type { App } from 'supertest/types';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
-import { DomainExceptionFilter } from 'src/infra/filters/domain-exception.filter';
+import { configureApp } from 'src/app.setup';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
 import { TestFactories } from 'test/factories';
 import { syntheticProtocolDefinition } from 'test/fixtures/configured-protocol';
@@ -24,6 +22,8 @@ import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-
 import { ProtocolCatalogService } from '../protocol-catalog.service';
 import { ProtocolMigrationService } from '../protocol-migration.service';
 import { ConfiguredDoseService } from '../../dosing/configured-dose.service';
+import { ClinicalScheduleService } from '../../dosing/clinical-schedule.service';
+import { TherapyLifecycleService } from '../../therapies/therapy-lifecycle.service';
 import { CreateImmunotherapyUseCase } from '../../therapies/use-cases/create-immunotherapy.use-case';
 import { UpdateImmunotherapyUseCase } from '../../therapies/use-cases/update-immunotherapy.use-case';
 import type { AdministerDoseDto } from '../../dosing/dtos/configured-dose.dto';
@@ -32,10 +32,11 @@ import type { ResolvedPrescription } from '../../clinical-rules/protocol-definit
 
 describe('Configured immunotherapy workflow - Integration and HTTP', () => {
   let module: TestingModule;
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
   let prisma: PrismaService;
   let catalog: ProtocolCatalogService;
   let clinical: ConfiguredDoseService;
+  let lifecycle: TherapyLifecycleService;
   let create: CreateImmunotherapyUseCase;
   let migration: ProtocolMigrationService;
   let factories: TestFactories;
@@ -49,20 +50,13 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       .overrideProvider(PrismaService)
       .useValue(TestDatabaseManager.getInstance())
       .compile();
-    app = module.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalPipes(
-      new ValidationPipe({
-        transform: true,
-        whitelist: true,
-        forbidNonWhitelisted: true,
-      }),
-    );
-    app.useGlobalFilters(new DomainExceptionFilter());
+    app = module.createNestApplication<NestExpressApplication>();
+    configureApp(app);
     await app.init();
     prisma = module.get(PrismaService);
     catalog = module.get(ProtocolCatalogService);
     clinical = module.get(ConfiguredDoseService);
+    lifecycle = module.get(TherapyLifecycleService);
     create = module.get(CreateImmunotherapyUseCase);
     migration = module.get(ProtocolMigrationService);
     factories = new TestFactories(prisma);
@@ -146,12 +140,15 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       .get(IAuthSessionRepository)
       .loadContextByUserId(actor.id);
     if (!context) throw new Error('Missing test account');
-    const issued = (
-      await module
-        .get(SessionService)
-        .issue(context, { userAgent: null, ipAddressHash: null }, null)
-    );
-    return { Cookie: 'allervia_session_v2=' + issued.sessionSecret, Origin: 'http://127.0.0.1', 'X-CSRF-Token': issued.csrfToken, 'X-Session-Context': issued.session.id };
+    const issued = await module
+      .get(SessionService)
+      .issue(context, { userAgent: null, ipAddressHash: null }, null);
+    return {
+      Cookie: 'allervia_session_v2=' + issued.sessionSecret,
+      Origin: 'http://127.0.0.1',
+      'X-CSRF-Token': issued.csrfToken,
+      'X-Session-Context': issued.session.id,
+    };
   }
 
   it('binds the published default and creates the first dose atomically', async () => {
@@ -165,6 +162,28 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       }),
     ).toBe(1);
   });
+  it('rejeita rascunho acima do teto de tamanho sem persistir nada', async () => {
+    const huge = {
+      steps: [],
+      filler: 'x'.repeat(300 * 1024),
+    };
+    await expect(
+      catalog.create({ name: 'Gigante', definition: huge }, user),
+    ).rejects.toThrow(BadRequestException);
+    expect(
+      await prisma.treatmentProtocol.count({ where: { name: 'Gigante' } }),
+    ).toBe(0);
+
+    const draft = await catalog.createVersion(
+      protocolId,
+      syntheticProtocolDefinition(),
+      user,
+    );
+    await expect(
+      catalog.mutate(draft.id, 0, user, 'edit', huge),
+    ).rejects.toThrow(BadRequestException);
+  });
+
   it('supports draft editing and rejects editing published content at API and database levels', async () => {
     const draft = await catalog.createVersion(
       protocolId,
@@ -356,6 +375,54 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       await prisma.dose.findFirst({ where: { sourceDoseId: edited.id } }),
     ).toMatchObject({ plannedStepId: 'high' });
   });
+  it('AC-33: rejeita administração no futuro, antes da indução e fora de ordem, sem escrever nada', async () => {
+    const result = await create.execute(createInput(), user);
+    const doseId = result.firstDose.id;
+
+    const future = new Date(Date.now() + 24 * 3600_000).toISOString();
+    await expect(
+      clinical.administer(doseId, command({ administeredAt: future }), user),
+    ).rejects.toMatchObject({ message: 'ADMINISTRATION_IN_FUTURE' });
+
+    await expect(
+      clinical.administer(
+        doseId,
+        command({ administeredAt: '2025-12-25T13:00:00Z' }),
+        user,
+      ),
+    ).rejects.toMatchObject({
+      message: 'ADMINISTRATION_BEFORE_INDUCTION_START',
+    });
+
+    const untouched = await prisma.dose.findUniqueOrThrow({
+      where: { id: doseId },
+    });
+    expect(untouched.status).toBe('SCHEDULED');
+    expect(untouched.administeredAt).toBeNull();
+
+    await clinical.administer(
+      doseId,
+      command({ administeredAt: '2026-01-05T13:00:00Z' }),
+      user,
+    );
+    const successor = await prisma.dose.findFirstOrThrow({
+      where: { sourceDoseId: doseId },
+    });
+    await expect(
+      clinical.administer(
+        successor.id,
+        command({
+          values: { concentration: '1000', volume: '0.2', intervalDays: 7 },
+          administeredAt: '2026-01-03T13:00:00Z',
+          expectedRevision: successor.revision,
+          expectedTherapyRevision: 1,
+          idempotencyKey: 'out-of-order-1',
+        }),
+        user,
+      ),
+    ).rejects.toMatchObject({ message: 'ADMINISTRATION_OUT_OF_ORDER' });
+  });
+
   it('preserves planned values while persisting a different administered value', async () => {
     const result = await create.execute(createInput(), user);
     await clinical.administer(
@@ -481,7 +548,11 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
   it('serializes administration against suspension', async () => {
     const result = await create.execute(createInput(), user);
     const outcomes = await Promise.allSettled([
-      clinical.therapyStatus(result.immunotherapy.id, 'SUSPENDED', 0, user),
+      lifecycle.execute(
+        result.immunotherapy.id,
+        { action: 'SUSPEND', expectedRevision: 0, reason: 'Concurrency check' },
+        user,
+      ),
       clinical.administer(result.firstDose.id, command(), user),
     ]);
     expect(
@@ -490,7 +561,11 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
   });
   it('rejects suspended and disabled treatment administration', async () => {
     const result = await create.execute(createInput(), user);
-    await clinical.therapyStatus(result.immunotherapy.id, 'SUSPENDED', 0, user);
+    await lifecycle.execute(
+      result.immunotherapy.id,
+      { action: 'SUSPEND', expectedRevision: 0, reason: 'Suspension check' },
+      user,
+    );
     await expect(
       clinical.administer(
         result.firstDose.id,
@@ -543,7 +618,9 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     const definition = syntheticProtocolDefinition();
     const ending = {
       ...definition,
-      steps: [{ ...definition.steps[0], nextStepId: null }],
+      steps: [
+        { ...definition.steps[0], phase: 'MAINTENANCE', nextStepId: null },
+      ],
     };
     const draft = await catalog.createVersion(protocolId, ending, user);
     await catalog.mutate(draft.id, 0, user, 'publish');
@@ -564,6 +641,63 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       }),
     ).toMatchObject({ status: 'IN_PROGRESS' });
   });
+  it('DEC-01: terapia suspensa/encerrada não aceita edição de metadados', async () => {
+    const result = await create.execute(createInput(), user);
+    await lifecycle.execute(
+      result.immunotherapy.id,
+      { action: 'SUSPEND', expectedRevision: 0, reason: 'DEC-01 guard' },
+      user,
+    );
+    await expect(
+      module
+        .get(UpdateImmunotherapyUseCase)
+        .execute(
+          result.immunotherapy.id,
+          { expectedRevision: 1, immunoType: 'Renomeada' },
+          user,
+        ),
+    ).rejects.toMatchObject({ message: 'TREATMENT_NOT_ACTIVE' });
+    expect(
+      await prisma.immunotherapy.findUniqueOrThrow({
+        where: { id: result.immunotherapy.id },
+      }),
+    ).toMatchObject({ immunoType: 'Synthetic' });
+  });
+
+  it('DEC-01: agenda clínica omite doses retratadas por default e as expõe por filtro explícito', async () => {
+    const result = await create.execute(createInput(), user);
+    await clinical.administer(result.firstDose.id, command(), user);
+    const schedule = module.get(ClinicalScheduleService);
+    const query = {
+      from: '2025-12-01T00:00:00Z',
+      to: '2027-01-01T00:00:00Z',
+      page: 1,
+      pageSize: 50,
+    };
+
+    const before = await schedule.list(query, user);
+    const totalBefore = before.total;
+
+    await prisma.dose.update({
+      where: { id: result.firstDose.id },
+      data: { status: 'ENTERED_IN_ERROR' },
+    });
+
+    const defaults = await schedule.list(query, user);
+    expect(defaults.total).toBe(totalBefore - 1);
+    expect(
+      defaults.items.every(
+        (item: { status: string }) => item.status !== 'ENTERED_IN_ERROR',
+      ),
+    ).toBe(true);
+
+    const explicit = await schedule.list(
+      { ...query, status: 'ENTERED_IN_ERROR' },
+      user,
+    );
+    expect(explicit.total).toBe(1);
+  });
+
   it('rejects generic prescription mutation', async () => {
     const result = await create.execute(createInput(), user);
     await expect(
@@ -581,7 +715,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
   it('uses real HTTP DTOs and guards for editable values and administration', async () => {
     const result = await create.execute(createInput(), user);
     const auth = await token();
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .patch(`/doses/${result.firstDose.id}/scheduled`)
       .set(auth)
       .send({
@@ -593,7 +727,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       })
       .expect(200);
     expect(await prisma.dose.count()).toBe(1);
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .post(`/doses/${result.firstDose.id}/administer`)
       .set(auth)
       .send(
@@ -604,18 +738,18 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
         }),
       )
       .expect(201);
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .patch(`/doses/${result.firstDose.id}`)
       .set(auth)
       .send({ volume: 0.3 })
       .expect(410);
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .get(`/doses/${result.firstDose.id}`)
       .expect(401);
   });
   it('rejects numeric decimals and missing revision over HTTP', async () => {
     const result = await create.execute(createInput(), user);
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .post(`/doses/${result.firstDose.id}/administer`)
       .set(await token())
       .send({
@@ -635,7 +769,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
       user.organizationId,
       ['NURSE'],
     );
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .post(`/treatment-protocols/versions/${versionId}/publish`)
       .set(await token(nurse))
       .send({ expectedRevision: 1 })
@@ -643,7 +777,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     const result = await create.execute(createInput(), user);
     const other =
       await factories.users.createAuthenticatedPhysicianProfessional();
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .get(`/doses/${result.firstDose.id}`)
       .set(await token(other))
       .expect(404);
@@ -739,7 +873,7 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
     expect(await prisma.protocolPrescription.count()).toBe(0);
   });
   it('registers a prescription through the real HTTP validation pipeline', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .post('/immunotherapies/register')
       .set(await token())
       .send(createInput())
@@ -889,5 +1023,31 @@ describe('Configured immunotherapy workflow - Integration and HTTP', () => {
         })
       ).versionId,
     ).toBe(versionId);
+  });
+
+  it('enforces optimistic revision on automation settings', async () => {
+    const view = await catalog.readSettings(user);
+    const updated = await catalog.settings(
+      {
+        enabled: true,
+        timeZone: 'America/Sao_Paulo',
+        expectedRevision: view.revision,
+      },
+      user,
+    );
+    expect(updated.revision).toBe(view.revision + 1);
+    await expect(
+      catalog.settings(
+        {
+          enabled: false,
+          timeZone: 'America/Sao_Paulo',
+          expectedRevision: view.revision,
+        },
+        user,
+      ),
+    ).rejects.toMatchObject({ message: 'STALE_ORGANIZATION_REVISION' });
+    const after = await catalog.readSettings(user);
+    expect(after.enabled).toBe(true);
+    expect(after.revision).toBe(updated.revision);
   });
 });

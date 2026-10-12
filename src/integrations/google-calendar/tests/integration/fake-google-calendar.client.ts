@@ -79,10 +79,13 @@ export class FakeGoogleCalendarClient extends GoogleCalendarClient {
   ): Promise<GoogleEvent> {
     this.record('insertEvent', [calendarId, event]);
     this.consumeError();
+    if (event.id && this.events.has(event.id)) {
+      throw new GoogleApiError(409, null, null, 'duplicate event id');
+    }
     this.sequence += 1;
     const created: GoogleEvent = {
       ...event,
-      id: `evt-${this.sequence}`,
+      id: event.id ?? `evt-${this.sequence}`,
       etag: `"etag-${this.sequence}"`,
     };
     this.events.set(created.id, created);

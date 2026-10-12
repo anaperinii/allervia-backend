@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   HttpStatus,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { HttpErrorFilter } from '../http-error.filter';
@@ -35,6 +36,16 @@ function capture(exception: unknown): ErrorEnvelope {
 }
 
 describe('HttpErrorFilter', () => {
+  it('does not log exception contents containing private values', () => {
+    const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    try {
+      capture(new Error('private-password private-clinical-value'));
+      expect(log).toHaveBeenCalled();
+      expect(JSON.stringify(log.mock.calls)).not.toContain('private-');
+    } finally {
+      log.mockRestore();
+    }
+  });
   it('traduz códigos de domínio para copy em português', () => {
     const envelope = capture(
       new ConflictException('ADMINISTRATION_BEFORE_INDUCTION_START'),
@@ -52,6 +63,16 @@ describe('HttpErrorFilter', () => {
 
     expect(envelope.code).toBe('NOT_FOUND');
     expect(envelope.message).toBe(ERROR_MESSAGES.NOT_FOUND);
+  });
+
+  it('resolve copy do catálogo quando o body traz só { code } (default do Nest)', () => {
+    const envelope = capture(
+      new BadRequestException({ code: 'INVALID_PROTOCOL', detail: ['x'] }),
+    );
+
+    expect(envelope.code).toBe('INVALID_PROTOCOL');
+    expect(envelope.message).toBe(ERROR_MESSAGES.INVALID_PROTOCOL);
+    expect(envelope.message).not.toContain('Exception');
   });
 
   it('preserva mensagens de domínio já escritas em português', () => {

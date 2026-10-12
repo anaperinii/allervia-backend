@@ -79,8 +79,6 @@ describe('ListImmunotherapiesByPatientUseCase - Integration', () => {
     );
 
     expect(patientOneImmunos).toHaveLength(2);
-    console.log(patientOneImmunos);
     expect(patientTwoImmunos).toHaveLength(1);
-    console.log(patientTwoImmunos);
   });
 });
