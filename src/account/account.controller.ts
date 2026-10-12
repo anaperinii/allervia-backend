@@ -13,6 +13,8 @@ import {
 import { ApiOkResponse } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { AccountContextDto } from './dtos/account-context.dto';
+import { ChangePasswordResponseDto } from './dtos/change-password-response.dto';
+import { UserResponseDto } from './dtos/user-response.dto';
 import { GetAccountContextUseCase } from './use-cases/get-account-context.use-case';
 import { SessionService } from 'src/security/session/session.service';
 import type { RequestWithSession } from 'src/security/session/session-auth.guard';
@@ -37,10 +39,11 @@ export class AccountController {
   @Post('me/password')
   @HttpCode(HttpStatus.OK)
   @AuthenticatedOnly()
+  @ApiOkResponse({ type: ChangePasswordResponseDto })
   async changePassword(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Body() dto: ChangePasswordDto,
-  ) {
+  ): Promise<ChangePasswordResponseDto> {
     await this.changePasswordUseCase.execute(currentUser, dto);
     return { message: 'Senha alterada com sucesso.' };
   }
@@ -66,11 +69,12 @@ export class AccountController {
 
   @Patch('update/stats/:id')
   @CheckPolicies({ action: 'update', subject: 'User' })
+  @ApiOkResponse({ type: UserResponseDto })
   async updateUserStatus(
     @Param('id') id: string,
     @Body() dto: UpdateUserStatusDto,
     @CurrentUser() currentUser: AuthenticatedUserPayload,
-  ) {
+  ): Promise<UserResponseDto> {
     return this.updateUserStatusUseCase.execute(id, dto, currentUser);
   }
 }
