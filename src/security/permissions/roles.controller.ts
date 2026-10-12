@@ -7,11 +7,17 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { ApiBody, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { CreateProfessionalRoleDto } from './dtos/create-role.dto';
+import { RoleResponseDto } from './dtos/role-response.dto';
 import { GrantRoleUseCase } from './use-cases/grant-role.use-case';
 import { RevokeRoleUseCase } from './use-cases/revoke-role.use-case';
 import { FindRoleByIdUseCase } from './use-cases/find-role-by-id.use-case';
@@ -29,6 +35,7 @@ export class RolesController {
 
   @Post()
   @ApiBody({ type: CreateProfessionalRoleDto })
+  @ApiCreatedResponse({ type: RoleResponseDto })
   @CheckPolicies({ action: 'create', subject: 'ProfessionalRole' })
   async grant(
     @Body() dto: CreateProfessionalRoleDto,
@@ -48,18 +55,30 @@ export class RolesController {
   }
 
   @Get('professional/:professionalId')
+  @ApiOkResponse({ type: [RoleResponseDto] })
   @CheckPolicies({ action: 'read', subject: 'ProfessionalRole' })
-  async listByProfessional(@Param('professionalId') professionalId: string) {
-    return this.listProfessionalRolesUseCase.execute(professionalId);
+  async listByProfessional(
+    @Param('professionalId') professionalId: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ) {
+    return this.listProfessionalRolesUseCase.execute(
+      professionalId,
+      currentUser.organizationId,
+    );
   }
 
   @Get(':id')
+  @ApiOkResponse({ type: RoleResponseDto })
   @CheckPolicies({ action: 'read', subject: 'ProfessionalRole' })
-  async findOne(@Param('id') id: string) {
-    return this.findRoleByIdUseCase.execute(id);
+  async findOne(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ) {
+    return this.findRoleByIdUseCase.execute(id, currentUser.organizationId);
   }
 
   @Delete(':id')
+  @ApiOkResponse({ type: RoleResponseDto })
   @CheckPolicies({ action: 'update', subject: 'ProfessionalRole' })
   async revoke(
     @Param('id') id: string,
