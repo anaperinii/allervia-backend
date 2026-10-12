@@ -31,10 +31,10 @@ export class TeamMemberDto {
   @ApiProperty({ enum: Profession })
   profession: Profession;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   councilNumber: string | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   councilUf: string | null;
 
   @ApiProperty({
@@ -49,6 +49,31 @@ export class TeamMemberDto {
 
   @ApiProperty()
   createdAt: Date;
+}
+
+export class TeamMemberPageDto {
+  @ApiProperty({ type: [TeamMemberDto] })
+  items: TeamMemberDto[];
+
+  @ApiProperty()
+  page: number;
+
+  @ApiProperty()
+  pageSize: number;
+
+  @ApiProperty({ description: 'Total de registros no escopo da consulta' })
+  total: number;
+}
+
+export class MemberAccessStatusDto {
+  @ApiProperty()
+  professionalId: string;
+
+  @ApiProperty()
+  userId: string;
+
+  @ApiProperty()
+  isActive: boolean;
 }
 
 export class ListTeamQueryDto extends PageQueryDto {
