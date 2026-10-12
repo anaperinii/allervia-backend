@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/infra/database/prisma.module';
 import { AuditModule } from 'src/infra/audit/audit.module';
 import { PermissionsModule } from 'src/security/permissions/permissions.module';
+import { SessionModule } from 'src/security/session/session.module';
+import { SchedulingModule } from 'src/scheduling/scheduling.module';
 import { GoogleCalendarConfig } from './google-calendar.config';
 import { GoogleTokenBoxService } from './google-token-box.service';
 import { OAuthStateService } from './oauth-state.service';
@@ -18,7 +20,13 @@ import { GoogleCalendarController } from './google-calendar.controller';
 import { GoogleCalendarWebhookController } from './google-calendar-webhook.controller';
 
 @Module({
-  imports: [PrismaModule, AuditModule, PermissionsModule],
+  imports: [
+    PrismaModule,
+    AuditModule,
+    PermissionsModule,
+    SessionModule,
+    SchedulingModule,
+  ],
   providers: [
     GoogleCalendarConfig,
     GoogleTokenBoxService,

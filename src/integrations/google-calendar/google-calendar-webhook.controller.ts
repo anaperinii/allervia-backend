@@ -3,6 +3,8 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { Public } from 'src/security/decorators/public.decorator';
+import { RateLimit } from 'src/security/rate-limit/rate-limit.decorator';
+import { RATE_LIMIT_CLASSES } from 'src/security/rate-limit/rate-limit.config';
 import { SkipCsrf } from 'src/security/session/skip-csrf.decorator';
 import { enqueueCalendarSync } from './calendar-sync.enqueue';
 
@@ -16,6 +18,7 @@ export class GoogleCalendarWebhookController {
   @Post('webhook')
   @Public()
   @SkipCsrf()
+  @RateLimit({ class: RATE_LIMIT_CLASSES.webhook, keyBy: ['ip'] })
   @HttpCode(200)
   async webhook(
     @Headers('x-goog-channel-id') channelId: string | undefined,
