@@ -7,7 +7,7 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { CheckPolicies } from 'src/security/permissions/ability/check-policies.decorator';
@@ -15,10 +15,12 @@ import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-
 import { PageDto } from 'src/infra/http/pagination';
 import { UpdatePatientStatusDto } from './dtos/update-patient-status.dto';
 import { UpdatePatientDto } from './dtos/update-patient.dto';
+import { PatientResponseDto } from './dtos/patient-response.dto';
 import {
   ListPatientsQueryDto,
   PatientDetailDto,
   PatientListItemDto,
+  PatientListPageDto,
 } from './dtos/patient-read.dto';
 import { FindPatientUseCase } from './use-cases/find-patient.use-case';
 import { ListPatientsUseCase } from './use-cases/list-patients.use-case';
@@ -37,6 +39,7 @@ export class PatientsController {
 
   @Get()
   @CheckPolicies({ action: 'read', subject: 'Patient' })
+  @ApiOkResponse({ type: PatientListPageDto })
   async findAll(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Query() query: ListPatientsQueryDto,
@@ -61,6 +64,7 @@ export class PatientsController {
   @ApiBody({ type: UpdatePatientDto })
   @Patch('update/:id')
   @CheckPolicies({ action: 'update', subject: 'Patient' })
+  @ApiOkResponse({ type: PatientResponseDto })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdatePatientDto,
@@ -72,6 +76,12 @@ export class PatientsController {
   @ApiBody({ type: UpdatePatientStatusDto })
   @Patch('update/status/:id')
   @CheckPolicies({ action: 'archive', subject: 'Patient' })
+  @ApiOperation({
+    summary: 'Ativa ou inativa o paciente',
+    description:
+      'Alterna apenas isActive. Paciente inativo não inicia nova imunoterapia (PATIENT_INACTIVE) nem recebe mutações de dose; ele continua aparecendo nas listagens e consultas.',
+  })
+  @ApiOkResponse({ type: PatientResponseDto })
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdatePatientStatusDto,
