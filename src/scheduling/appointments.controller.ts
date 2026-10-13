@@ -25,6 +25,13 @@ import {
 export class AppointmentsController {
   constructor(private readonly appointments: AppointmentsService) {}
 
+  @Get(':id')
+  @CheckPolicies({ action: 'read', subject: 'Appointment' })
+  @ApiOkResponse({ type: AppointmentResponseDto })
+  read(@Param('id') id: string, @CurrentUser() user: AuthenticatedUserPayload) {
+    return this.appointments.read(id, user);
+  }
+
   @Get()
   @CheckPolicies({ action: 'read', subject: 'Appointment' })
   @ApiOkResponse({ type: AppointmentPageDto })

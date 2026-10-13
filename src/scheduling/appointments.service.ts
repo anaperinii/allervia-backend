@@ -60,6 +60,22 @@ export class AppointmentsService {
     private readonly abilities: AbilityFactory,
   ) {}
 
+  async read(id: string, user: AuthenticatedUserPayload) {
+    const ability = this.abilities.createForUser(user);
+    if (!ability.can('read', 'Appointment')) throw new NotFoundException();
+    const appointment = await this.prisma.appointment.findFirst({
+      where: {
+        AND: [
+          { id, organizationId: user.organizationId },
+          accessibleBy(ability, 'read').ofType('Appointment'),
+        ],
+      },
+      select: APPOINTMENT_SELECT,
+    });
+    if (!appointment) throw new NotFoundException();
+    return appointment;
+  }
+
   async create(dto: CreateAppointmentDto, user: AuthenticatedUserPayload) {
     const window = period(dto.startsAt, dto.endsAt);
     const ability = this.abilities.createForUser(user);

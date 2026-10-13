@@ -1,6 +1,7 @@
 import { DoseStatus, Prisma } from '@prisma/client';
 
 export interface DoseProps {
+  timeZone?: string | null;
   revision?: number;
   prescriptionId?: string | null;
   plannedStepId?: string | null;
@@ -41,6 +42,7 @@ export interface CreateDoseProps {
 }
 
 export class Dose {
+  timeZone?: string | null;
   revision: number;
   prescriptionId?: string | null;
   plannedStepId?: string | null;
@@ -67,6 +69,7 @@ export class Dose {
   updatedAt: Date;
 
   constructor(props: DoseProps) {
+    this.timeZone = props.timeZone ?? null;
     this.revision = props.revision ?? 0;
     this.prescriptionId = props.prescriptionId;
     this.plannedStepId = props.plannedStepId;

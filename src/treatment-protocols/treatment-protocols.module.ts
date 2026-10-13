@@ -7,6 +7,7 @@ import { TherapyLifecycleService } from './allergen-immunotherapy/therapies/ther
 import { PrescriptionRevisionService } from './allergen-immunotherapy/therapies/prescription-revision.service';
 import { ClinicalExportService } from './allergen-immunotherapy/therapies/clinical-export.service';
 import { ClinicalHistoryService } from './allergen-immunotherapy/therapies/clinical-history.service';
+import { StatusHistoryService } from './allergen-immunotherapy/therapies/status-history.service';
 import { DoseCorrectionService } from './allergen-immunotherapy/dosing/dose-correction.service';
 import { Module } from '@nestjs/common';
 import { ListDosesByTherapyUseCase } from './allergen-immunotherapy/dosing/use-cases/list-doses-by-therapy.use-case';
@@ -38,6 +39,7 @@ import { PermissionsModule } from 'src/security/permissions/permissions.module';
     PrescriptionRevisionService,
     ClinicalExportService,
     ClinicalHistoryService,
+    StatusHistoryService,
     DoseCorrectionService,
     ListDosesByTherapyUseCase,
     CreateImmunotherapyUseCase,
