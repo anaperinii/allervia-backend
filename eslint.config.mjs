@@ -26,6 +26,18 @@ export default tseslint.config(
   },
   {
     rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@nestjs/class-validator',
+              message:
+                'Fork deprecado: use class-validator (metadata storage do pipe global).',
+            },
+          ],
+        },
+      ],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
