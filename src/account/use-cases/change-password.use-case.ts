@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IUserRepository } from '../user.repository';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 import { IEmailService } from 'src/infra/email/email.service';
@@ -15,6 +10,8 @@ import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { USER_MESSAGES } from '../user.messages';
 import { SessionService } from 'src/security/session/session.service';
 import { AuthSessionRevokeReason } from '@prisma/client';
+import { CodedUnauthorizedException } from 'src/infra/exceptions/coded.exception';
+import { AUTH_ERROR_CODES } from 'src/security/auth.messages';
 
 @Injectable()
 export class ChangePasswordUseCase {
@@ -46,7 +43,10 @@ export class ChangePasswordUseCase {
     );
 
     if (!isCurrentValid) {
-      throw new UnauthorizedException(USER_MESSAGES.invalidCurrentPassword);
+      throw new CodedUnauthorizedException(
+        AUTH_ERROR_CODES.invalidCredentials,
+        USER_MESSAGES.invalidCurrentPassword,
+      );
     }
 
     const passwordHash = await this.hashingService.hash(dto.newPassword);
@@ -74,7 +74,6 @@ export class ChangePasswordUseCase {
     try {
       await this.emailService.sendPasswordChangedNotification(user.email);
     } catch (error) {
-
       this.logger.error(
         'Falha ao notificar troca de senha por e-mail.',
         error instanceof Error ? error.stack : String(error),

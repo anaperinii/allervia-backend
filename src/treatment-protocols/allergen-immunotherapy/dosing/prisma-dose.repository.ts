@@ -16,9 +16,14 @@ export class PrismaDoseRepository extends IDoseRepository {
   ): Promise<Dose[]> {
     const doses = await this.prismaService.dose.findMany({
       where: { AND: [{ immunotherapyId }, where] },
-      orderBy: { administeredAt: 'desc' },
+      orderBy: [{ administeredAt: 'desc' }, { id: 'desc' }],
+      include: { prescription: { select: { resolved: true } } },
     });
 
-    return doses.map((dose) => new Dose(dose));
+    return doses.map((dose) => {
+      const resolved = dose.prescription?.resolved;
+      const timeZone = resolved && typeof resolved === 'object' && !Array.isArray(resolved) && typeof resolved.timeZone === 'string' ? resolved.timeZone : null;
+      return new Dose({ ...dose, timeZone });
+    });
   }
 }

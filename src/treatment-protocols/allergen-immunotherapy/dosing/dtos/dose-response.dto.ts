@@ -1,4 +1,4 @@
-import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   AdministrationRoute,
   DoseImmediateConduct,
@@ -104,6 +104,8 @@ const RECOMMENDATION_VARIANTS = [
   DoseRecommendationEndOfSequenceDto,
 )
 export class DoseRecordDto {
+  @ApiPropertyOptional({ type: String, nullable: true })
+  timeZone?: string | null;
   @ApiProperty()
   id: string;
 
@@ -576,6 +578,8 @@ export class ScheduleTherapySummaryDto {
 }
 
 export class ScheduleDoseItemDto {
+  @ApiPropertyOptional({ type: String, nullable: true })
+  timeZone?: string | null;
   @ApiProperty()
   id: string;
 

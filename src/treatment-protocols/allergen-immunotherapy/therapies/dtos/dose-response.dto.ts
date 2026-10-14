@@ -2,6 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DoseImmediateConduct, DoseStatus } from '@prisma/client';
 
 export class DoseResponseDto {
+  @ApiPropertyOptional({ type: String, nullable: true })
+  timeZone?: string | null;
   @ApiProperty()
   id: string;
 

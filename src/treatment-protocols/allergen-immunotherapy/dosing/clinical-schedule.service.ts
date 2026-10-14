@@ -40,6 +40,7 @@ const SCHEDULE_SELECT = {
   plannedValues: true,
   administeredValues: true,
   revision: true,
+  prescription: { select: { resolved: true } },
   immunotherapy: {
     select: {
       id: true,
@@ -130,7 +131,11 @@ export class ClinicalScheduleService {
       }),
       this.prisma.dose.count({ where }),
     ]);
-    return buildPage(items, total, bounds);
+    return buildPage(items.map(({ prescription, ...item }) => {
+      const resolved = prescription?.resolved;
+      const timeZone = resolved && typeof resolved === 'object' && !Array.isArray(resolved) && typeof resolved.timeZone === 'string' ? resolved.timeZone : null;
+      return { ...item, timeZone };
+    }), total, bounds);
   }
 
   async metrics(dto: SchedulePeriodDto, user: AuthenticatedUserPayload) {

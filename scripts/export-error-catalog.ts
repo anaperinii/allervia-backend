@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { ERROR_MESSAGES } from '../src/infra/errors/error-catalog';
 import { defaultCodeForStatus } from '../src/infra/filters/error-envelope';
+import { AUTH_ERROR_CODES } from '../src/security/auth.messages';
 
 const STATUS_BY_EXCEPTION: Record<string, number> = {
   BadRequest: 400,
@@ -23,6 +24,7 @@ const GENERIC_STATUSES = [
 ];
 
 const THROW_SITE = /(\w+)Exception\(\s*'([A-Z][A-Z0-9_]+)'/g;
+const CONSTANT_THROW_SITE = /(\w+)Exception\(\s*AUTH_ERROR_CODES\.(\w+)/g;
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -40,8 +42,15 @@ function statusByCode(): Map<string, number> {
   for (const file of sourceFiles(resolve(__dirname, '..', 'src'))) {
     const text = readFileSync(file, 'utf8');
     for (const [, exception, code] of text.matchAll(THROW_SITE)) {
-      const status = STATUS_BY_EXCEPTION[exception];
+      const status = STATUS_BY_EXCEPTION[exception.replace(/^Coded/, '')];
       if (status) result.set(code, status);
+    }
+
+    // Coded*Exception com status no nome da classe (CodedUnauthorized → 401).
+    for (const [, exception, key] of text.matchAll(CONSTANT_THROW_SITE)) {
+      const code = AUTH_ERROR_CODES[key as keyof typeof AUTH_ERROR_CODES];
+      const status = STATUS_BY_EXCEPTION[exception.replace(/^Coded/, '')];
+      if (code && status) result.set(code, status);
     }
   }
 

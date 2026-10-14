@@ -39,6 +39,8 @@ import { TherapyLifecycleService } from 'src/treatment-protocols/allergen-immuno
 import { PrescriptionRevisionService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/prescription-revision.service';
 import { ClinicalExportService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/clinical-export.service';
 import { ClinicalHistoryService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/clinical-history.service';
+import { StatusHistoryService } from './status-history.service';
+import { PatientClinicalRecordDto, StatusHistoryQueryDto, StatusHistoryResponseDto } from './dtos/status-history.dto';
 import {
   ClinicalExportPageDto,
   ClinicalExportQueryDto,
@@ -80,6 +82,7 @@ export class ImmunotherapiesController {
     private revision: PrescriptionRevisionService,
     private exporter: ClinicalExportService,
     private history: ClinicalHistoryService,
+    private statusHistory: StatusHistoryService,
     private listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
     private listAllImmunotherapies: ListAllImmunotherapiesUseCase,
     private listImmunotherapyTypesUseCase: ListImmunotherapyTypesUseCase,
@@ -145,6 +148,23 @@ export class ImmunotherapiesController {
   ): Promise<PageDto<ImmunotherapyListItemDto>> {
     response.setHeader('Cache-Control', 'no-store');
     return this.listAllImmunotherapies.execute(currentUser, query);
+  }
+
+  @Get('status-history')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
+  @ApiOkResponse({ type: StatusHistoryResponseDto })
+  async readStatusHistory(@Query() query: StatusHistoryQueryDto, @CurrentUser() user: AuthenticatedUserPayload, @Res({ passthrough: true }) response: Response) {
+    response.setHeader('Cache-Control', 'no-store');
+    return this.statusHistory.read(query, user);
+  }
+
+  @Get('record/:patientId')
+  @CheckPolicies({ action: 'read', subject: 'Dose' })
+  @RateLimit({ class: RATE_LIMIT_CLASSES.export, keyBy: ['user', 'organization'] })
+  @ApiOkResponse({ type: PatientClinicalRecordDto })
+  async readPatientRecord(@Param('patientId') patientId: string, @CurrentUser() user: AuthenticatedUserPayload, @Res({ passthrough: true }) response: Response) {
+    response.setHeader('Cache-Control', 'no-store');
+    return this.history.record(patientId, user);
   }
 
   @Get('patients/:patientId')
