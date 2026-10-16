@@ -2,7 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class PasswordResetMessageResponseDto {
   @ApiProperty({
-    example: 'Se o e-mail existir, enviamos as instruções de redefinição.',
+    example:
+      'Se o e-mail existir, enviamos o link de redefinição para sua caixa de entrada.',
   })
   message: string;
 }

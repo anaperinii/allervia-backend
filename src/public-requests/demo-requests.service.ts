@@ -1,19 +1,24 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { CodedTooManyRequestsException } from 'src/infra/exceptions/coded.exception';
+import { IEmailService } from 'src/infra/email/email.service';
 import { DemoRequestDto } from './demo-request.dto';
 
 @Injectable()
 export class DemoRequestsService {
+  private readonly logger = new Logger(DemoRequestsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly emailService: IEmailService,
   ) {}
 
   async create(input: DemoRequestDto, ip: string) {
@@ -24,7 +29,7 @@ export class DemoRequestsService {
     }
     const data = { ...input, email: input.email.toLowerCase() };
     const sourceHash = createHash('sha256').update(`demo:${ip}`).digest('hex');
-    return this.prisma.$transaction(async (tx) => {
+    const { response, isNew } = await this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(73120545)`;
       const previous = await tx.demoRequest.findUnique({
         where: { requestId: input.requestId },
@@ -40,9 +45,12 @@ export class DemoRequestsService {
           );
         }
         return {
-          received: true,
-          id: previous.id,
-          createdAt: previous.createdAt,
+          response: {
+            received: true,
+            id: previous.id,
+            createdAt: previous.createdAt,
+          },
+          isNew: false,
         };
       }
       const sinceHour = new Date(Date.now() - 3_600_000);
@@ -66,7 +74,22 @@ export class DemoRequestsService {
       const saved = await tx.demoRequest.create({
         data: { ...data, sourceHash },
       });
-      return { received: true, id: saved.id, createdAt: saved.createdAt };
+      return {
+        response: { received: true, id: saved.id, createdAt: saved.createdAt },
+        isNew: true,
+      };
     });
+
+    if (isNew) {
+      try {
+        await this.emailService.sendDemoRequestConfirmation(data);
+      } catch {
+        this.logger.error(
+          'Falha ao enviar e-mail de confirmação de demonstração.',
+        );
+      }
+    }
+
+    return response;
   }
 }

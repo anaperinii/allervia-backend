@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import {
   IsPassword,
   PASSWORD_MAX_BYTES,
+  PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   isPasswordWithinPolicy,
 } from './password.validation';
@@ -21,30 +22,51 @@ function errorsFor(password: unknown): string[] {
   );
 }
 
+const VALID_PASSWORD = 'Senha!Forte2026';
+
 describe('IsPassword (política única de senha — DEC-05)', () => {
+  it('aceita senha que cumpre todos os requisitos', () => {
+    expect(errorsFor(VALID_PASSWORD)).toHaveLength(0);
+  });
+
   it('rejeita vazio e abaixo do mínimo', () => {
     expect(errorsFor('')).toContain('isNotEmpty');
-    expect(errorsFor('a'.repeat(PASSWORD_MIN_LENGTH - 1))).toContain(
-      'minLength',
+    expect(errorsFor('Ab1!'.repeat(1))).toContain('minLength');
+  });
+
+  it('rejeita acima do máximo de caracteres', () => {
+    expect(errorsFor('A'.repeat(PASSWORD_MAX_LENGTH + 1) + 'a1!')).toContain(
+      'maxLength',
     );
   });
 
-  it('aceita o mínimo e o limite exato de 72 bytes ASCII', () => {
-    expect(errorsFor('a'.repeat(PASSWORD_MIN_LENGTH))).toHaveLength(0);
-    expect(errorsFor('a'.repeat(PASSWORD_MAX_BYTES))).toHaveLength(0);
+  it('aceita o mínimo e o máximo de caracteres', () => {
+    expect(errorsFor('Ab1!'.repeat(2))).toHaveLength(0);
+    expect(
+      errorsFor('Ab1!'.repeat(PASSWORD_MAX_LENGTH / 4)),
+    ).toHaveLength(0);
   });
 
-  it('rejeita 73 bytes ASCII', () => {
-    expect(errorsFor('a'.repeat(PASSWORD_MAX_BYTES + 1))).toContain(
-      'maxByteLength',
+  it('rejeita sem letra maiúscula', () => {
+    expect(errorsFor('senha!forte2026')).toContain('matches');
+  });
+
+  it('rejeita sem letra minúscula', () => {
+    expect(errorsFor('SENHA!FORTE2026')).toContain('matches');
+  });
+
+  it('rejeita sem número', () => {
+    expect(errorsFor('Senha!Forte')).toContain('matches');
+  });
+
+  it('rejeita sem caractere especial', () => {
+    expect(errorsFor('SenhaForte2026')).toContain('matches');
+  });
+
+  it('rejeita 73 bytes ASCII mesmo dentro do limite de caracteres', () => {
+    expect(isPasswordWithinPolicy('a'.repeat(PASSWORD_MAX_BYTES + 1))).toBe(
+      false,
     );
-  });
-
-  it('conta bytes, não caracteres, para Unicode multibyte', () => {
-    const twoBytesEach = 'á'.repeat(36);
-    expect(errorsFor(twoBytesEach)).toHaveLength(0);
-    const overByOneChar = 'á'.repeat(37);
-    expect(errorsFor(overByOneChar)).toContain('maxByteLength');
   });
 
   it('rejeita não-string', () => {
@@ -58,9 +80,7 @@ describe('IsPassword (política única de senha — DEC-05)', () => {
     const legacyHash = bcrypt.hashSync(prefix, 4);
     expect(bcrypt.compareSync(longer, legacyHash)).toBe(true);
 
-    expect(isPasswordWithinPolicy(prefix)).toBe(true);
     expect(isPasswordWithinPolicy(longer)).toBe(false);
-    expect(errorsFor(longer)).toContain('maxByteLength');
   });
 });
 

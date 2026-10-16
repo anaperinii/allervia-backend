@@ -23,4 +23,5 @@ export interface ActiveVerificationToken {
   id: string;
   userId: string;
   userEmail: string;
+  userPassword: string;
 }

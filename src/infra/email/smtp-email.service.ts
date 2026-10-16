@@ -2,10 +2,25 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
 import {
+  DemoConfirmationEmailParams,
   DemoEmailParams,
   IEmailService,
   InviteEmailParams,
 } from './email.service';
+
+const DEMO_ROLE_LABELS: Record<string, string> = {
+  doctor: 'Médico(a)',
+  clinic_manager: 'Gestor(a) de clínica',
+  pharmacist: 'Farmacêutico(a)',
+  nurse: 'Enfermeiro(a)',
+  other: 'Outro',
+};
+
+const DEMO_SOLUTION_LABELS: Record<string, string> = {
+  self: 'Uso próprio',
+  single_clinic: 'Uma clínica',
+  clinic_network: 'Rede de clínicas',
+};
 
 @Injectable()
 export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
@@ -38,18 +53,6 @@ export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
   }
 
   async sendDemoRequest(params: DemoEmailParams): Promise<void> {
-    const roles: Record<string, string> = {
-      doctor: 'Médico(a)',
-      clinic_manager: 'Gestor(a) de clínica',
-      pharmacist: 'Farmacêutico(a)',
-      nurse: 'Enfermeiro(a)',
-      other: 'Outro',
-    };
-    const solutions: Record<string, string> = {
-      self: 'Uso próprio',
-      single_clinic: 'Uma clínica',
-      clinic_network: 'Rede de clínicas',
-    };
     const result = await this.transporter.sendMail({
       from: this.sender,
       to: params.to,
@@ -63,8 +66,8 @@ export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
         `Nome: ${params.name} ${params.lastName}`,
         `E-mail: ${params.email}`,
         `Telefone: ${params.phone}`,
-        `Atuação: ${roles[params.role] ?? params.role}`,
-        `Uso pretendido: ${solutions[params.solution] ?? params.solution}`,
+        `Atuação: ${DEMO_ROLE_LABELS[params.role] ?? params.role}`,
+        `Uso pretendido: ${DEMO_SOLUTION_LABELS[params.solution] ?? params.solution}`,
         `Especialidade: ${params.specialty}`,
         `Número de profissionais: ${params.professionals}`,
         '',
@@ -74,6 +77,36 @@ export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
     if (result.rejected?.length || !result.accepted?.length) {
       throw new Error('SMTP_RECIPIENT_REJECTED');
     }
+  }
+
+  async sendDemoRequestConfirmation(
+    params: DemoConfirmationEmailParams,
+  ): Promise<void> {
+    const result = await this.transporter.sendMail({
+      from: this.sender,
+      to: params.email,
+      subject: 'Recebemos seu pedido de demonstração — Allervia',
+      text: [
+        `Olá, ${params.name}.`,
+        '',
+        'Obrigado por entrar em contato com a Allervia! Recebemos sua solicitação de demonstração com os seguintes dados:',
+        '',
+        `Nome: ${params.name} ${params.lastName}`,
+        `E-mail: ${params.email}`,
+        `Telefone: ${params.phone}`,
+        `Atuação: ${DEMO_ROLE_LABELS[params.role] ?? params.role}`,
+        `Uso pretendido: ${DEMO_SOLUTION_LABELS[params.solution] ?? params.solution}`,
+        `Especialidade: ${params.specialty}`,
+        `Número de profissionais: ${params.professionals}`,
+        '',
+        'Em breve retornaremos o contato para agendar sua demonstração.',
+      ].join('\n'),
+    });
+    if (result.rejected?.length || !result.accepted?.length) {
+      throw new Error('SMTP_RECIPIENT_REJECTED');
+    }
+
+    this.logger.log('Demo request confirmation dispatched.');
   }
 
   async sendPasswordResetLink(email: string, token: string): Promise<void> {

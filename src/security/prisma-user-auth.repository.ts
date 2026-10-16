@@ -74,14 +74,23 @@ export class PrismaUserAuthRepository extends IUserAuthRepository {
         consumedAt: null,
         expiresAt: { gt: new Date() },
       },
-      select: { id: true, userId: true, user: { select: { email: true } } },
+      select: {
+        id: true,
+        userId: true,
+        user: { select: { email: true, password: true } },
+      },
     });
 
     if (!token) {
       return null;
     }
 
-    return { id: token.id, userId: token.userId, userEmail: token.user.email };
+    return {
+      id: token.id,
+      userId: token.userId,
+      userEmail: token.user.email,
+      userPassword: token.user.password,
+    };
   }
 
   async countRecentVerificationTokens(

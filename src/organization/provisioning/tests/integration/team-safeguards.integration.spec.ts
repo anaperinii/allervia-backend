@@ -59,6 +59,7 @@ describe('Salvaguardas de equipe e convites - Integração HTTP', () => {
       sendPasswordResetLink: () => Promise.resolve(),
       sendPasswordChangedNotification: () => Promise.resolve(),
       sendDemoRequest: () => Promise.resolve(),
+      sendDemoRequestConfirmation: () => Promise.resolve(),
       sendInviteLink: (params: InviteEmailParams) => {
         delivered.push(params);
         return Promise.resolve();

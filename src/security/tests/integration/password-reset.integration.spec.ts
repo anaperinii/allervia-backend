@@ -59,6 +59,7 @@ describe('Recuperação de senha - Integração HTTP', () => {
         return Promise.resolve();
       },
       sendDemoRequest: () => Promise.resolve(),
+      sendDemoRequestConfirmation: () => Promise.resolve(),
       sendInviteLink: () => Promise.resolve(),
     };
 
@@ -248,7 +249,7 @@ describe('Recuperação de senha - Integração HTTP', () => {
 
     const second = await postPublic('/auth/password-reset/confirm', {
       token,
-      newPassword: 'OutraSenha!Forte#2028',
+      newPassword: 'OutraSenha!Forte8',
     });
     expect(second.status).toBe(404);
     expect(readBody<ErrorBody>(second).code).toBe('NOT_FOUND');
@@ -260,7 +261,7 @@ describe('Recuperação de senha - Integração HTTP', () => {
   it('responde 202 para email inexistente sem enviar email nem criar token', async () => {
     const response = await requestReset('ninguem@clinica.com.br');
     expect(readBody<ResetMessageBody>(response).message).toBe(
-      'Se o e-mail existir, enviamos as instruções de redefinição.',
+      'Se o e-mail existir, enviamos o link de redefinição para sua caixa de entrada.',
     );
     expect(resetEmails).toHaveLength(0);
     expect(await prisma.verificationToken.count()).toBe(0);
@@ -272,7 +273,7 @@ describe('Recuperação de senha - Integração HTTP', () => {
     const second = await requestReset(user.email);
 
     expect(readBody<ResetMessageBody>(second).message).toBe(
-      'Se o e-mail existir, enviamos as instruções de redefinição.',
+      'Se o e-mail existir, enviamos o link de redefinição para sua caixa de entrada.',
     );
     expect(resetEmails).toHaveLength(1);
     expect(

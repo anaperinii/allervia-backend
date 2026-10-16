@@ -23,6 +23,7 @@ export const AUTH_MESSAGES = {
   mfaKeyUnavailable:
     'Cadastro de segundo fator indisponível: chave de criptografia não configurada.',
   reauthenticationRequired: 'Confirme sua identidade para continuar.',
+  passwordSameAsCurrent: 'A nova senha deve ser diferente da senha atual.',
 } as const;
 
 export const AUTH_ERROR_CODES = {
@@ -42,4 +43,5 @@ export const AUTH_ERROR_CODES = {
   mfaAlreadyConfirmed: 'MFA_ALREADY_CONFIRMED',
   mfaUnavailable: 'MFA_UNAVAILABLE',
   reauthenticationRequired: 'REAUTHENTICATION_REQUIRED',
+  passwordSameAsCurrent: 'PASSWORD_SAME_AS_CURRENT',
 } as const;

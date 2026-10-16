@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { IUserRepository } from '../user.repository';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
 import { IEmailService } from 'src/infra/email/email.service';
@@ -10,7 +15,10 @@ import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { USER_MESSAGES } from '../user.messages';
 import { SessionService } from 'src/security/session/session.service';
 import { AuthSessionRevokeReason } from '@prisma/client';
-import { CodedUnauthorizedException } from 'src/infra/exceptions/coded.exception';
+import {
+  CodedHttpException,
+  CodedUnauthorizedException,
+} from 'src/infra/exceptions/coded.exception';
 import { AUTH_ERROR_CODES } from 'src/security/auth.messages';
 
 @Injectable()
@@ -46,6 +54,19 @@ export class ChangePasswordUseCase {
       throw new CodedUnauthorizedException(
         AUTH_ERROR_CODES.invalidCredentials,
         USER_MESSAGES.invalidCurrentPassword,
+      );
+    }
+
+    const isSameAsCurrent = await this.hashingService.compare(
+      dto.newPassword,
+      user.password,
+    );
+
+    if (isSameAsCurrent) {
+      throw new CodedHttpException(
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        AUTH_ERROR_CODES.passwordSameAsCurrent,
+        USER_MESSAGES.passwordSameAsCurrent,
       );
     }
 

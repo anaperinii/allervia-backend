@@ -31,7 +31,8 @@ export class AuthController {
   ): Promise<PasswordResetMessageResponseDto> {
     await this.passwordResetRequestUseCase.execute(requestDto);
     return {
-      message: 'Se o e-mail existir, enviamos as instruções de redefinição.',
+      message:
+        'Se o e-mail existir, enviamos o link de redefinição para sua caixa de entrada.',
     };
   }
 

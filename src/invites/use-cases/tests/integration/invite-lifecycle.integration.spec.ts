@@ -65,6 +65,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
       sendPasswordResetLink: () => Promise.resolve(),
       sendPasswordChangedNotification: () => Promise.resolve(),
       sendDemoRequest: () => Promise.resolve(),
+      sendDemoRequestConfirmation: () => Promise.resolve(),
       sendInviteLink: (params: InviteEmailParams) => {
         if (failNextInviteEmail) {
           failNextInviteEmail = false;
