@@ -31,10 +31,10 @@ export class AccountProfessionalDto {
   @ApiProperty({ enum: Profession })
   profession: Profession;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   councilNumber: string | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true })
   councilUf: string | null;
 }
 

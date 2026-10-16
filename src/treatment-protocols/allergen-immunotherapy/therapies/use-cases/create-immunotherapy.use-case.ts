@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
+import { canonical } from '../../clinical-command';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { CreatePatientUseCase } from 'src/patients/use-cases/create-patient.use-case';
@@ -33,18 +34,6 @@ export interface RegistrationResult {
     id: string;
     plannedValues?: unknown;
   } & Record<string, unknown>;
-}
-
-function canonical(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([key, entry]) => [key, canonical(entry)]),
-    );
-  }
-  return value;
 }
 
 @Injectable()

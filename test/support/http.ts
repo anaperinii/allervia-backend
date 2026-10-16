@@ -63,6 +63,16 @@ export interface EnrollmentBody {
   keyUri: string;
 }
 
+export interface MfaFactorsBody {
+  factors: Array<{ id: string; label: string; confirmed: boolean }>;
+  recoveryCodesRemaining: number;
+}
+
+export interface ReauthenticationBody {
+  reauthenticatedAt: string;
+  maxAgeSeconds: number;
+}
+
 export interface CsrfBody {
   csrfToken: string;
 }

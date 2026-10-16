@@ -5,13 +5,13 @@ export class RoleResponseDto {
   @ApiProperty({ description: 'ID da concessão de role' })
   id: string;
 
-  @ApiProperty({ description: 'Role concedida' })
+  @ApiProperty({ enum: Role, description: 'Role concedida' })
   role: Role;
 
   @ApiProperty({ description: 'ID do profissional' })
   professionalId: string;
 
-  @ApiProperty({ description: 'Data da concessão' })
+  @ApiProperty({ description: 'Data da concessão', format: 'date-time' })
   grantedAt: Date;
 
   @ApiProperty({ description: 'ID de quem concedeu' })
@@ -21,6 +21,8 @@ export class RoleResponseDto {
     description: 'Data da revogação',
     required: false,
     nullable: true,
+    format: 'date-time',
+    type: String,
   })
   revokedAt: Date | null;
 
@@ -28,6 +30,7 @@ export class RoleResponseDto {
     description: 'ID de quem revogou',
     required: false,
     nullable: true,
+    type: String,
   })
   revokedById: string | null;
 }

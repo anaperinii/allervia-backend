@@ -4,13 +4,18 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "setupFiles": ["<rootDir>/test/setup-test-environment.cjs"],
+  "setupFilesAfterEnv": ["<rootDir>/test/support/test-hygiene.cjs"],
   "moduleNameMapper": {
     "^src/(.*)$": "<rootDir>/src/$1",
-    "^test/(.*)$": "<rootDir>/test/$1"
+    "^test/(.*)$": "<rootDir>/test/$1",
+    "^otplib$": "<rootDir>/node_modules/otplib/dist/index.cjs"
   },
   "maxWorkers": 1,
   "testTimeout": 30000,
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(@faker-js/faker|@scure|@noble|@otplib|otplib)/)"
+  ]
 }

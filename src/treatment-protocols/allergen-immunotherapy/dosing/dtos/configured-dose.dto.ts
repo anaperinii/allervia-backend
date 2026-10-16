@@ -69,6 +69,15 @@ export class UpdateScheduledDoseDto extends DoseRevisionDto {
   @IsNotEmpty()
   @MaxLength(2000)
   reason: string;
+  @ApiPropertyOptional({
+    description:
+      'Stable key reused for retries of this exact command. When present, repeating the same key and body returns the original result without editing again; the same key with a different body is rejected with 409 IDEMPOTENCY_KEY_REUSED.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  idempotencyKey?: string;
 }
 export class DoseObservationDto {
   @ApiProperty({ enum: DoseObservationPhase })

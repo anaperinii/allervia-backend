@@ -5,11 +5,27 @@ module.exports = {
 
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
 
-  collectCoverage: true,
+  collectCoverage: false,
+
+  coverageThreshold: {
+    global: {
+      lines: 80,
+      branches: 60,
+    },
+  },
 
   rootDir: '.',
 
-  testMatch: ['**/*.spec.ts', '**/*.integration.spec.ts'],
+  testMatch: ['**/*.spec.ts'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/artifacts/',
+    '<rootDir>/tmp/',
+  ],
+
+  setupFiles: ['<rootDir>/test/setup-test-environment.cjs'],
+
+  setupFilesAfterEnv: ['<rootDir>/test/support/test-hygiene.cjs'],
 
   collectCoverageFrom: [
     'src/**/*.(t|j)s',

@@ -1,9 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { InviteStrategyContext } from 'src/invites/strategies/invites/invite-strategy.context';
 import { CreateInviteDto } from 'src/invites/dtos/create-invite.dto';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { randomBytes } from 'node:crypto';
-import { ValidateUserEmailUseCase } from 'src/account/use-cases/validate-user-email.use-case';
 import { UserInvite } from 'src/invites/domain/entities/user-invite.entity';
 import {
   InviteResponseDto,
@@ -23,9 +22,10 @@ const INVITE_TTL_DAYS = 7;
 
 @Injectable()
 export class CreateInviteUseCase {
+  private readonly logger = new Logger(CreateInviteUseCase.name);
+
   constructor(
     private validationContext: InviteStrategyContext,
-    private validateUserEmail: ValidateUserEmailUseCase,
     private inviteRepository: IUserInviteRepository,
     private findActiveInviteUseCase: FindActiveInviteUseCase,
     private prisma: PrismaService,
@@ -44,10 +44,14 @@ export class CreateInviteUseCase {
       );
 
     const email = dto.email.trim().toLowerCase();
-    const user = await this.validateUserEmail.execute(email, currentUser);
 
-    if (user && user.isActive) {
+    const user = await this.prisma.user.findFirst({ where: { email } });
+
+    if (user && user.isActive && !user.isArchived) {
       throw new ConflictException(INVITE_MESSAGES.emailAlreadyActive);
+    }
+    if (user) {
+      throw new ConflictException(INVITE_MESSAGES.userDisabled);
     }
 
     const existingInvite = await this.findActiveInviteUseCase.execute(
@@ -100,15 +104,24 @@ export class CreateInviteUseCase {
       select: { name: true },
     });
 
-    await this.emailService.sendInviteLink({
-      email,
-      fullName: dto.fullName,
-      organizationName: organization.name,
-      token,
-      expiresAt,
-    });
+    let emailDelivered = true;
+    try {
+      await this.emailService.sendInviteLink({
+        email,
+        fullName: dto.fullName,
+        organizationName: organization.name,
+        token,
+        expiresAt,
+      });
+    } catch {
+      emailDelivered = false;
+      this.logger.error(
+        `Falha ao enviar convite ${created.id} (reenvio disponível em POST /onboarding/invites/${created.id}/resend).`,
+      );
+    }
 
     return {
+      emailDelivered,
       id: created.id,
       email: created.email,
       fullName: created.fullName,

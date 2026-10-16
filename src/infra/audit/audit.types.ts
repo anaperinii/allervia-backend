@@ -45,6 +45,8 @@ export const AUDIT_ACTIONS = {
   INVITE_CREATED: 'INVITE_CREATED',
   INVITE_CANCELLED: 'INVITE_CANCELLED',
 
+  OUTBOX_EVENT_REQUEUED: 'OUTBOX_EVENT_REQUEUED',
+
   EXPORT_GENERATED: 'EXPORT_GENERATED',
 
   ORGANIZATION_PROVISIONED: 'ORGANIZATION_PROVISIONED',
@@ -60,10 +62,12 @@ export const AUDIT_ENTITY_TYPES = {
   USER: 'User',
   PROFESSIONAL: 'Professional',
   PATIENT: 'Patient',
+  APPOINTMENT: 'Appointment',
   IMMUNOTHERAPY: 'Immunotherapy',
   DOSE: 'Dose',
   INTERNAL_USER_INVITE: 'InternalUserInvite',
   ORGANIZATION: 'Organization',
+  OUTBOX_EVENT: 'OutboxEvent',
 } as const;
 
 export type AuditEntityType =

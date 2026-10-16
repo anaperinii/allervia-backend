@@ -40,6 +40,7 @@ const SCHEDULE_SELECT = {
   plannedValues: true,
   administeredValues: true,
   revision: true,
+  prescription: { select: { resolved: true } },
   immunotherapy: {
     select: {
       id: true,
@@ -89,7 +90,10 @@ export class ClinicalScheduleService {
             { administeredAt: null, scheduledAt: { gte: from, lte: to } },
           ],
         },
-        ...(query.status ? [{ status: query.status }] : []),
+
+        ...(query.status
+          ? [{ status: query.status }]
+          : [{ status: { not: 'ENTERED_IN_ERROR' as const } }]),
         ...(query.search
           ? [
               {
@@ -127,7 +131,11 @@ export class ClinicalScheduleService {
       }),
       this.prisma.dose.count({ where }),
     ]);
-    return buildPage(items, total, bounds);
+    return buildPage(items.map(({ prescription, ...item }) => {
+      const resolved = prescription?.resolved;
+      const timeZone = resolved && typeof resolved === 'object' && !Array.isArray(resolved) && typeof resolved.timeZone === 'string' ? resolved.timeZone : null;
+      return { ...item, timeZone };
+    }), total, bounds);
   }
 
   async metrics(dto: SchedulePeriodDto, user: AuthenticatedUserPayload) {
@@ -168,6 +176,7 @@ export class ClinicalScheduleService {
           },
           scope,
           { isArchived: false },
+          { status: { not: 'ENTERED_IN_ERROR' } },
           {
             OR: [
               { administeredAt: { gte: from, lte: to } },

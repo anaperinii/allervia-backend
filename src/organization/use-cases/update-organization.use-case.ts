@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -28,20 +29,33 @@ export class UpdateOrganizationUseCase {
       throw new ForbiddenException(AUTH_MESSAGES.organizationNotSet);
     }
 
-    const current = await this.prisma.organization.findUnique({
-      where: { id: currentUser.organizationId },
-    });
-
-    if (!current) {
-      throw new NotFoundException(
-        ORGANIZATION_MESSAGES.notFound(currentUser.organizationId),
-      );
-    }
-
     return this.prisma.$transaction(async (tx) => {
+
+      await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${currentUser.organizationId} FOR NO KEY UPDATE`;
+      const current = await tx.organization.findUnique({
+        where: { id: currentUser.organizationId },
+      });
+
+      if (!current) {
+        throw new NotFoundException(
+          ORGANIZATION_MESSAGES.notFound(currentUser.organizationId),
+        );
+      }
+
+      if (
+        dto.expectedRevision !== undefined &&
+        current.revision !== dto.expectedRevision
+      ) {
+        throw new ConflictException('STALE_ORGANIZATION_REVISION');
+      }
+
       const updated = await tx.organization.update({
         where: { id: current.id },
-        data: { name: dto.name, timeZone: dto.timeZone },
+        data: {
+          name: dto.name,
+          timeZone: dto.timeZone,
+          revision: { increment: 1 },
+        },
       });
 
       const changes = diffFields(current, updated, ['name', 'timeZone']);

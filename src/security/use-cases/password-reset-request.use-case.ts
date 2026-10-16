@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { VerificationPurpose } from '@prisma/client';
 import { PasswordResetRequestDTO } from '../dtos/password-reset-request.dto';
 import { SecurityUtil } from 'src/utils/security.utils';
@@ -15,6 +15,8 @@ const EMISSION_LIMITS = [
 
 @Injectable()
 export class PasswordResetRequestUseCase {
+  private readonly logger = new Logger(PasswordResetRequestUseCase.name);
+
   constructor(
     private readonly authRepository: IUserAuthRepository,
     private readonly emailService: IEmailService,
@@ -43,7 +45,12 @@ export class PasswordResetRequestUseCase {
       expiresAt,
     });
 
-    await this.emailService.sendPasswordResetLink(user.email, token);
+    try {
+      await this.emailService.sendPasswordResetLink(user.email, token);
+    } catch {
+
+      this.logger.error('Falha ao enviar e-mail de redefinição de senha.');
+    }
   }
 
   private async isThrottled(userId: string): Promise<boolean> {

@@ -76,8 +76,6 @@ describe('ListImmunotherapiesByTypeUseCase - Integration', () => {
     const resultPolen = await listAllByType.execute('Pólen', authenticatedUser);
 
     expect(resultAcaros).toHaveLength(2);
-    console.log(resultAcaros);
     expect(resultPolen).toHaveLength(2);
-    console.log(resultPolen);
   });
 });

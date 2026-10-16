@@ -107,6 +107,8 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
     'Médico responsável não encontrado ou inativo.',
   RETURN_FORECAST_ONLY_ON_SUSPENSION:
     'Previsão de retorno só pode ser informada ao suspender o tratamento.',
+  CATEGORY_ONLY_ON_SUSPENSION:
+    'Categoria só pode ser informada ao suspender o tratamento.',
   REVISION_TARGETS_SAME_VERSION:
     'A versão escolhida já é a que está em uso. Selecione outra.',
   SCHEDULE_REQUIRES_CALENDAR_REVIEW:
@@ -131,6 +133,45 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   VALUE_OUTSIDE_EXACT_STORAGE_RANGE:
     'Valor fora do intervalo aceito. Revise volume, concentração e intervalo.',
 
+  INVALID_CREDENTIALS: 'Credenciais inválidas.',
+  SESSION_MISSING: 'Sessão ausente. Entre novamente.',
+  SESSION_INVALID: 'Sessão inválida. Entre novamente.',
+  SESSION_EXPIRED: 'Sessão expirada.',
+  SESSION_REVOKED: 'Sessão encerrada.',
+  SESSION_CONTEXT_REQUIRED:
+    'Contexto de sessão ausente. Recarregue a página e tente de novo.',
+  SESSION_CONTEXT_CHANGED:
+    'A sessão mudou em outra aba. Recarregue a página para continuar.',
+  CSRF_TOKEN_INVALID: 'Token CSRF ausente ou inválido.',
+  ORIGIN_NOT_ALLOWED: 'Origem da requisição não permitida.',
+  ACCOUNT_DISABLED: 'Conta desativada.',
+  ORGANIZATION_DISABLED: 'Organização desativada.',
+  MFA_REQUIRED: 'Segundo fator obrigatório.',
+  MFA_ENROLLMENT_REQUIRED: 'Cadastre um segundo fator para continuar.',
+  MFA_CHALLENGE_INVALID: 'Desafio de segundo fator inválido ou expirado.',
+  MFA_CODE_INVALID: 'Código de verificação inválido.',
+  MFA_ALREADY_CONFIRMED: 'Credencial de segundo fator já confirmada.',
+  MFA_UNAVAILABLE: 'Segundo fator indisponível no momento.',
+  REAUTHENTICATION_REQUIRED: 'Confirme sua identidade para continuar.',
+  PROVISIONING_KEY_INVALID: 'Chave de provisionamento inválida.',
+
+  GOOGLE_OAUTH_SESSION_INVALID:
+    'Sua sessão mudou durante a conexão com o Google. Entre novamente e repita a conexão.',
+  DEMO_REQUEST_LIMIT:
+    'Limite de solicitações atingido. Tente novamente mais tarde.',
+  STALE_ORGANIZATION_REVISION:
+    'As configurações da organização foram alteradas por outra pessoa. Recarregue e tente de novo.',
+  INVALID_PROTOCOL:
+    'A definição do protocolo é inválida. Revise os passos antes de publicar.',
+  INVALID_PRESCRIPTION:
+    'A prescrição deste tratamento é inválida. Fale com o suporte.',
+  STEP_NOT_IN_PRESCRIPTION:
+    'O passo informado não pertence à prescrição deste tratamento.',
+  THERAPY_NOT_FOUND: 'Tratamento não encontrado.',
+  DRAFT_TOO_LARGE: 'O rascunho do protocolo excede o tamanho máximo permitido.',
+  CLINICAL_READ_REQUIRED:
+    'Apenas profissionais clínicos ou administradores podem consultar protocolos.',
+
   VALIDATION_ERROR: 'Requisição inválida. Confira os campos destacados.',
   BAD_REQUEST: 'Requisição inválida.',
   UNAUTHENTICATED: 'Sessão expirada ou inválida. Entre novamente.',
@@ -142,6 +183,9 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   UNSUPPORTED_CONTENT_TYPE: 'Formato de conteúdo não suportado.',
   UNPROCESSABLE_ENTITY: 'Não foi possível processar os dados enviados.',
   TOO_MANY_ATTEMPTS: 'Muitas tentativas. Aguarde um instante e tente de novo.',
+  RATE_LIMITED: 'Muitas requisições. Aguarde antes de tentar novamente.',
+  LAST_ADMINISTRATOR:
+    'A organização não pode ficar sem um administrador ativo.',
   SERVICE_UNAVAILABLE:
     'Serviço temporariamente indisponível. Tente de novo em instantes.',
   INTERNAL_ERROR: 'Erro interno ao processar a requisição.',

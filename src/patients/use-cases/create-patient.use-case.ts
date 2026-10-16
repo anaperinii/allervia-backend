@@ -6,7 +6,7 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { Prisma } from '@prisma/client';
 import { normalizeCpf } from '../cpf';
-import { guardianColumns } from '../guardian';
+import { guardianColumns, todayCivilDate } from '../guardian';
 
 @Injectable()
 export class CreatePatientUseCase {
@@ -20,12 +20,20 @@ export class CreatePatientUseCase {
     currentUser: AuthenticatedUserPayload,
     tx?: Prisma.TransactionClient,
   ) {
+    const client = tx ?? this.prisma;
     const cpf = normalizeCpf(dto.cpf);
     const birthDate = new Date(dto.birthDate);
-    const guardian = guardianColumns(dto.guardian, birthDate);
+    const organization = await client.organization.findUniqueOrThrow({
+      where: { id: currentUser.organizationId },
+      select: { timeZone: true },
+    });
+    const guardian = guardianColumns(
+      dto.guardian,
+      birthDate,
+      todayCivilDate(organization.timeZone),
+    );
 
     if (cpf) {
-      const client = tx ?? this.prisma;
       const holder = await client.patient.findFirst({
         where: { organizationId: currentUser.organizationId, cpf },
         select: { id: true },

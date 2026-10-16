@@ -170,6 +170,7 @@ describe('configured protocol acceptance fixtures (stage 1)', () => {
 describe('exact decimal representation', () => {
   it.each([
     ['000.2000', '0.2'],
+    ['0.50', '0.5'],
     ['001000.000', '1000'],
     [
       '9007199254740993.0000000000000000010',
@@ -213,6 +214,18 @@ describe('exact decimal representation', () => {
     expect(recommendNextDose(edited)).toMatchObject({
       kind: 'RECOMMENDED',
       values: { volume: '0.4', concentration: '1000' },
+    });
+  });
+  it('resolves "0.50" to the step configured as "0.5"', () => {
+    const base = input('maintenance-100-050-14');
+    expect(
+      resolveProtocolStep({
+        ...base,
+        administered: { ...base.administered, volume: '0.50' },
+      }),
+    ).toMatchObject({
+      kind: 'RESOLVED',
+      step: { id: 'maintenance-100-050-14', volume: '0.5' },
     });
   });
   it('never rounds a nearby value to an existing step', () => {
@@ -312,6 +325,62 @@ describe('protocol publication validation', () => {
       );
     },
   );
+  it('rejects a BUILD_UP cycle with no path to maintenance, naming the step and field', () => {
+    const config = protocol();
+    const looped = {
+      ...config,
+      steps: config.steps.map((step) =>
+        step.id === 'build-up-1000-040'
+          ? { ...step, nextStepId: 'build-up-1000-010' }
+          : step,
+      ),
+    };
+    expect(() => validateProtocolDefinition(looped)).toThrow(
+      'protocol.steps[0].nextStepId: BUILD_UP_WITHOUT_MAINTENANCE_PATH: step "build-up-1000-010" has no path to a MAINTENANCE step',
+    );
+    unresolved(
+      {
+        ...input(),
+        protocol: looped as PublishedProtocolDefinition,
+      },
+      'INVALID_PROTOCOL',
+    );
+  });
+  it('rejects a BUILD_UP step that dead-ends before any maintenance step', () => {
+    const config = protocol();
+    const truncated = {
+      ...config,
+      steps: config.steps.map((step) =>
+        step.id === 'build-up-100-050' ? { ...step, nextStepId: null } : step,
+      ),
+    };
+    expect(() => validateProtocolDefinition(truncated)).toThrow(
+      /BUILD_UP_WITHOUT_MAINTENANCE_PATH/,
+    );
+  });
+  it('keeps maintenance self-loops and maintenance cycles valid', () => {
+    const config = protocol();
+    expect(() => validateProtocolDefinition(config)).not.toThrow();
+    const alternate: ProtocolStep = {
+      ...config.steps[config.steps.length - 1],
+      id: 'maintenance-alternate',
+      label: 'Alternate maintenance',
+      intervalDays: 21,
+      nextStepId: 'maintenance-100-050-14',
+    };
+    const cycling = {
+      ...config,
+      steps: [
+        ...config.steps.map((step) =>
+          step.id === 'maintenance-100-050-14'
+            ? { ...step, nextStepId: 'maintenance-alternate' }
+            : step,
+        ),
+        alternate,
+      ],
+    };
+    expect(() => validateProtocolDefinition(cycling)).not.toThrow();
+  });
 });
 
 describe('resolved prescription validation', () => {
@@ -395,7 +464,9 @@ describe('resolved prescription validation', () => {
     const broken = {
       ...config,
       steps: config.steps.map((step, index) =>
-        index === 0 ? { ...step, nextStepId: step.id } : step,
+        index === 0
+          ? { ...step, phase: 'MAINTENANCE' as const, nextStepId: step.id }
+          : step,
       ),
     };
     unresolved(input('build-up-1000-020', broken), 'INVALID_PRESCRIPTION');
@@ -539,7 +610,11 @@ describe('step resolution and recommendations', () => {
     });
   });
   it('returns explicit end of sequence, with no implicit repetition', () => {
-    const last = { ...protocol().steps[0], nextStepId: null };
+    const last = {
+      ...protocol().steps[0],
+      phase: 'MAINTENANCE' as const,
+      nextStepId: null,
+    };
     expect(recommendNextDose(input(last.id, withSteps([last])))).toEqual({
       kind: 'END_OF_SEQUENCE',
       fromStepId: last.id,

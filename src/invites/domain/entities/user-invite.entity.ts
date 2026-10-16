@@ -84,6 +84,10 @@ export class UserInvite {
   }
 
   deactive(): void {
+
+    if (this.isUsed()) {
+      throw new UserInviteAlreadyUsedException();
+    }
     this.isActive = false;
   }
 

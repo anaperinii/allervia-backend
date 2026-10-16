@@ -60,6 +60,32 @@ export class GoogleCalendarConfig {
     return this.positiveNumber('GOOGLE_OAUTH_STATE_TTL_MINUTES', 10) * 60_000;
   }
 
+  get tokenEndpointUrl(): string {
+    return (
+      this.configService.get<string>('GOOGLE_TOKEN_URL') ||
+      'https://oauth2.googleapis.com/token'
+    );
+  }
+
+  get revokeEndpointUrl(): string {
+    return (
+      this.configService.get<string>('GOOGLE_REVOKE_URL') ||
+      'https://oauth2.googleapis.com/revoke'
+    );
+  }
+
+  get calendarApiBaseUrl(): string {
+    return (
+      this.configService.get<string>('GOOGLE_CALENDAR_API_BASE_URL') ||
+      'https://www.googleapis.com/calendar/v3'
+    );
+  }
+
+  get httpTimeoutMs(): number {
+    const value = this.positiveNumber('GOOGLE_HTTP_TIMEOUT_MS', 15_000);
+    return Math.min(Math.max(value, 1_000), 60_000);
+  }
+
   private positiveNumber(key: string, fallback: number): number {
     const raw = this.configService.get<string>(key);
     if (raw === undefined || raw === null || raw === '') return fallback;

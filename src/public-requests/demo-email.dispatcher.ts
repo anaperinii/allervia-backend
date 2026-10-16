@@ -28,6 +28,10 @@ export class DemoEmailDispatcher implements OnModuleInit, OnModuleDestroy {
       this.config.get<string>('EMAIL_TRANSPORT') ??
       (environment === 'production' ? 'smtp' : 'log');
     if (environment === 'test' || transport !== 'smtp') return;
+    if (process.env.ALLERVIA_DISPATCHERS_DISABLED === 'true') {
+      this.logger.log('Dispatcher disabled by ALLERVIA_DISPATCHERS_DISABLED.');
+      return;
+    }
     this.timer = setInterval(() => {
       if (this.inFlight) return;
       this.inFlight = this.processPending()

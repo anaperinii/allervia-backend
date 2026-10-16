@@ -19,12 +19,14 @@ import { CreateInviteDto } from './dtos/create-invite.dto';
 import { ListInvitesQueryDto } from './dtos/list-invites-query.dto';
 import {
   InviteContextDto,
+  InvitePageDto,
   InviteResponseDto,
 } from './dtos/invite-response.dto';
 import { CancelInviteUseCase } from './use-cases/cancel-invite.use-case';
 import { CreateInviteUseCase } from './use-cases/create-invite.use-case';
 import { ListInvitesUseCase } from './use-cases/list-invites.use-case';
 import { FindInviteContextUseCase } from './use-cases/find-invite-context.use-case';
+import { ResendInviteUseCase } from './use-cases/resend-invite.use-case';
 
 @ApiTags('onboarding')
 @Controller('onboarding/invites')
@@ -34,6 +36,7 @@ export class InviteController {
     private cancelInviteUseCase: CancelInviteUseCase,
     private listInvitesUseCase: ListInvitesUseCase,
     private findInviteContextUseCase: FindInviteContextUseCase,
+    private resendInviteUseCase: ResendInviteUseCase,
   ) {}
 
   @Get('context/:token')
@@ -56,11 +59,23 @@ export class InviteController {
 
   @Get('list')
   @CheckPolicies({ action: 'read', subject: 'InternalUserInvite' })
+  @ApiOkResponse({ type: InvitePageDto })
   async listInvites(
     @CurrentUser() currentUser: AuthenticatedUserPayload,
     @Query() query: ListInvitesQueryDto,
   ): Promise<PageDto<InviteResponseDto>> {
     return this.listInvitesUseCase.execute(currentUser, query);
+  }
+
+  @Post(':id/resend')
+  @HttpCode(HttpStatus.OK)
+  @CheckPolicies({ action: 'update', subject: 'InternalUserInvite' })
+  @ApiOkResponse({ type: InviteResponseDto })
+  async resendInvite(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUserPayload,
+  ): Promise<InviteResponseDto> {
+    return this.resendInviteUseCase.execute(id, currentUser);
   }
 
   @Delete(':id')

@@ -1,7 +1,8 @@
 import {
+  HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { IUserRepository } from '../user.repository';
 import { IPasswordHashingService } from 'src/security/interfaces/password-hashing.service.interface';
@@ -14,9 +15,16 @@ import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { USER_MESSAGES } from '../user.messages';
 import { SessionService } from 'src/security/session/session.service';
 import { AuthSessionRevokeReason } from '@prisma/client';
+import {
+  CodedHttpException,
+  CodedUnauthorizedException,
+} from 'src/infra/exceptions/coded.exception';
+import { AUTH_ERROR_CODES } from 'src/security/auth.messages';
 
 @Injectable()
 export class ChangePasswordUseCase {
+  private readonly logger = new Logger(ChangePasswordUseCase.name);
+
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly hashingService: IPasswordHashingService,
@@ -43,7 +51,23 @@ export class ChangePasswordUseCase {
     );
 
     if (!isCurrentValid) {
-      throw new UnauthorizedException(USER_MESSAGES.invalidCurrentPassword);
+      throw new CodedUnauthorizedException(
+        AUTH_ERROR_CODES.invalidCredentials,
+        USER_MESSAGES.invalidCurrentPassword,
+      );
+    }
+
+    const isSameAsCurrent = await this.hashingService.compare(
+      dto.newPassword,
+      user.password,
+    );
+
+    if (isSameAsCurrent) {
+      throw new CodedHttpException(
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        AUTH_ERROR_CODES.passwordSameAsCurrent,
+        USER_MESSAGES.passwordSameAsCurrent,
+      );
     }
 
     const passwordHash = await this.hashingService.hash(dto.newPassword);
@@ -68,6 +92,13 @@ export class ChangePasswordUseCase {
       AuthSessionRevokeReason.PASSWORD_CHANGED,
     );
 
-    await this.emailService.sendPasswordChangedNotification(user.email);
+    try {
+      await this.emailService.sendPasswordChangedNotification(user.email);
+    } catch (error) {
+      this.logger.error(
+        'Falha ao notificar troca de senha por e-mail.',
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }

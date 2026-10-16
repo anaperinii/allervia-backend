@@ -16,7 +16,11 @@ import { diffFields } from 'src/infra/audit/diff-fields';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { normalizeCpf } from '../cpf';
-import { guardianColumns, guardianFromColumns } from '../guardian';
+import {
+  guardianColumns,
+  guardianFromColumns,
+  todayCivilDate,
+} from '../guardian';
 
 @Injectable()
 export class UpdatePatientUseCase {
@@ -43,15 +47,17 @@ export class UpdatePatientUseCase {
 
     const cpf = dto.cpf === undefined ? undefined : normalizeCpf(dto.cpf);
 
-    // A regra de menoridade vale sobre o estado resultante, não sobre o que
-    // veio no corpo: corrigir só a data de nascimento pode tornar obrigatório
-    // (ou proibido) um responsável que o cliente nem mencionou.
     const birthDate = dto.birthDate
       ? new Date(dto.birthDate)
       : patient.birthDate;
+    const organization = await this.prisma.organization.findUniqueOrThrow({
+      where: { id: patient.organizationId },
+      select: { timeZone: true },
+    });
     const guardian = guardianColumns(
       dto.guardian === undefined ? guardianFromColumns(patient) : dto.guardian,
       birthDate,
+      todayCivilDate(organization.timeZone),
     );
 
     if (cpf) {

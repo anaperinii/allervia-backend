@@ -1,5 +1,4 @@
 import type { ProtocolPrescription, Prisma } from '@prisma/client';
-import { BadRequestException } from '@nestjs/common';
 import { AdministrationRoute, TherapyStatus } from '@prisma/client';
 
 export interface ImmunotherapyProps {
@@ -77,41 +76,5 @@ export class Immunotherapy {
     this.updatedById = props.updatedById;
     this.archivedById = props.archivedById;
     this.archivedAt = props.archivedAt;
-  }
-
-  static createNew(props: CreateImmunotherapyProps) {
-    return {
-      immunoType: props.immunoType.trim(),
-      administrationRoute: props.administrationRoute,
-      extract: props.extract,
-      inductionStartDate: props.inductionStartDate,
-      targetConcentration: props.targetConcentration,
-      targetVolume: props.targetVolume,
-      patientId: props.patientId,
-      status: TherapyStatus.IN_PROGRESS,
-      createdById: props.createdById,
-      updatedById: props.updatedById,
-      isArchived: false,
-    };
-  }
-
-  updateStatus(status: TherapyStatus, updatedById: string): void {
-    if (this.status === status) {
-      throw new BadRequestException(
-        `A respectiva imunoterapia já possui o status ${this.status}`,
-      );
-    }
-    this.status = status;
-    this.updatedById = updatedById;
-  }
-
-  archive(archivedById: string): void {
-    if (this.isArchived) {
-      throw new Error('Cannot archive an already archived immunotherapy');
-    }
-
-    this.isArchived = true;
-    this.archivedById = archivedById;
-    this.archivedAt = new Date();
   }
 }

@@ -19,6 +19,12 @@ import {
   requireClinicalAuthor,
 } from '../protocol-catalog/protocol-catalog.service';
 import type { ResolvedPrescription } from '../clinical-rules/protocol-definition';
+import {
+  clinicalCommandHash,
+  clinicalCommandKey,
+  commitClinicalCommand,
+  replayClinicalCommand,
+} from '../clinical-command';
 import { PrescriptionRevisionDto } from './dtos/prescription-revision.dto';
 
 @Injectable()
@@ -36,8 +42,19 @@ export class PrescriptionRevisionService {
   ) {
     requireClinicalAuthor(user);
     const dryRun = dto.dryRun !== false;
+    const hash =
+      !dryRun && dto.idempotencyKey
+        ? clinicalCommandHash('PRESCRIPTION_REVISION', dto)
+        : null;
     return this.prisma.$transaction(async (tx) => {
       const therapy = await this.clinical.lockTherapy(tx, id, user);
+      const key = clinicalCommandKey(
+        user,
+        id,
+        dryRun ? undefined : dto.idempotencyKey,
+      );
+      const previous = await replayClinicalCommand(tx, key, hash);
+      if (previous) return previous.result as never;
       if (!therapy.currentPrescription)
         throw new ConflictException('PROTOCOL_MIGRATION_REQUIRED');
       if (therapy.revision !== dto.expectedRevision)
@@ -158,13 +175,13 @@ export class PrescriptionRevisionService {
         },
         tx,
       );
-      return {
+      return commitClinicalCommand(tx, key, hash, {
         dryRun: false,
         prescriptionId: snapshot.id,
         previousPrescriptionId: therapy.currentPrescription.id,
         pendingDose: updatedDose,
         therapyRevision: updatedTherapy.revision,
-      };
+      });
     });
   }
 }

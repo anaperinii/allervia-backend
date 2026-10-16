@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Profession } from '@prisma/client';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsPassword } from 'src/security/validation/password.validation';
 
 export class ProfileInternalUserDto {
   @ApiProperty({ description: 'Nome Completo' })
@@ -9,8 +10,7 @@ export class ProfileInternalUserDto {
   fullName: string;
 
   @ApiProperty({ description: 'Senha' })
-  @IsNotEmpty()
-  @IsString()
+  @IsPassword()
   password: string;
 
   @ApiProperty({ description: 'Profissão', enum: Profession })

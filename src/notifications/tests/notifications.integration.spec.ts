@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
@@ -183,6 +184,139 @@ describe('Notifications outbox and persisted requests - Integration', () => {
     expect(status.pending).toBe(1);
     expect(status.deadLettered).toBe(1);
     expect(status.lastFailures[0].lastError).toBe('simulated failure');
+  });
+
+  it('claims each event once across concurrent workers and never duplicates the notification', async () => {
+    await administeredWithReviewRequest();
+    await prisma.outboxEvent.updateMany({
+      data: { leaseUntil: new Date(Date.now() - 1000) },
+    });
+    const [a, b] = await Promise.all([
+      notifications.processPending(),
+      notifications.processPending(),
+    ]);
+    expect(a.processed + b.processed).toBe(1);
+    expect(await prisma.notification.count()).toBe(1);
+    expect(
+      (await prisma.outboxEvent.findFirstOrThrow()).processedAt,
+    ).not.toBeNull();
+  });
+
+  it('fences a worker that lost ownership after a restart', async () => {
+    await administeredWithReviewRequest();
+    const event = await prisma.outboxEvent.findFirstOrThrow();
+    await prisma.outboxEvent.update({
+      where: { id: event.id },
+      data: {
+        leaseUntil: new Date(Date.now() + 60_000),
+        attemptId: 'stale-worker',
+      },
+    });
+    expect(await notifications.processPending()).toEqual({
+      processed: 0,
+      failed: 0,
+    });
+
+    await prisma.outboxEvent.update({
+      where: { id: event.id },
+      data: { leaseUntil: new Date(Date.now() - 1000) },
+    });
+    expect(await notifications.processPending()).toEqual({
+      processed: 1,
+      failed: 0,
+    });
+    const reclaimed = await prisma.outboxEvent.findFirstOrThrow();
+    expect(reclaimed.processedAt).not.toBeNull();
+    expect(reclaimed.attemptId).not.toBe('stale-worker');
+    const lateWrite = await prisma.outboxEvent.updateMany({
+      where: { id: event.id, attemptId: 'stale-worker' },
+      data: { processedAt: null, lastError: 'stale overwrite' },
+    });
+    expect(lateWrite.count).toBe(0);
+  });
+
+  it('backs off on failure and keeps the exhausted event consultable until an authorized retry', async () => {
+    const malformed = await prisma.outboxEvent.create({
+      data: {
+        organizationId: physician.organizationId,
+        kind: 'PHYSICIAN_REVIEW_REQUESTED',
+        payload: Prisma.JsonNull,
+      },
+    });
+    expect(await notifications.processPending()).toEqual({
+      processed: 0,
+      failed: 1,
+    });
+    const failedOnce = await prisma.outboxEvent.findUniqueOrThrow({
+      where: { id: malformed.id },
+    });
+    expect(failedOnce.attempts).toBe(1);
+    expect(failedOnce.lastError).not.toBeNull();
+    expect(failedOnce.leaseUntil).toBeNull();
+    expect(failedOnce.nextAttemptAt.getTime()).toBeGreaterThan(Date.now());
+    expect(await notifications.processPending()).toEqual({
+      processed: 0,
+      failed: 0,
+    });
+
+    await prisma.outboxEvent.update({
+      where: { id: malformed.id },
+      data: { attempts: 5, nextAttemptAt: new Date(0) },
+    });
+    expect(await notifications.processPending()).toEqual({
+      processed: 0,
+      failed: 0,
+    });
+    expect((await notifications.outboxStatus(physician)).deadLettered).toBe(1);
+
+    await prisma.outboxEvent.update({
+      where: { id: malformed.id },
+      data: {
+        payload: {
+          therapyId: 'therapy-1',
+          patientId: 'patient-1',
+          patientName: 'Paciente Retry',
+          reason: 'Reprocessamento autorizado',
+          recipientProfessionalId: physician.professionalId!,
+        },
+      },
+    });
+    const retried = await notifications.retryOutboxEvent(
+      malformed.id,
+      physician,
+    );
+    expect(retried).toEqual({ requeued: true, id: malformed.id });
+    const requeued = await prisma.outboxEvent.findUniqueOrThrow({
+      where: { id: malformed.id },
+    });
+    expect(requeued.attempts).toBe(0);
+    expect(requeued.processedAt).toBeNull();
+    const audit = await prisma.auditLog.findFirstOrThrow({
+      where: { entityId: malformed.id },
+    });
+    expect(audit.action).toBe('OUTBOX_EVENT_REQUEUED');
+    expect(audit.userId).toBe(physician.id);
+
+    expect(await notifications.processPending()).toEqual({
+      processed: 1,
+      failed: 0,
+    });
+    expect(await prisma.notification.count()).toBe(1);
+  });
+
+  it('rejects retry of events that are not terminally failed', async () => {
+    await administeredWithReviewRequest();
+    const event = await prisma.outboxEvent.findFirstOrThrow();
+    await expect(
+      notifications.retryOutboxEvent(event.id, physician),
+    ).rejects.toThrow(ConflictException);
+    await notifications.processPending();
+    await expect(
+      notifications.retryOutboxEvent(event.id, physician),
+    ).rejects.toThrow(ConflictException);
+    await expect(
+      notifications.retryOutboxEvent('01J0000000000000000000FAKE', physician),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('persists public contact and authenticated support requests with confirmation', async () => {

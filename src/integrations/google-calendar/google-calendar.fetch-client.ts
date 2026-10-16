@@ -12,9 +12,9 @@ import {
   GoogleWatchResponse,
 } from './google-calendar.client';
 
-const TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
-const CALENDAR_BASE = 'https://www.googleapis.com/calendar/v3';
+const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
+
+const MAX_RETRY_AFTER_SECONDS = 15 * 60;
 
 @Injectable()
 export class GoogleCalendarFetchClient extends GoogleCalendarClient {
@@ -41,11 +41,60 @@ export class GoogleCalendarFetchClient extends GoogleCalendarClient {
   }
 
   async revokeToken(token: string): Promise<void> {
-    await fetch(REVOKE_URL, {
+    const response = await this.send(this.config.revokeEndpointUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ token }).toString(),
     });
+    await this.readBody(response);
+    if (!response.ok)
+      throw new GoogleApiError(
+        response.status,
+        null,
+        this.retryAfter(response),
+        `Google revoke endpoint ${response.status}`,
+      );
+  }
+
+  private async send(url: string, init: RequestInit): Promise<Response> {
+    try {
+      return await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(this.config.httpTimeoutMs),
+      });
+    } catch (error) {
+      const name = error instanceof Error ? error.name : 'unknown';
+      throw GoogleApiError.network(
+        name === 'TimeoutError' || name === 'AbortError'
+          ? `Google request timed out after ${this.config.httpTimeoutMs}ms`
+          : `Google request transport failure: ${name}`,
+      );
+    }
+  }
+
+  private async readBody(response: Response): Promise<string> {
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    const reader = response.body?.getReader();
+    if (!reader) return '';
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > MAX_RESPONSE_BYTES) {
+          await reader.cancel();
+          throw GoogleApiError.network(
+            'Google response body exceeds size limit',
+          );
+        }
+        chunks.push(value);
+      }
+    } catch (error) {
+      const name = error instanceof Error ? error.name : 'unknown';
+      throw GoogleApiError.network(`Google response body read failed: ${name}`);
+    }
+    return Buffer.concat(chunks).toString('utf8');
   }
 
   async insertEvent(
@@ -137,7 +186,7 @@ export class GoogleCalendarFetchClient extends GoogleCalendarClient {
     if (!clientId || !clientSecret) {
       throw new ServiceUnavailableException('GOOGLE_TOKEN_KEY_UNAVAILABLE');
     }
-    const response = await fetch(TOKEN_URL, {
+    const response = await this.send(this.config.tokenEndpointUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -146,16 +195,35 @@ export class GoogleCalendarFetchClient extends GoogleCalendarClient {
         client_secret: clientSecret,
       }).toString(),
     });
-    const body = (await response.json().catch(() => ({}))) as Record<
-      string,
-      unknown
-    >;
+    const text = await this.readBody(response);
+    let body: Record<string, unknown> = {};
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : {};
+    } catch {
+      if (response.ok) {
+        throw GoogleApiError.network(
+          'Google token endpoint returned invalid JSON',
+        );
+      }
+    }
     if (!response.ok) {
       throw new GoogleApiError(
         response.status,
         typeof body.error === 'string' ? body.error : null,
         this.retryAfter(response),
         `Google token endpoint ${response.status}`,
+      );
+    }
+    if (
+      !body ||
+      typeof body.access_token !== 'string' ||
+      !body.access_token ||
+      typeof body.expires_in !== 'number' ||
+      !Number.isFinite(body.expires_in) ||
+      body.expires_in <= 0
+    ) {
+      throw GoogleApiError.network(
+        'Google token endpoint returned invalid token fields',
       );
     }
     return body as unknown as GoogleTokenResponse;
@@ -167,18 +235,29 @@ export class GoogleCalendarFetchClient extends GoogleCalendarClient {
     path: string,
     body?: unknown,
   ): Promise<T> {
-    const response = await fetch(`${CALENDAR_BASE}${path}`, {
-      method,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    const response = await this.send(
+      `${this.config.calendarApiBaseUrl}${path}`,
+      {
+        method,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        },
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       },
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
+    );
     if (!response.ok) {
-      const errorBody = (await response.json().catch(() => ({}))) as {
+      const errorText = await this.readBody(response).catch(() => '');
+      let errorBody: {
         error?: { message?: string; errors?: Array<{ reason?: string }> };
-      };
+      } = {};
+      try {
+        errorBody = errorText
+          ? (JSON.parse(errorText) as typeof errorBody)
+          : {};
+      } catch {
+
+      }
       throw new GoogleApiError(
         response.status,
         errorBody.error?.errors?.[0]?.reason ?? null,
@@ -186,15 +265,50 @@ export class GoogleCalendarFetchClient extends GoogleCalendarClient {
         errorBody.error?.message ?? `Google Calendar API ${response.status}`,
       );
     }
-    if (response.status === 204) return undefined as T;
-    const text = await response.text();
-    return (text ? JSON.parse(text) : undefined) as T;
+    const emptyAllowed = method === 'DELETE' || path === '/channels/stop';
+    if (response.status === 204 && emptyAllowed) return undefined as T;
+    const text = await this.readBody(response);
+    if (!text && emptyAllowed) return undefined as T;
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+        throw new Error('Invalid object');
+      const value = parsed as Record<string, unknown>;
+      if (
+        !emptyAllowed &&
+        method !== 'GET' &&
+        (typeof value.id !== 'string' || !value.id)
+      )
+        throw new Error('Missing id');
+      if (
+        path.endsWith('/watch') &&
+        (typeof value.resourceId !== 'string' || !value.resourceId)
+      )
+        throw new Error('Missing resourceId');
+      if (
+        method === 'GET' &&
+        value.items !== undefined &&
+        !Array.isArray(value.items)
+      )
+        throw new Error('Invalid items');
+      return parsed as T;
+    } catch {
+      throw GoogleApiError.network('Google Calendar API returned invalid JSON');
+    }
   }
 
   private retryAfter(response: Response): number | null {
     const header = response.headers.get('Retry-After');
     if (!header) return null;
     const seconds = Number(header);
-    return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+    if (Number.isFinite(seconds) && seconds > 0) {
+      return Math.min(seconds, MAX_RETRY_AFTER_SECONDS);
+    }
+    const date = Date.parse(header);
+    if (Number.isFinite(date)) {
+      const delta = Math.ceil((date - Date.now()) / 1000);
+      if (delta > 0) return Math.min(delta, MAX_RETRY_AFTER_SECONDS);
+    }
+    return null;
   }
 }

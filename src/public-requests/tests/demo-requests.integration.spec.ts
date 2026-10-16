@@ -27,6 +27,7 @@ describe('Demo request HTTP and durable email - Integration', () => {
   let prisma: PrismaService;
   let dispatcher: DemoEmailDispatcher;
   const send = jest.fn();
+  const sendConfirmation = jest.fn();
   const oldRecipient = process.env.DEMO_REQUEST_EMAIL_TO;
 
   beforeAll(async () => {
@@ -36,7 +37,10 @@ describe('Demo request HTTP and durable email - Integration', () => {
       .overrideProvider(PrismaService)
       .useValue(TestDatabaseManager.getInstance())
       .overrideProvider(IEmailService)
-      .useValue({ sendDemoRequest: send })
+      .useValue({
+        sendDemoRequest: send,
+        sendDemoRequestConfirmation: sendConfirmation,
+      })
       .compile();
     prisma = module.get(PrismaService);
     dispatcher = module.get(DemoEmailDispatcher);
@@ -48,6 +52,7 @@ describe('Demo request HTTP and durable email - Integration', () => {
   beforeEach(async () => {
     await TestDatabaseManager.cleanAll();
     send.mockReset().mockResolvedValue(undefined);
+    sendConfirmation.mockReset().mockResolvedValue(undefined);
   });
 
   afterAll(async () => {
@@ -77,6 +82,10 @@ describe('Demo request HTTP and durable email - Integration', () => {
     expect(typeof receipt.id).toBe('string');
     expect(typeof receipt.createdAt).toBe('string');
     expect(send).not.toHaveBeenCalled();
+    expect(sendConfirmation).toHaveBeenCalledTimes(1);
+    expect(sendConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({ email: input.email, name: input.name }),
+    );
     const saved = await prisma.demoRequest.findFirstOrThrow();
     expect(saved).toMatchObject(input);
     expect(saved.emailNextAttemptAt).not.toBeNull();
@@ -105,6 +114,7 @@ describe('Demo request HTTP and durable email - Integration', () => {
       new Set(responses.map((r) => (r.body as { id: string }).id)).size,
     ).toBe(1);
     expect(await prisma.demoRequest.count()).toBe(1);
+    expect(sendConfirmation).toHaveBeenCalledTimes(1);
     await request(app.getHttpServer())
       .post('/demo-requests')
       .send({ ...input, name: 'Outra' })

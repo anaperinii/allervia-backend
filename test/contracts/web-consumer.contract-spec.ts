@@ -1,17 +1,15 @@
 import { execFile } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { Test } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import cookieParser from 'cookie-parser';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SessionService } from 'src/security/session/session.service';
 import { IAuthSessionRepository } from 'src/security/session/auth-session.repository';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from 'src/app.module';
+import { configureApp } from 'src/app.setup';
 import { PrismaService } from 'src/infra/database/prisma.service';
-import { DomainExceptionFilter } from 'src/infra/filters/domain-exception.filter';
-import { buildValidationPipe } from 'src/infra/http/validation-pipe';
 import { ProtocolCatalogService } from 'src/treatment-protocols/allergen-immunotherapy/protocol-catalog/protocol-catalog.service';
 import { CreateImmunotherapyUseCase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/create-immunotherapy.use-case';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
@@ -19,7 +17,7 @@ import { TestFactories } from 'test/factories';
 import { syntheticProtocolDefinition } from 'test/fixtures/configured-protocol';
 
 describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
-  let app: INestApplication;
+  let app: NestExpressApplication;
 
   afterAll(async () => {
     if (app) await app.close();
@@ -43,10 +41,8 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
       .overrideProvider(PrismaService)
       .useValue(TestDatabaseManager.getInstance())
       .compile();
-    app = module.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalPipes(buildValidationPipe());
-    app.useGlobalFilters(new DomainExceptionFilter());
+    app = module.createNestApplication<NestExpressApplication>();
+    configureApp(app);
     await app.listen(0, '127.0.0.1');
     const contractDirectory = resolve('docs/integration-baseline');
     mkdirSync(contractDirectory, { recursive: true });
@@ -126,12 +122,30 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
       ALLERVIA_CONTRACT_COOKIE: 'allervia_session_v2=' + issued.sessionSecret,
       ALLERVIA_CONTRACT_CSRF: issued.csrfToken,
       ALLERVIA_CONTRACT_DOSE_ID: therapy.firstDose.id,
+      ALLERVIA_CONTRACT_PATIENT_ID: therapy.patient.id,
+      ALLERVIA_CONTRACT_PHYSICIAN_ID: user.professionalId!,
     };
     const run = promisify(execFile);
+    // Read structured counters so additional cases do not break the harness
+    // and an empty consumer suite cannot pass.
+    const reportPath = resolve(
+      web,
+      'artifacts',
+      'contract',
+      'web-consumer-results.json',
+    );
+    mkdirSync(resolve(web, 'artifacts', 'contract'), { recursive: true });
     try {
-      const result = await run(
+      await run(
         process.execPath,
-        [vitest, 'run', '--config', 'vitest.contract.config.ts'],
+        [
+          vitest,
+          'run',
+          '--config',
+          'vitest.contract.config.ts',
+          '--reporter=json',
+          `--outputFile=${reportPath}`,
+        ],
         {
           cwd: web,
           env: childEnv,
@@ -139,7 +153,17 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
           maxBuffer: 1024 * 1024,
         },
       );
-      expect(result.stdout).toContain('10 passed');
+      const report = JSON.parse(readFileSync(reportPath, 'utf8')) as {
+        numTotalTests: number;
+        numPassedTests: number;
+        numFailedTests: number;
+        numPendingTests?: number;
+        numTodoTests?: number;
+      };
+      expect(report.numFailedTests).toBe(0);
+      expect(report.numTotalTests).toBeGreaterThan(0);
+      expect(report.numPassedTests).toBe(report.numTotalTests);
+      expect((report.numPendingTests ?? 0) + (report.numTodoTests ?? 0)).toBe(0);
       expect(
         await prisma.dose.count({
           where: { immunotherapyId: therapy.immunotherapy.id },

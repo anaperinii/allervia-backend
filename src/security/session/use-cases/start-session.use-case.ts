@@ -21,6 +21,8 @@ export interface StartSessionInput {
   clientIp: string | null;
 }
 
+const ACCOUNT_CEILING_MULTIPLIER = 5;
+
 export type StartSessionResult =
   | { status: 'AUTHENTICATED'; issued: IssuedSession; context: AuthContext }
   | {
@@ -52,9 +54,15 @@ export class StartSessionUseCase {
     const email = input.email.trim().toLowerCase();
 
     await this.rateLimit.assertWithinLimit(
+      this.accountIpPair(email, input.clientIp),
+      'account-ip',
+      AUTH_OPERATIONS.login,
+    );
+    await this.rateLimit.assertWithinLimit(
       email,
       'account',
       AUTH_OPERATIONS.login,
+      this.config.maxLoginAttempts * ACCOUNT_CEILING_MULTIPLIER,
     );
     if (input.clientIp) {
       await this.rateLimit.assertWithinLimit(
@@ -168,11 +176,21 @@ export class StartSessionUseCase {
     return { token, expiresAt };
   }
 
+  private accountIpPair(email: string, clientIp: string | null): string {
+    return `${email}|${clientIp ?? 'unknown'}`;
+  }
+
   private async registerFailure(
     email: string,
     clientIp: string | null,
   ): Promise<void> {
     await this.rateLimit.record(email, 'account', AUTH_OPERATIONS.login, false);
+    await this.rateLimit.record(
+      this.accountIpPair(email, clientIp),
+      'account-ip',
+      AUTH_OPERATIONS.login,
+      false,
+    );
     if (clientIp) {
       await this.rateLimit.record(clientIp, 'ip', AUTH_OPERATIONS.login, false);
     }

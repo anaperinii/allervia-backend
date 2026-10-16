@@ -9,6 +9,7 @@ import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-
 import { ProtocolCatalogService } from '../../../../protocol-catalog/protocol-catalog.service';
 import { ConfiguredDoseService } from '../../../configured-dose.service';
 import { ClinicalScheduleService } from '../../../clinical-schedule.service';
+import { DoseCorrectionService } from '../../../dose-correction.service';
 import { CreateImmunotherapyUseCase } from '../../../../therapies/use-cases/create-immunotherapy.use-case';
 import type { CreateImmunotherapyDto } from '../../../../therapies/dtos/create-immunotherapy.dto';
 
@@ -18,6 +19,7 @@ describe('Clinical schedule and metrics - Integration', () => {
   let catalog: ProtocolCatalogService;
   let clinical: ConfiguredDoseService;
   let schedule: ClinicalScheduleService;
+  let correction: DoseCorrectionService;
   let create: CreateImmunotherapyUseCase;
   let factories: TestFactories;
   let physician: AuthenticatedUserPayload;
@@ -33,6 +35,7 @@ describe('Clinical schedule and metrics - Integration', () => {
     catalog = module.get(ProtocolCatalogService);
     clinical = module.get(ConfiguredDoseService);
     schedule = module.get(ClinicalScheduleService);
+    correction = module.get(DoseCorrectionService);
     create = module.get(CreateImmunotherapyUseCase);
     factories = new TestFactories(prisma);
   });
@@ -269,6 +272,54 @@ describe('Clinical schedule and metrics - Integration', () => {
     expect(year.therapies.inProgress).toBe(2);
     expect(year.therapies.buildUp).toBe(2);
     expect(year.therapies.maintenance).toBe(0);
+  });
+
+  it('removes a retracted dose from applications, byDay and adherence', async () => {
+    const result = await create.execute(
+      createInput(physician, 'Retratada'),
+      physician,
+    );
+    await administerFirst(
+      result.firstDose.id,
+      physician,
+      '2026-01-02T01:00:00Z',
+    );
+
+    const before = await schedule.metrics({ ...JAN }, physician);
+    expect(before.applications.total).toBe(1);
+    expect(before.applications.byDay).toEqual([
+      { day: '2026-01-01', count: 1 },
+    ]);
+    expect(before.adherence).toEqual({
+      numerator: 1,
+      denominator: 1,
+      ratio: 1,
+    });
+
+    const dose = await prisma.dose.findUniqueOrThrow({
+      where: { id: result.firstDose.id },
+      select: { revision: true, immunotherapy: { select: { revision: true } } },
+    });
+    await correction.retract(
+      result.firstDose.id,
+      {
+        reason: 'Registro em erro.',
+        expectedRevision: dose.revision,
+        expectedTherapyRevision: dose.immunotherapy.revision,
+      },
+      physician,
+    );
+
+    const after = await schedule.metrics({ ...JAN }, physician);
+    expect(after.applications.total).toBe(0);
+    expect(after.applications.onSchedule).toBe(0);
+    expect(after.applications.offSchedule).toBe(0);
+    expect(after.applications.byDay).toEqual([]);
+    expect(after.adherence).toEqual({
+      numerator: 0,
+      denominator: 0,
+      ratio: null,
+    });
   });
 
   it('returns a null adherence ratio when there is no base, never a mock number', async () => {

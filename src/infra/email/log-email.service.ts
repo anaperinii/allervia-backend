@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { IEmailService, InviteEmailParams } from './email.service';
+import {
+  DemoConfirmationEmailParams,
+  IEmailService,
+  InviteEmailParams,
+} from './email.service';
 
 @Injectable()
 export class LogEmailService extends IEmailService {
@@ -8,6 +12,15 @@ export class LogEmailService extends IEmailService {
   }
 
   private readonly logger = new Logger('EmailService');
+
+  sendDemoRequestConfirmation(
+    params: DemoConfirmationEmailParams,
+  ): Promise<void> {
+    this.logger.log(
+      `[DEV] Confirmação de demonstração enviada para ${params.email}`,
+    );
+    return Promise.resolve();
+  }
 
   sendPasswordResetLink(email: string, token: string): Promise<void> {
     this.logger.log(

@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { User, UserType } from '@prisma/client';
 
 export class UserResponseDto {
@@ -13,11 +14,24 @@ export class UserResponseDto {
     };
   }
 
+  @ApiProperty()
   id: string;
+
+  @ApiProperty()
   email: string;
+
+  @ApiProperty({ enum: UserType })
   type: UserType;
+
+  @ApiProperty()
   isActive: boolean;
+
+  @ApiProperty()
   isArchived: boolean;
+
+  @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
+
+  @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
 }

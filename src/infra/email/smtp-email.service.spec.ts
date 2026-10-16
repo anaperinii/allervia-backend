@@ -66,4 +66,14 @@ describe('SMTP demo notification', () => {
       'SMTP_RECIPIENT_REJECTED',
     );
   });
+
+  it('sends the visitor a confirmation without any protocol number', async () => {
+    sendMail.mockResolvedValue({ accepted: ['visitor@example.com'], rejected: [] });
+    await service.sendDemoRequestConfirmation(input);
+    const sent = sendMail.mock.calls[0][0] as { to: string; text: string };
+    expect(sent.to).toBe('visitor@example.com');
+    expect(sent.text).not.toMatch(/Protocolo/i);
+    expect(sent.text).toContain('Olá, Nome.');
+    expect(sent.text).toContain('Especialidade: Alergologia');
+  });
 });

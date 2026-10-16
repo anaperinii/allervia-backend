@@ -23,8 +23,9 @@ export class AuthRateLimitService {
 
   async assertWithinLimit(
     identifier: string,
-    scope: 'account' | 'ip',
+    scope: 'account' | 'ip' | 'account-ip',
     operation: AuthOperation,
+    limit?: number,
   ): Promise<void> {
     const since = new Date(Date.now() - this.config.loginAttemptWindowMs);
     const failures = await this.repository.countFailedAttempts(
@@ -33,7 +34,7 @@ export class AuthRateLimitService {
       since,
     );
 
-    if (failures >= this.config.maxLoginAttempts) {
+    if (failures >= (limit ?? this.config.maxLoginAttempts)) {
       throw new CodedTooManyRequestsException(
         AUTH_ERROR_CODES.tooManyAttempts,
         AUTH_MESSAGES.tooManyAttempts,
@@ -43,7 +44,7 @@ export class AuthRateLimitService {
 
   async record(
     identifier: string,
-    scope: 'account' | 'ip',
+    scope: 'account' | 'ip' | 'account-ip',
     operation: AuthOperation,
     succeeded: boolean,
   ): Promise<void> {

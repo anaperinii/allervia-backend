@@ -11,6 +11,17 @@ export interface DemoEmailParams {
   professionals: number;
 }
 
+export interface DemoConfirmationEmailParams {
+  name: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  solution: string;
+  specialty: string;
+  professionals: number;
+}
+
 export interface InviteEmailParams {
   email: string;
   fullName: string;
@@ -21,6 +32,10 @@ export interface InviteEmailParams {
 
 export abstract class IEmailService {
   abstract sendDemoRequest(params: DemoEmailParams): Promise<void>;
+
+  abstract sendDemoRequestConfirmation(
+    params: DemoConfirmationEmailParams,
+  ): Promise<void>;
 
   abstract sendPasswordResetLink(email: string, token: string): Promise<void>;
 

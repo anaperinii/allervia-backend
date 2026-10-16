@@ -21,17 +21,18 @@ export abstract class IUserInviteRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<UserInvite>;
 
+  abstract markAsUsed(
+    id: string,
+    usedAt: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<boolean>;
+
   abstract findById(
     id: string,
     currentUser: AuthenticatedUserPayload,
   ): Promise<UserInvite | null>;
 
   abstract findByToken(token: string): Promise<UserInvite | null>;
-
-  abstract findByOrganization(
-    organizationId: string,
-    filters?: FindInvitesFilters,
-  ): Promise<UserInvite[]>;
 
   abstract findPageByOrganization(
     organizationId: string,

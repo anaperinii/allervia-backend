@@ -11,7 +11,7 @@ export class FindInviteContextUseCase {
     const context = await this.inviteRepository.findContextByToken(token);
 
     if (!context) {
-      throw new NotFoundException(INVITE_MESSAGES.notFound(token));
+      throw new NotFoundException(INVITE_MESSAGES.notFound);
     }
 
     const invite = await this.inviteRepository.findByToken(token);

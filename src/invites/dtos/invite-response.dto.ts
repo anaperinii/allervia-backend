@@ -10,6 +10,14 @@ export const INVITE_STATUS = {
 
 export type InviteStatus = (typeof INVITE_STATUS)[keyof typeof INVITE_STATUS];
 
+export class InviteCreatedByDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  email: string;
+}
+
 export class InviteResponseDto {
   @ApiProperty()
   id: string;
@@ -26,17 +34,46 @@ export class InviteResponseDto {
   @ApiProperty({ enum: Object.values(INVITE_STATUS) })
   status: InviteStatus;
 
-  @ApiProperty()
+  @ApiProperty({ format: 'date-time' })
   expiresAt: Date;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true, format: 'date-time' })
   usedAt: Date | null;
 
-  @ApiProperty()
+  @ApiProperty({ format: 'date-time' })
   createdAt: Date;
 
-  @ApiPropertyOptional({ description: 'Quem emitiu o convite' })
-  createdBy?: { id: string; email: string };
+  @ApiPropertyOptional({
+    type: InviteCreatedByDto,
+    description: 'Quem emitiu o convite',
+  })
+  createdBy?: InviteCreatedByDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Presente ao criar/reenviar: false indica que o e-mail não foi aceito pelo provedor e o convite deve ser reenviado (o convite em si está persistido).',
+  })
+  emailDelivered?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Presente no reenvio: true quando o convite expirado foi cancelado e reemitido com novo token.',
+  })
+  reissued?: boolean;
+}
+
+export class InvitePageDto {
+  @ApiProperty({ type: [InviteResponseDto] })
+  items: InviteResponseDto[];
+
+  @ApiProperty()
+  page: number;
+
+  @ApiProperty()
+  pageSize: number;
+
+  @ApiProperty({ description: 'Total de registros no escopo da consulta' })
+  total: number;
 }
 
 export class InviteContextDto {

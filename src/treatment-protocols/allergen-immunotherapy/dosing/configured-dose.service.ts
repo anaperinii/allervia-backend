@@ -7,7 +7,6 @@
   NotFoundException,
 } from '@nestjs/common';
 import { accessibleBy } from '@casl/prisma';
-import { createHash } from 'node:crypto';
 import { Prisma, Role, TherapyStatus } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { IAuditLogService } from 'src/infra/audit/audit-log.service';
@@ -22,6 +21,12 @@ import {
   json,
 } from '../protocol-catalog/protocol-catalog.service';
 import { enqueueOutbox } from 'src/notifications/notifications.service';
+import {
+  clinicalCommandHash,
+  clinicalCommandKey,
+  commitClinicalCommand,
+  replayClinicalCommand,
+} from '../clinical-command';
 import {
   validateResolvedPrescription,
   ProtocolValidationError,
@@ -61,12 +66,6 @@ export interface TherapyMilestones {
   maintenanceStartDate: Date | null;
 }
 
-/**
- * Marcos derivados das doses vivas: a indução começa na primeira dose não
- * arquivada e a manutenção na primeira aplicação de fase MAINTENANCE. Reagendar
- * a primeira dose ou retratar a aplicação que marcou a manutenção muda esses
- * marcos, então eles são recalculados em vez de escritos uma única vez.
- */
 export async function therapyMilestones(
   tx: Prisma.TransactionClient,
   immunotherapyId: string,
@@ -98,10 +97,6 @@ export async function therapyMilestones(
   };
 }
 
-/**
- * Compara os marcos recalculados com os gravados e devolve apenas o que mudou,
- * para a escrita e a auditoria ficarem vazias quando nada se move.
- */
 export function milestoneChanges(
   current: { inductionStartDate: Date; maintenanceStartDate: Date | null },
   next: TherapyMilestones | null,
@@ -178,17 +173,6 @@ export function plannedDoseData(
     updatedById: userId,
   };
 }
-function canonical(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === 'object')
-    return Object.fromEntries(
-      Object.entries(value)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([key, item]) => [key, canonical(item)]),
-    );
-  return value;
-}
-
 @Injectable()
 export class ConfiguredDoseService {
   constructor(
@@ -445,8 +429,14 @@ export class ConfiguredDoseService {
     dto: UpdateScheduledDoseDto,
     user: AuthenticatedUserPayload,
   ) {
+    const hash = dto.idempotencyKey
+      ? clinicalCommandHash('DOSE_SCHEDULE_EDIT', dto)
+      : null;
     return this.prisma.$transaction(async (tx) => {
       const context = await this.context(tx, id, user, 'update');
+      const key = clinicalCommandKey(user, id, dto.idempotencyKey);
+      const previous = await replayClinicalCommand(tx, key, hash);
+      if (previous) return previous.result as never;
       this.active(context, dto);
       const { step } = this.resolve(context, dto.values);
       if (!dto.reason?.trim())
@@ -464,8 +454,7 @@ export class ConfiguredDoseService {
           updatedById: user.id,
         },
       });
-      // Reagendar a primeira dose move o início da indução; o recálculo roda
-      // depois da escrita da dose para enxergar o novo `scheduledAt`.
+
       const milestones = milestoneChanges(
         context.therapy,
         await therapyMilestones(tx, context.therapy.id),
@@ -512,7 +501,10 @@ export class ConfiguredDoseService {
         },
         tx,
       );
-      return { ...updated, therapyRevision: therapy.revision };
+      return commitClinicalCommand(tx, key, hash, {
+        ...updated,
+        therapyRevision: therapy.revision,
+      });
     });
   }
   async administer(
@@ -522,26 +514,13 @@ export class ConfiguredDoseService {
   ) {
     if (!dto.idempotencyKey?.trim())
       throw new BadRequestException('IDEMPOTENCY_KEY_REQUIRED');
-    const hash = createHash('sha256')
-      .update(JSON.stringify(canonical(dto)))
-      .digest('hex');
+    const hash = clinicalCommandHash('DOSE_ADMINISTER', dto);
     return this.prisma.$transaction(
       async (tx) => {
         const context = await this.context(tx, id, user, 'update');
-        const key = {
-          organizationId: user.organizationId,
-          actorId: user.id,
-          doseId: id,
-          key: dto.idempotencyKey,
-        };
-        const previous = await tx.clinicalCommand.findUnique({
-          where: { organizationId_actorId_doseId_key: key },
-        });
-        if (previous) {
-          if (previous.requestHash !== hash)
-            throw new ConflictException('IDEMPOTENCY_KEY_REUSED');
-          return previous.result;
-        }
+        const key = clinicalCommandKey(user, id, dto.idempotencyKey);
+        const previous = await replayClinicalCommand(tx, key, hash);
+        if (previous) return previous.result as never;
         this.active(context, dto);
         const { step, input } = this.resolve(context, dto.values);
         const administeredAt = this.date(dto.administeredAt);
@@ -725,59 +704,21 @@ export class ConfiguredDoseService {
           },
           tx,
         );
-        const result = json({
+        return commitClinicalCommand(tx, key, hash, {
           dose: updated,
           successor,
           recommendation,
           therapyRevision: therapy.revision,
         });
-        await tx.clinicalCommand.create({
-          data: { ...key, requestHash: hash, result },
-        });
-        return result;
       },
       { maxWait: 10000, timeout: 15000 },
     );
-  }
-  async therapyStatus(
-    id: string,
-    status: TherapyStatus,
-    expectedRevision: number,
-    user: AuthenticatedUserPayload,
-  ) {
-    return this.prisma.$transaction(async (tx) => {
-      const therapy = await this.lockTherapy(tx, id, user);
-      if (therapy.revision !== expectedRevision)
-        throw new ConflictException('STALE_CLINICAL_REVISION');
-      if (therapy.status === status)
-        throw new BadRequestException('UNCHANGED_THERAPY_STATUS');
-      const result = await tx.immunotherapy.update({
-        where: { id },
-        data: { status, revision: { increment: 1 }, updatedById: user.id },
-      });
-      await this.audit.record(
-        {
-          userId: user.id,
-          organizationId: user.organizationId,
-          entityType: 'Immunotherapy',
-          entityId: id,
-          action: 'IMMUNOTHERAPY_STATUS_CHANGED',
-          oldValues: { status: therapy.status },
-          newValues: { status },
-          changedFields: ['status'],
-        },
-        tx,
-      );
-      return result;
-    });
   }
   async rejectLegacyWrite(
     id: string,
     user: AuthenticatedUserPayload,
   ): Promise<never> {
     await this.read(id, user);
-    throw new GoneException(
-      'Use scheduled, preview and administer commands. Retraction requires a dedicated clinical revision.',
-    );
+    throw new GoneException('ENDPOINT_RETIRED');
   }
 }

@@ -1,3 +1,4 @@
+import { randomBytes, randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   CalendarSyncJob,
@@ -16,12 +17,11 @@ import { ChannelLifecycleService } from './channel-lifecycle.service';
 import { CalendarInboundSyncService } from './calendar-inbound-sync.service';
 
 export const MAX_ATTEMPTS = 8;
-const LEASE_MS = 60_000;
+const LEASE_MS = 600_000;
 const BASE_BACKOFF_MS = 30_000;
 const MAX_BACKOFF_MS = 3_600_000;
 
 const APPOINTMENT_INCLUDE = {
-  patient: { select: { fullName: true } },
   organization: { select: { timeZone: true } },
   calendarEventLink: true,
 } satisfies Prisma.AppointmentInclude;
@@ -61,29 +61,43 @@ export class CalendarSyncService {
     let processed = 0;
     let failed = 0;
     for (const job of candidates) {
+      const attemptId = randomUUID();
       const leased = await this.prisma.calendarSyncJob.updateMany({
         where: {
           id: job.id,
           processedAt: null,
           OR: [{ leaseUntil: job.leaseUntil }, { leaseUntil: null }],
         },
-        data: { leaseUntil: new Date(Date.now() + LEASE_MS) },
+        data: {
+          leaseUntil: new Date(Date.now() + LEASE_MS),
+          attemptId,
+          pendingKey: null,
+        },
       });
       if (leased.count === 0) continue;
 
       try {
         await this.dispatch(job);
-        await this.prisma.calendarSyncJob.update({
-          where: { id: job.id },
-          data: { processedAt: new Date(), leaseUntil: null, pendingKey: null },
-        });
+        await this.complete(job, attemptId);
         processed += 1;
       } catch (error) {
         failed += 1;
-        await this.scheduleRetry(job, error);
+        await this.scheduleRetry(job, attemptId, error);
       }
     }
     return { processed, failed };
+  }
+
+  private async complete(job: CalendarSyncJob, attemptId: string) {
+    const updated = await this.prisma.calendarSyncJob.updateMany({
+      where: { id: job.id, attemptId },
+      data: { processedAt: new Date(), leaseUntil: null, lastError: null },
+    });
+    if (updated.count === 0) {
+      this.logger.debug(
+        `calendar sync job ${job.id} reassigned to another worker; completion by attempt ${attemptId} discarded`,
+      );
+    }
   }
 
   private async dispatch(job: CalendarSyncJob): Promise<void> {
@@ -188,18 +202,77 @@ export class CalendarSyncService {
       }
     }
 
-    const inserted = await this.client.insertEvent(
-      accessToken,
-      connection.calendarId,
-      payload,
+    await this.prisma.googleCalendarEventLink.createMany({
+      data: {
+        organizationId: appointment.organizationId,
+        appointmentId: appointment.id,
+        connectionId: connection.id,
+        googleEventId: this.newEventId(),
+      },
+      skipDuplicates: true,
+    });
+    const reserved =
+      await this.prisma.googleCalendarEventLink.findUniqueOrThrow({
+        where: { appointmentId: appointment.id },
+      });
+    if (reserved.deletedAt || (link && link.lastSyncedHash !== null)) {
+      await this.prisma.googleCalendarEventLink.updateMany({
+        where: {
+          id: reserved.id,
+          googleEventId: reserved.googleEventId,
+          deletedAt: reserved.deletedAt,
+          lastSyncedHash: reserved.lastSyncedHash,
+        },
+        data: {
+          googleEventId: this.newEventId(),
+          deletedAt: null,
+          lastSyncedHash: null,
+          etag: null,
+        },
+      });
+    }
+    const pending = await this.prisma.googleCalendarEventLink.findUniqueOrThrow(
+      { where: { appointmentId: appointment.id } },
     );
-    await this.saveLink(
-      appointment,
-      connection,
-      inserted.id,
-      inserted.etag,
-      hash,
-    );
+    const pendingEventId = pending.googleEventId;
+
+    try {
+      const inserted = await this.client.insertEvent(
+        accessToken,
+        connection.calendarId,
+        { ...payload, id: pendingEventId },
+      );
+      await this.saveLink(
+        appointment,
+        connection,
+        inserted.id,
+        inserted.etag,
+        hash,
+      );
+    } catch (error) {
+      if (error instanceof GoogleApiError && error.status === 409) {
+
+        const patched = await this.client.patchEvent(
+          accessToken,
+          connection.calendarId,
+          pendingEventId,
+          payload,
+        );
+        await this.saveLink(
+          appointment,
+          connection,
+          patched.id,
+          patched.etag,
+          hash,
+        );
+        return;
+      }
+      throw error;
+    }
+  }
+
+  private newEventId(): string {
+    return randomBytes(16).toString('hex');
   }
 
   private async removeEvent(
@@ -234,26 +307,65 @@ export class CalendarSyncService {
     connection: GoogleCalendarConnection,
     googleEventId: string,
     etag: string | undefined,
-    hash: string,
+    hash: string | null,
   ): Promise<void> {
-    await this.prisma.googleCalendarEventLink.upsert({
-      where: { appointmentId: appointment.id },
-      create: {
-        organizationId: appointment.organizationId,
+
+    await this.prisma.googleCalendarEventLink.updateMany({
+      where: {
         appointmentId: appointment.id,
         connectionId: connection.id,
         googleEventId,
-        etag: etag ?? null,
-        lastSyncedHash: hash,
-      },
-      update: {
-        connectionId: connection.id,
-        googleEventId,
-        etag: etag ?? null,
-        lastSyncedHash: hash,
         deletedAt: null,
       },
+      data: {
+        etag: etag ?? null,
+        lastSyncedHash: hash,
+      },
     });
+    const current = await this.prisma.appointment.findUnique({
+      where: { id: appointment.id },
+      include: APPOINTMENT_INCLUDE,
+    });
+    if (
+      !current ||
+      current.status === 'CANCELLED' ||
+      current.status === 'MISSED'
+    ) {
+      const accessToken = await this.auth.getAccessToken(connection);
+      try {
+        await this.client.deleteEvent(
+          accessToken,
+          connection.calendarId,
+          googleEventId,
+        );
+      } catch (error) {
+        if (
+          !(error instanceof GoogleApiError) ||
+          (!error.isNotFound && !error.isGone)
+        )
+          throw error;
+      }
+      await this.prisma.googleCalendarEventLink.updateMany({
+        where: { appointmentId: appointment.id, googleEventId },
+        data: {
+          deletedAt: new Date(),
+          lastSyncedHash: current
+            ? this.mapper.contentHash(this.toMappable(current))
+            : null,
+          etag: null,
+        },
+      });
+    } else if (hash !== this.mapper.contentHash(this.toMappable(current))) {
+
+      await this.prisma.calendarSyncJob.create({
+        data: {
+          organizationId: current.organizationId,
+          appointmentId: current.id,
+          kind: 'PUSH_SYNC',
+          nextAttemptAt: new Date(),
+        },
+      });
+    }
   }
 
   private async deleteOnOldConnection(
@@ -287,36 +399,58 @@ export class CalendarSyncService {
       startsAt: appointment.startsAt,
       endsAt: appointment.endsAt,
       status: appointment.status,
-      patientFirstName:
-        appointment.patient.fullName.trim().split(/\s+/)[0] ?? 'Paciente',
       timeZone: appointment.organization.timeZone,
     };
   }
 
   private async scheduleRetry(
     job: CalendarSyncJob,
+    attemptId: string,
     error: unknown,
   ): Promise<void> {
     const attempts = job.attempts + 1;
+
+    if (
+      error instanceof GoogleApiError &&
+      error.status === 401 &&
+      job.connectionId
+    ) {
+      this.auth.evict(job.connectionId);
+    }
     const retryAfterMs =
       error instanceof GoogleApiError && error.retryAfterSeconds
         ? error.retryAfterSeconds * 1000
         : null;
-    const backoffMs =
-      retryAfterMs ??
-      Math.min(BASE_BACKOFF_MS * 2 ** job.attempts, MAX_BACKOFF_MS);
+
+    const exponentialMs = Math.min(
+      BASE_BACKOFF_MS * 2 ** job.attempts,
+      MAX_BACKOFF_MS,
+    );
+    const backoffMs = Math.round(
+      (retryAfterMs ?? exponentialMs) * (1 + Math.random() * 0.2),
+    );
     const message = error instanceof Error ? error.message : String(error);
-    const deadLettered = attempts >= MAX_ATTEMPTS;
-    await this.prisma.calendarSyncJob.update({
-      where: { id: job.id },
+    const nonRetryable =
+      error instanceof GoogleApiError &&
+      !error.isRetryable &&
+      error.status !== 401;
+    const deadLettered = attempts >= MAX_ATTEMPTS || nonRetryable;
+    const updated = await this.prisma.calendarSyncJob.updateMany({
+      where: { id: job.id, attemptId },
       data: {
         attempts,
         nextAttemptAt: new Date(Date.now() + backoffMs),
         leaseUntil: null,
         lastError: message.slice(0, 500),
-        ...(deadLettered ? { processedAt: new Date(), pendingKey: null } : {}),
+        ...(deadLettered ? { processedAt: new Date() } : {}),
       },
     });
+    if (updated.count === 0) {
+      this.logger.debug(
+        `calendar sync job ${job.id} reassigned to another worker; retry by attempt ${attemptId} discarded`,
+      );
+      return;
+    }
     if (deadLettered) {
       this.logger.warn(`calendar sync job ${job.id} dead-lettered: ${message}`);
     }

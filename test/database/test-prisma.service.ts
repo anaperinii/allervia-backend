@@ -9,6 +9,8 @@ const { assertTestDatabase } = environment as {
 };
 
 const TABLES = [
+  'OAuthStateNonce',
+  'RateLimitCounter',
   'DemoRequest',
   'Notification',
   'NotificationPreference',

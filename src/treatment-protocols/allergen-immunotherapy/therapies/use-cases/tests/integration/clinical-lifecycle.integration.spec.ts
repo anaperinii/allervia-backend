@@ -336,13 +336,12 @@ describe('Clinical lifecycle workflows - Integration', () => {
     });
     expect(pending.prescriptionId).toBe(committed.prescriptionId);
     expect(pending.plannedStepId).toBe('middle');
-    expect(pending.scheduledAt.toISOString()).toBe(
-      (await prisma.auditLog.findFirst({
-        where: { action: 'PRESCRIPTION_REVISED' },
-      }))
-        ? pending.scheduledAt.toISOString()
-        : 'unreachable',
-    );
+
+    const revisedAudit = await prisma.auditLog.findFirst({
+      where: { action: 'PRESCRIPTION_REVISED' },
+    });
+    expect(revisedAudit).not.toBeNull();
+    expect(pending.scheduledAt.toISOString()).toBe('2026-01-08T13:00:00.000Z');
 
     const applied = await administer(pending.id, {
       administeredAt: '2026-01-08T13:00:00Z',

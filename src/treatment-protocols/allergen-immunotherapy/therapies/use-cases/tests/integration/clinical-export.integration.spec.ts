@@ -8,6 +8,7 @@ import { syntheticProtocolDefinition } from 'test/fixtures/configured-protocol';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { ProtocolCatalogService } from '../../../../protocol-catalog/protocol-catalog.service';
 import { ConfiguredDoseService } from '../../../../dosing/configured-dose.service';
+import { DoseCorrectionService } from '../../../../dosing/dose-correction.service';
 import { CreateImmunotherapyUseCase } from '../../create-immunotherapy.use-case';
 import { ClinicalExportService } from '../../../clinical-export.service';
 import { ClinicalHistoryService } from '../../../clinical-history.service';
@@ -19,6 +20,7 @@ describe('Clinical export and authorized history - Integration', () => {
   let prisma: PrismaService;
   let catalog: ProtocolCatalogService;
   let clinical: ConfiguredDoseService;
+  let correction: DoseCorrectionService;
   let exporter: ClinicalExportService;
   let history: ClinicalHistoryService;
   let auditList: ListAuditLogsUseCase;
@@ -36,6 +38,7 @@ describe('Clinical export and authorized history - Integration', () => {
     prisma = module.get(PrismaService);
     catalog = module.get(ProtocolCatalogService);
     clinical = module.get(ConfiguredDoseService);
+    correction = module.get(DoseCorrectionService);
     exporter = module.get(ClinicalExportService);
     history = module.get(ClinicalHistoryService);
     auditList = module.get(ListAuditLogsUseCase);
@@ -151,21 +154,146 @@ describe('Clinical export and authorized history - Integration', () => {
     expect(now.total).toBe(2);
   });
 
-  it('records the export request with author, cut and filters only once', async () => {
+  it('records every export page with author, cut, pagination and justification', async () => {
     await create.execute(createInput(physician, 'Trilha'), physician);
     const asOf = new Date().toISOString();
-    await exporter.export({ asOf, page: 1, pageSize: 1 }, physician);
-    await exporter.export({ asOf, page: 2, pageSize: 1 }, physician);
+    await exporter.export(
+      { asOf, page: 1, pageSize: 1, justification: 'Auditoria clínica LGPD.' },
+      physician,
+    );
+    await exporter.export(
+      { asOf, page: 2, pageSize: 1, justification: 'Auditoria clínica LGPD.' },
+      physician,
+    );
     const logs = await prisma.auditLog.findMany({
       where: { action: 'EXPORT_GENERATED' },
     });
-    expect(logs).toHaveLength(1);
-    expect(logs[0].userId).toBe(physician.id);
-    expect(logs[0].newValues).toMatchObject({
+    expect(logs).toHaveLength(2);
+    const pages = logs.map(
+      (log) => (log.newValues as Record<string, unknown>).page,
+    );
+    expect(pages.sort()).toEqual([1, 2]);
+    const first = logs.find(
+      (log) => (log.newValues as Record<string, unknown>).page === 1,
+    )!;
+    const second = logs.find(
+      (log) => (log.newValues as Record<string, unknown>).page === 2,
+    )!;
+    expect(first.userId).toBe(physician.id);
+    expect(first.newValues).toMatchObject({
       kind: 'CLINICAL_DOSES',
       asOf,
+      page: 1,
+      pageSize: 1,
+      rows: 1,
       rowCount: 1,
+      justification: 'Auditoria clínica LGPD.',
     });
+    expect(second.newValues).toMatchObject({
+      page: 2,
+      rows: 0,
+      rowCount: 1,
+      justification: 'Auditoria clínica LGPD.',
+    });
+  });
+
+  it('freezes membership across pages at the same asOf while rows carry current values', async () => {
+    const therapyA = await create.execute(
+      createInput(physician, 'Terapia A'),
+      physician,
+    );
+    const administeredA = await administerFirst(therapyA.firstDose.id);
+    const therapyB = await create.execute(
+      createInput(physician, 'Terapia B'),
+      physician,
+    );
+    const administeredB = await administerFirst(therapyB.firstDose.id);
+    const successorB = administeredB.successor!.id;
+    const asOf = new Date().toISOString();
+
+    const page1 = await exporter.export(
+      { asOf, page: 1, pageSize: 2 },
+      physician,
+    );
+    expect(page1.total).toBe(4);
+    expect(page1.items.map((row) => row.doseId)).toEqual([
+      therapyA.firstDose.id,
+      administeredA.successor!.id,
+    ]);
+
+    const successorA = administeredA.successor!.id;
+    const doseA2 = await prisma.dose.findUniqueOrThrow({
+      where: { id: successorA },
+      select: { revision: true, immunotherapy: { select: { revision: true } } },
+    });
+    sequence += 1;
+    await clinical.administer(
+      successorA,
+      {
+        values: {
+          concentration: '1000',
+          volume: '0.2',
+          intervalDays: 7,
+          stepId: 'middle',
+        },
+        administeredAt: new Date().toISOString(),
+        expectedRevision: doseA2.revision,
+        expectedTherapyRevision: doseA2.immunotherapy.revision,
+        idempotencyKey: `export-cmd-${sequence}`,
+        betweenDosesReport: '',
+        reason: 'Paciente antecipou a aplicação.',
+      },
+      physician,
+    );
+    const doseB1 = await prisma.dose.findUniqueOrThrow({
+      where: { id: therapyB.firstDose.id },
+      select: { revision: true, immunotherapy: { select: { revision: true } } },
+    });
+    await correction.retract(
+      therapyB.firstDose.id,
+      {
+        reason: 'Registro em erro.',
+        expectedRevision: doseB1.revision,
+        expectedTherapyRevision: doseB1.immunotherapy.revision,
+      },
+      physician,
+    );
+
+    const page2 = await exporter.export(
+      { asOf, page: 2, pageSize: 2 },
+      physician,
+    );
+    expect(page2.total).toBe(4);
+    expect(page2.items.map((row) => row.doseId)).toEqual([
+      therapyB.firstDose.id,
+      successorB,
+    ]);
+    const retracted = page2.items.find(
+      (row) => row.doseId === therapyB.firstDose.id,
+    )!;
+    expect(retracted.status).toBe('ENTERED_IN_ERROR');
+    expect(retracted.administered).toMatchObject({ volume: '0.1' });
+
+    const freshCut = await exporter.export(
+      { asOf: new Date().toISOString(), page: 1, pageSize: 50 },
+      physician,
+    );
+    expect(freshCut.total).toBe(6);
+  });
+
+  it('issues a server cut on the first page and requires its reuse for subsequent pages', async () => {
+    const before = Date.now();
+    const first = await exporter.export({ page: 1 }, physician);
+    expect(Date.parse(first.asOf)).toBeGreaterThanOrEqual(before);
+    expect(Date.parse(first.asOf)).toBeLessThanOrEqual(Date.now());
+    const second = await exporter.export(
+      { page: 2, asOf: first.asOf },
+      physician,
+    );
+    expect(second.asOf).toBe(first.asOf);
+    await expect(exporter.export({ page: 2 }, physician)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('scopes the export by physician and organization and rejects a future cut', async () => {

@@ -1,0 +1,52 @@
+name: Backend CI
+on:
+  pull_request:
+  push:
+    branches: [main, homolog]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17.6-bookworm
+        env:
+          POSTGRES_PASSWORD: ephemeral-ci-only
+          POSTGRES_DB: allervia_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d allervia_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: node scripts/ci/write-test-environment.cjs
+        env:
+          CI_DATABASE_PASSWORD: ephemeral-ci-only
+      - run: npm run test:setup
+      - run: npm run lint:check
+      # Todo código de erro lançado precisa existir no catálogo pt-BR.
+      - run: npm run errors:check
+      - run: npm run build
+      # Unit + integração com cobertura medida e piso global (lines 80 /
+      # branches 60) — regressão de cobertura falha o build (plano 15, F16).
+      - run: npm run test:cov
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          retention-days: 14
+      - run: npm run contract:export
+      - run: git diff --exit-code -- docs/contracts/openapi.json

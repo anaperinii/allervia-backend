@@ -12,6 +12,12 @@ import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { json } from '../protocol-catalog/protocol-catalog.service';
+import {
+  clinicalCommandHash,
+  clinicalCommandKey,
+  commitClinicalCommand,
+  replayClinicalCommand,
+} from '../clinical-command';
 import { milestoneChanges, therapyMilestones } from './configured-dose.service';
 import { enqueueOutbox } from 'src/notifications/notifications.service';
 import { LateObservationDto, RetractDoseDto } from './dtos/dose-correction.dto';
@@ -63,8 +69,14 @@ export class DoseCorrectionService {
     dto: RetractDoseDto,
     user: AuthenticatedUserPayload,
   ) {
+    const hash = dto.idempotencyKey
+      ? clinicalCommandHash('DOSE_RETRACT', dto)
+      : null;
     return this.prisma.$transaction(async (tx) => {
       const dose = await this.lockedDose(tx, id, user);
+      const key = clinicalCommandKey(user, id, dto.idempotencyKey);
+      const previous = await replayClinicalCommand(tx, key, hash);
+      if (previous) return previous.result as never;
       if (
         dose.status !== 'ADMINISTERED_ON_SCHEDULE' &&
         dose.status !== 'ADMINISTERED_OFF_SCHEDULE'
@@ -121,9 +133,7 @@ export class DoseCorrectionService {
           updatedById: user.id,
         },
       });
-      // A retratada sai da contagem e a reemitida entra: se a aplicação
-      // retratada era o marco da manutenção, o campo volta a ficar vazio até
-      // uma nova aplicação de fase MAINTENANCE.
+
       const milestones = milestoneChanges(
         dose.immunotherapy,
         await therapyMilestones(tx, dose.immunotherapyId),
@@ -169,12 +179,12 @@ export class DoseCorrectionService {
         },
         tx,
       );
-      return {
+      return commitClinicalCommand(tx, key, hash, {
         dose: retracted,
         archivedSuccessorId,
         reissuedDose: reissued,
         therapyRevision: therapy.revision,
-      };
+      });
     });
   }
 
@@ -183,13 +193,21 @@ export class DoseCorrectionService {
     dto: LateObservationDto,
     user: AuthenticatedUserPayload,
   ) {
+    const hash = dto.idempotencyKey
+      ? clinicalCommandHash('DOSE_LATE_OBSERVATION', dto)
+      : null;
     return this.prisma.$transaction(async (tx) => {
       const dose = await this.lockedDose(tx, id, user);
+      const key = clinicalCommandKey(user, id, dto.idempotencyKey);
+      const previous = await replayClinicalCommand(tx, key, hash);
+      if (previous) return previous.result as never;
       if (
         dose.status !== 'ADMINISTERED_ON_SCHEDULE' &&
         dose.status !== 'ADMINISTERED_OFF_SCHEDULE'
       )
         throw new ConflictException('DOSE_NOT_ADMINISTERED');
+      if (dose.immunotherapy.revision !== dto.expectedTherapyRevision)
+        throw new ConflictException('STALE_CLINICAL_REVISION');
       const observedAt = new Date(dto.observedAt);
       if (
         !Number.isFinite(observedAt.getTime()) ||
@@ -223,8 +241,6 @@ export class DoseCorrectionService {
           throw new ForbiddenException('CONDUCT_REQUIRES_PHYSICIAN');
         if (dose.immunotherapy.status !== 'IN_PROGRESS')
           throw new ConflictException('INVALID_LIFECYCLE_TRANSITION');
-        if (dose.immunotherapy.revision !== dto.expectedTherapyRevision)
-          throw new ConflictException('STALE_CLINICAL_REVISION');
         suspension = await tx.therapyLifecycleEvent.create({
           data: {
             immunotherapyId: dose.immunotherapyId,
@@ -288,7 +304,10 @@ export class DoseCorrectionService {
         },
         tx,
       );
-      return { addendum, suspensionEventId: suspension?.id ?? null };
+      return commitClinicalCommand(tx, key, hash, {
+        addendum,
+        suspensionEventId: suspension?.id ?? null,
+      });
     });
   }
 }

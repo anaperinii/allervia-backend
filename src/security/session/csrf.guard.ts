@@ -75,7 +75,17 @@ export class CsrfGuard implements CanActivate {
 
   private assertContentType(request: RequestWithSession): void {
     const contentType = request.get('content-type');
-    if (!contentType) return;
+    if (!contentType) {
+      const declaredLength = Number(request.get('content-length') ?? 0);
+      const hasBody =
+        declaredLength > 0 || Boolean(request.get('transfer-encoding'));
+      if (!hasBody) return;
+      throw new CodedHttpException(
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        AUTH_ERROR_CODES.unsupportedContentType,
+        AUTH_MESSAGES.unsupportedContentType,
+      );
+    }
 
     const normalized = contentType.split(';')[0].trim().toLowerCase();
     if (ACCEPTED_CONTENT_TYPES.includes(normalized)) return;
