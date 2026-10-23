@@ -4356,7 +4356,7 @@
       "PasswordResetMessageResponseDto": {
         "properties": {
           "message": {
-            "example": "Se o e-mail existir, enviamos as instruções de redefinição.",
+            "example": "Se o e-mail existir, enviamos o link de redefinição para sua caixa de entrada.",
             "type": "string"
           }
         },

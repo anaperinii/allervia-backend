@@ -24,7 +24,6 @@ API REST para gestão de tratamentos de imunoterapia com alérgenos. O sistema c
 - [Tratamento de erros](#tratamento-de-erros)
 - [Fluxo de onboarding](#fluxo-de-onboarding)
 - [Convenções de código](#convenções-de-código)
-- [Estado atual e limitações conhecidas](#estado-atual-e-limitações-conhecidas)
 
 ---
 
@@ -339,11 +338,6 @@ Para testes de integração, as variáveis vão em `.env.test.local`, apontando 
 | `npm run start:demo` | Sobe a aplicação já com o ambiente de demonstração |
 | `npm run logs` | Visualizador de logs local (`scripts/log-viewer.cjs`) |
 | `npm run start:logs` | Sobe a aplicação encanando a saída pelo visualizador de logs |
-| `npm run local:up` / `local:down` | Sobe/derruba os containers locais de validação (`compose.validation.yml`) |
-| `npm run local:init` | Inicializa o ambiente local de validação |
-| `npm run local:seed` | Roda o seed dentro dos containers locais |
-| `npm run local:backup` / `local:restore-check` | Backup e verificação de restauração do banco local (`scripts/operations/recovery.cjs`) |
-| `npm run validation:manifest` | Gera o manifesto do ambiente de validação local |
 
 ---
 
