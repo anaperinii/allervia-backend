@@ -24,6 +24,15 @@ export const AUTH_MESSAGES = {
     'Cadastro de segundo fator indisponível: chave de criptografia não configurada.',
   reauthenticationRequired: 'Confirme sua identidade para continuar.',
   passwordSameAsCurrent: 'A nova senha deve ser diferente da senha atual.',
+  invalidOrExpiredEmailChangeToken:
+    'Token de troca de e-mail inválido ou expirado.',
+  emailChangeTokenAlreadyUsed: 'Token de troca de e-mail já utilizado.',
+  emailAlreadyInUse: 'Este e-mail já está em uso por outra conta.',
+  emailSameAsCurrent: 'O novo e-mail deve ser diferente do e-mail atual.',
+  emailChangeRequestNotFound:
+    'Pedido de troca de e-mail não encontrado ou já decidido.',
+  emailChangeTargetNotProfessional:
+    'Troca de e-mail disponível apenas para profissionais da clínica.',
 } as const;
 
 export const AUTH_ERROR_CODES = {
@@ -44,4 +53,6 @@ export const AUTH_ERROR_CODES = {
   mfaUnavailable: 'MFA_UNAVAILABLE',
   reauthenticationRequired: 'REAUTHENTICATION_REQUIRED',
   passwordSameAsCurrent: 'PASSWORD_SAME_AS_CURRENT',
+  emailAlreadyInUse: 'EMAIL_ALREADY_IN_USE',
+  emailSameAsCurrent: 'EMAIL_SAME_AS_CURRENT',
 } as const;
