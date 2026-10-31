@@ -108,21 +108,21 @@ src/
 ├── app.module.ts               # composição dos módulos + guards globais (SessionAuth, Csrf, Policies, RateLimit) + HttpErrorFilter
 │
 ├── security/                   # autenticação e autorização
-│   ├── auth.controller.ts      # password-reset request/verify/confirm
+│   ├── auth.controller.ts      # password-reset e email-change: request/verify/confirm
 │   ├── decorators/             # @Public, @AuthenticatedOnly, @CurrentUser
 │   ├── guards/                 # PoliciesGuard (deny-by-default)
 │   ├── session/                # sessão opaca, cookies, CSRF, MFA TOTP, rate limit de auth
 │   ├── rate-limit/             # @RateLimit por classe (public-submit, export, webhook)
-│   ├── use-cases/              # password-reset request/verify/confirm
+│   ├── use-cases/              # password-reset request/verify/confirm; email-change verify/confirm
 │   ├── validation/             # política de senha (mín. 8 chars, máx. 72 bytes)
 │   └── permissions/            # CASL
 │       ├── ability/            # AbilityFactory, tipos, @CheckPolicies
 │       ├── roles.controller.ts
 │       └── use-cases/          # grant, revoke, find, list
 │
-├── account/                    # perfil, senha, estatísticas do usuário
+├── account/                    # perfil, senha, pedido próprio de troca de e-mail, estatísticas do usuário
 ├── organization/                # cadastro/consulta da instituição + provisioning/ (criação administrativa)
-├── professionals/                # equipe: dados cadastrais e gestão de acesso
+├── professionals/                # equipe: dados cadastrais, gestão de acesso e fila de troca de e-mail
 ├── patients/                     # listagem, consulta e atualização de pacientes
 ├── invites/                      # convites + registro via convite
 │   ├── domain/                   # entidade, exceções e interfaces de convite
@@ -216,7 +216,7 @@ Todos os identificadores são ULID. Os agregados relevantes carregam autoria (`c
 - **Immunotherapy**: raiz do agregado clínico. Tipo, via de administração (`SUBCUTANEOUS` ou `SUBLINGUAL`), extrato, concentração e volume alvo, datas de início de indução e manutenção, status (`IN_PROGRESS`, `SUSPENDED`, `COMPLETED`).
 - **Dose**: concentração, volume, data prevista, data efetiva, intervalo até a próxima e status (`SCHEDULED`, `ADMINISTERED_ON_SCHEDULE`, `ADMINISTERED_OFF_SCHEDULE`, `ENTERED_IN_ERROR`).
 - **DoseObservation**: observações pré e pós-administração (efeitos colaterais, medicações), única por `(doseId, phase)`.
-- **VerificationToken**: token de uso único para `PASSWORD_RESET` e `EMAIL_CHANGE`, com `expiresAt` e `consumedAt`.
+- **VerificationToken**: token de uso único para `PASSWORD_RESET` e `EMAIL_CHANGE`, com `expiresAt` e `consumedAt`. Nos pedidos de troca de e-mail, guarda também `newEmail`, `requestedById`, `approvedAt` e `approvedById` — o estado do pedido é derivado desses campos: pendente enquanto `approvedAt` e `consumedAt` são nulos, despachado após `approvedAt`, recusado quando `consumedAt` é preenchido sem aprovação.
 - **InternalUserInvite**: convite com token único, papel pretendido, validade e consumo; único por `(email, organizationId, isActive)`.
 - **AuditLog**: `entityType`, `entityId`, `action`, `oldValues`, `newValues`, `changedFields`, indexado por entidade, usuário, organização e tempo.
 
@@ -391,6 +391,8 @@ Prefixo: raiz da aplicação. Todas as rotas exigem sessão autenticada (cookie 
 | POST | `/auth/password-reset/request` | público |
 | POST | `/auth/password-reset/verify` | público |
 | POST | `/auth/password-reset/confirm` | público |
+| POST | `/auth/email-change/verify` | público |
+| POST | `/auth/email-change/confirm` | público |
 
 ### `organization`
 
@@ -427,6 +429,7 @@ Prefixo: raiz da aplicação. Todas as rotas exigem sessão autenticada (cookie 
 | --- | --- | --- |
 | GET | `/account/me` | autenticado |
 | POST | `/account/me/password` | autenticado |
+| POST | `/account/me/email-change` | autenticado, exige reautenticação recente |
 | PATCH | `/account/update/stats/:id` | `update User` |
 
 ### `professionals`
@@ -436,8 +439,12 @@ Prefixo: raiz da aplicação. Todas as rotas exigem sessão autenticada (cookie 
 | GET | `/professionals` | `read Professional` |
 | GET | `/professionals/me` | autenticado |
 | PATCH | `/professionals/me` | autenticado |
+| GET | `/professionals/email-change-requests` | `manage Professional` |
+| POST | `/professionals/email-change-requests/:id/approve` | `manage Professional` |
+| POST | `/professionals/email-change-requests/:id/reject` | `manage Professional` |
 | PATCH | `/professionals/:id` | `manage Professional` |
 | PATCH | `/professionals/:id/access` | `manage Professional` |
+| POST | `/professionals/:id/email-change` | `manage Professional` |
 
 ### `patients`
 

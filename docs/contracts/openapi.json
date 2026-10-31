@@ -16,7 +16,8 @@
                 "$ref": "#/components/schemas/AccountOrganizationDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "professional": {
             "allOf": [
@@ -24,7 +25,8 @@
                 "$ref": "#/components/schemas/AccountProfessionalDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "roles": {
             "items": {
@@ -246,7 +248,8 @@
               }
             ],
             "description": "Scheduled successor; null at end of sequence",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "therapyRevision": {
             "type": "number"
@@ -306,6 +309,26 @@
           "route",
           "volumeUnit",
           "concentrationUnit"
+        ],
+        "type": "object"
+      },
+      "AdminRequestEmailChangeDto": {
+        "properties": {
+          "channel": {
+            "enum": [
+              "email",
+              "whatsapp"
+            ],
+            "type": "string"
+          },
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newEmail",
+          "channel"
         ],
         "type": "object"
       },
@@ -418,7 +441,8 @@
                 "$ref": "#/components/schemas/AppointmentDoseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "doseId": {
             "nullable": true,
@@ -450,7 +474,8 @@
                 "$ref": "#/components/schemas/AppointmentProfessionalDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "professionalId": {
             "nullable": true,
@@ -504,6 +529,21 @@
           "patient",
           "dose",
           "professional"
+        ],
+        "type": "object"
+      },
+      "ApproveEmailChangeDto": {
+        "properties": {
+          "channel": {
+            "enum": [
+              "email",
+              "whatsapp"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel"
         ],
         "type": "object"
       },
@@ -760,7 +800,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "administeredAt": {
             "format": "date-time",
@@ -773,7 +814,8 @@
                 "$ref": "#/components/schemas/ExportAdministeredByDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -801,7 +843,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "prescription": {
             "allOf": [
@@ -809,7 +852,8 @@
                 "$ref": "#/components/schemas/ExportPrescriptionDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "scheduledAt": {
             "format": "date-time",
@@ -1141,7 +1185,8 @@
               }
             ],
             "description": "Responsável legal. Obrigatório para menores de 18 anos e recusado para maiores. Enviar null remove o vínculo.",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "phoneNumber": {
             "description": "Número de Telefone",
@@ -1403,7 +1448,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -1492,7 +1538,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "prescriptionId": {
             "nullable": true,
@@ -2188,7 +2235,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -2253,7 +2301,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "prescriptionId": {
             "nullable": true,
@@ -2555,7 +2604,8 @@
                 "$ref": "#/components/schemas/DosePrescriptionDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "currentPrescriptionId": {
             "nullable": true,
@@ -2705,6 +2755,133 @@
         "required": [
           "definition",
           "expectedRevision"
+        ],
+        "type": "object"
+      },
+      "EmailChangeConfirmDTO": {
+        "properties": {},
+        "type": "object"
+      },
+      "EmailChangeMessageResponseDto": {
+        "properties": {
+          "message": {
+            "example": "E-mail de acesso alterado com sucesso.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "EmailChangeRequestDto": {
+        "properties": {
+          "currentEmail": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "description": "Momento em que o pedido foi encerrado: aprovação confirmada, recusa ou substituição.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "newEmail": {
+            "type": "string"
+          },
+          "professionalId": {
+            "type": "string"
+          },
+          "professionalName": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "DISPATCHED",
+              "CONFIRMED",
+              "REJECTED",
+              "SUPERSEDED",
+              "EXPIRED"
+            ],
+            "type": "string"
+          },
+          "whatsappUrl": {
+            "description": "URL wa.me pronta para envio manual quando o canal escolhido é WhatsApp.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "professionalId",
+          "professionalName",
+          "currentEmail",
+          "newEmail",
+          "status",
+          "expiresAt",
+          "requestedAt"
+        ],
+        "type": "object"
+      },
+      "EmailChangeRequestPageDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EmailChangeRequestDto"
+            },
+            "type": "array"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pending": {
+            "description": "Total de pedidos aguardando decisão, independente da página consultada.",
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "pending"
+        ],
+        "type": "object"
+      },
+      "EmailChangeVerifyDTO": {
+        "properties": {},
+        "type": "object"
+      },
+      "EmailChangeVerifyResponseDto": {
+        "properties": {
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "type": "string"
+          },
+          "valid": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "newEmail"
         ],
         "type": "object"
       },
@@ -3066,7 +3243,8 @@
               }
             ],
             "description": "Previsão em aberto mais próxima; ausência não é término",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "patient": {
             "$ref": "#/components/schemas/TherapyPatientRefDto"
@@ -3078,7 +3256,8 @@
               }
             ],
             "description": "Snapshot imutável da prescrição: versão fixada, revisão e seleção resolvida. Histórico é lido daqui, nunca reinterpretado pela versão padrão vigente.",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "responsiblePhysician": {
             "$ref": "#/components/schemas/TherapyPhysicianRefDto"
@@ -3165,7 +3344,8 @@
               }
             ],
             "description": "Previsão em aberto mais próxima; ausência não é término",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "patient": {
             "$ref": "#/components/schemas/TherapyPatientRefDto"
@@ -3176,7 +3356,8 @@
                 "$ref": "#/components/schemas/TherapyPrescriptionRefDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "responsiblePhysician": {
             "$ref": "#/components/schemas/TherapyPhysicianRefDto"
@@ -3301,7 +3482,8 @@
               }
             ],
             "description": "Immutable prescription snapshot: versionId, revision and resolved step selection",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "revision": {
             "description": "Concurrency revision for clinical writes",
@@ -3570,7 +3752,8 @@
                 "$ref": "#/components/schemas/ProfessionalRefDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           }
         },
         "required": [
@@ -4008,7 +4191,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           },
@@ -4085,7 +4270,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           }
@@ -4261,7 +4448,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           },
@@ -4466,7 +4655,8 @@
               }
             ],
             "description": "Responsável legal; null quando o paciente é maior de idade",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "id": {
             "type": "string"
@@ -5891,7 +6081,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -5917,7 +6108,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "revision": {
             "type": "number"
@@ -6034,6 +6226,18 @@
         ],
         "type": "object"
       },
+      "SelfRequestEmailChangeDto": {
+        "properties": {
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newEmail"
+        ],
+        "type": "object"
+      },
       "SessionEnvelopeDto": {
         "properties": {
           "authenticated": {
@@ -6114,7 +6318,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           }
@@ -6616,7 +6822,8 @@
                 "$ref": "#/components/schemas/LifecycleRecommendationsDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "type": {
             "enum": [
@@ -6683,7 +6890,8 @@
                 "$ref": "#/components/schemas/LifecycleRecommendationsDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "type": {
             "enum": [
@@ -6926,7 +7134,8 @@
                 "$ref": "#/components/schemas/TherapySummaryNextDoseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "prescription": {
             "allOf": [
@@ -6935,7 +7144,8 @@
               }
             ],
             "description": "Versão de protocolo fixada na prescrição",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "revision": {
             "description": "Revisão de concorrência do tratamento",
@@ -7213,7 +7423,8 @@
               }
             ],
             "description": "Responsável legal. Obrigatório para menores de 18 anos e recusado para maiores. Enviar null remove o vínculo.",
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "phoneNumber": {
             "description": "Número de Telefone",
@@ -7295,7 +7506,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -7360,7 +7572,8 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true
+            "nullable": true,
+            "type": "object"
           },
           "prescriptionId": {
             "nullable": true,
@@ -7560,6 +7773,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountContextDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/account/me/email-change": {
+      "post": {
+        "operationId": "AccountController_requestOwnEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelfRequestEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
                 }
               }
             },
@@ -8254,6 +8498,68 @@
         },
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/auth/email-change/confirm": {
+      "post": {
+        "operationId": "AuthController_emailChangeConfirm",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeConfirmDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeMessageResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/email-change/verify": {
+      "post": {
+        "operationId": "AuthController_emailChangeVerify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeVerifyDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeVerifyResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
         ]
       }
     },
@@ -10953,6 +11259,159 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MemberAccessStatusDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/{id}/email-change": {
+      "post": {
+        "operationId": "ProfessionalsController_startEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRequestEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests": {
+      "get": {
+        "operationId": "ProfessionalsController_listPendingEmailChanges",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestPageDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests/{id}/approve": {
+      "post": {
+        "operationId": "ProfessionalsController_approvePendingEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests/{id}/reject": {
+      "post": {
+        "operationId": "ProfessionalsController_rejectPendingEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
                 }
               }
             },
