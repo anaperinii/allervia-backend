@@ -309,6 +309,26 @@
         ],
         "type": "object"
       },
+      "AdminRequestEmailChangeDto": {
+        "properties": {
+          "channel": {
+            "enum": [
+              "email",
+              "whatsapp"
+            ],
+            "type": "string"
+          },
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newEmail",
+          "channel"
+        ],
+        "type": "object"
+      },
       "AppointmentDoseDto": {
         "properties": {
           "id": {
@@ -504,6 +524,21 @@
           "patient",
           "dose",
           "professional"
+        ],
+        "type": "object"
+      },
+      "ApproveEmailChangeDto": {
+        "properties": {
+          "channel": {
+            "enum": [
+              "email",
+              "whatsapp"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel"
         ],
         "type": "object"
       },
@@ -2708,6 +2743,133 @@
         ],
         "type": "object"
       },
+      "EmailChangeConfirmDTO": {
+        "properties": {},
+        "type": "object"
+      },
+      "EmailChangeMessageResponseDto": {
+        "properties": {
+          "message": {
+            "example": "E-mail de acesso alterado com sucesso.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "EmailChangeRequestDto": {
+        "properties": {
+          "currentEmail": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "description": "Momento em que o pedido foi encerrado: aprovação confirmada, recusa ou substituição.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "newEmail": {
+            "type": "string"
+          },
+          "professionalId": {
+            "type": "string"
+          },
+          "professionalName": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "DISPATCHED",
+              "CONFIRMED",
+              "REJECTED",
+              "SUPERSEDED",
+              "EXPIRED"
+            ],
+            "type": "string"
+          },
+          "whatsappUrl": {
+            "description": "URL wa.me pronta para envio manual quando o canal escolhido é WhatsApp.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "professionalId",
+          "professionalName",
+          "currentEmail",
+          "newEmail",
+          "status",
+          "expiresAt",
+          "requestedAt"
+        ],
+        "type": "object"
+      },
+      "EmailChangeRequestPageDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EmailChangeRequestDto"
+            },
+            "type": "array"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pending": {
+            "description": "Total de pedidos aguardando decisão, independente da página consultada.",
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "pending"
+        ],
+        "type": "object"
+      },
+      "EmailChangeVerifyDTO": {
+        "properties": {},
+        "type": "object"
+      },
+      "EmailChangeVerifyResponseDto": {
+        "properties": {
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "type": "string"
+          },
+          "valid": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "newEmail"
+        ],
+        "type": "object"
+      },
       "EnrollMfaDto": {
         "properties": {
           "label": {
@@ -4008,7 +4170,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           },
@@ -4085,7 +4249,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           }
@@ -4261,7 +4427,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           },
@@ -4356,7 +4524,7 @@
       "PasswordResetMessageResponseDto": {
         "properties": {
           "message": {
-            "example": "Se o e-mail existir, enviamos as instruções de redefinição.",
+            "example": "Se o e-mail existir, enviamos o link de redefinição para sua caixa de entrada.",
             "type": "string"
           }
         },
@@ -6034,6 +6202,18 @@
         ],
         "type": "object"
       },
+      "SelfRequestEmailChangeDto": {
+        "properties": {
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newEmail"
+        ],
+        "type": "object"
+      },
       "SessionEnvelopeDto": {
         "properties": {
           "authenticated": {
@@ -6114,7 +6294,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           }
@@ -7571,6 +7753,37 @@
         ]
       }
     },
+    "/account/me/email-change": {
+      "post": {
+        "operationId": "AccountController_requestOwnEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelfRequestEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Account"
+        ]
+      }
+    },
     "/account/me/password": {
       "post": {
         "operationId": "AccountController_changePassword",
@@ -8254,6 +8467,68 @@
         },
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/auth/email-change/confirm": {
+      "post": {
+        "operationId": "AuthController_emailChangeConfirm",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeConfirmDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeMessageResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/email-change/verify": {
+      "post": {
+        "operationId": "AuthController_emailChangeVerify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeVerifyDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeVerifyResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
         ]
       }
     },
@@ -10953,6 +11228,159 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MemberAccessStatusDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/{id}/email-change": {
+      "post": {
+        "operationId": "ProfessionalsController_startEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRequestEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests": {
+      "get": {
+        "operationId": "ProfessionalsController_listPendingEmailChanges",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestPageDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests/{id}/approve": {
+      "post": {
+        "operationId": "ProfessionalsController_approvePendingEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests/{id}/reject": {
+      "post": {
+        "operationId": "ProfessionalsController_rejectPendingEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
                 }
               }
             },

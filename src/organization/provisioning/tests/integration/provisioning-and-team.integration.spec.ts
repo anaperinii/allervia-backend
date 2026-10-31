@@ -92,6 +92,9 @@ describe('Provisionamento e equipe - Integração HTTP', () => {
       sendPasswordChangedNotification: () => Promise.resolve(),
       sendDemoRequest: () => Promise.resolve(),
       sendDemoRequestConfirmation: () => Promise.resolve(),
+      sendEmailChangeLink: () => Promise.resolve(),
+      sendEmailChangeFarewell: () => Promise.resolve(),
+      sendEmailChangeWelcome: () => Promise.resolve(),
       sendInviteLink: (params: InviteEmailParams) => {
         if (failInviteEmail) {
           return Promise.reject(new Error('SMTP indisponível'));

@@ -205,7 +205,6 @@ export class CalendarInboundSyncService {
       !Number.isFinite(endsAt.getTime()) ||
       startsAt >= endsAt
     ) {
-
       await this.prisma.$transaction(async (tx) => {
         await tx.googleCalendarEventLink.update({
           where: { id: link.id },
@@ -228,7 +227,6 @@ export class CalendarInboundSyncService {
       (event.description !== undefined &&
         (event.description ?? '') !== (expected.description ?? ''));
     if (contentDrifted) {
-
       await this.prisma.$transaction(async (tx) => {
         await tx.googleCalendarEventLink.update({
           where: { id: link.id },

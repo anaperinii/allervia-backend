@@ -41,7 +41,6 @@ export class CalendarSyncDispatcher implements OnModuleInit, OnModuleDestroy {
       return;
     }
     if (!process.env.SYSTEM_USER_ID?.trim()) {
-
       this.logger.error(
         'SYSTEM_USER_ID ausente com a integração Google habilitada: inbound e teardown ficarão represados até a configuração.',
       );
@@ -66,7 +65,6 @@ export class CalendarSyncDispatcher implements OnModuleInit, OnModuleDestroy {
     if (this.running) return;
     this.running = true;
     try {
-
       await this.connections.processPendingTeardowns();
       const result = await this.sync.processPending();
       if (result.failed > 0) {

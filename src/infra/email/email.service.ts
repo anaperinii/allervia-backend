@@ -30,6 +30,13 @@ export interface InviteEmailParams {
   expiresAt: Date;
 }
 
+export interface EmailChangeLinkParams {
+  email: string;
+  fullName: string;
+  newEmail: string;
+  token: string;
+}
+
 export abstract class IEmailService {
   abstract sendDemoRequest(params: DemoEmailParams): Promise<void>;
 
@@ -42,4 +49,13 @@ export abstract class IEmailService {
   abstract sendPasswordChangedNotification(email: string): Promise<void>;
 
   abstract sendInviteLink(params: InviteEmailParams): Promise<void>;
+
+  abstract sendEmailChangeLink(params: EmailChangeLinkParams): Promise<void>;
+
+  abstract sendEmailChangeFarewell(
+    previousEmail: string,
+    newEmail: string,
+  ): Promise<void>;
+
+  abstract sendEmailChangeWelcome(newEmail: string): Promise<void>;
 }

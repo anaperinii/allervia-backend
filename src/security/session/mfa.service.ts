@@ -116,7 +116,6 @@ export class MfaService {
     );
 
     if (!confirmed) {
-
       const current = await this.repository.findMfaCredential(
         credential.id,
         userId,
@@ -169,7 +168,6 @@ export class MfaService {
       );
 
       if (verification.valid && verification.timeStep !== null) {
-
         return this.repository.registerMfaCredentialUse(
           credential.id,
           BigInt(verification.timeStep),

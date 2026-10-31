@@ -33,7 +33,6 @@ export class PrismaImmunotherapyRepository extends IImmunotherapyRepository {
     where: Prisma.ImmunotherapyWhereInput,
   ): Promise<Immunotherapy[]> {
     const therapies = await this.prisma.immunotherapy.findMany({
-
       where: { AND: [{ immunoType: type }, { isArchived: false }, where] },
       include: IMMUNO_INCLUDE,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],

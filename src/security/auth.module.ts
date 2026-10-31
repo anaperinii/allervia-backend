@@ -12,6 +12,8 @@ import { PrismaUserAuthRepository } from './prisma-user-auth.repository';
 import { PasswordResetRequestUseCase } from './use-cases/password-reset-request.use-case';
 import { PasswordResetVerifyUseCase } from './use-cases/password-reset-verify.use-case';
 import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.use-case';
+import { EmailChangeVerifyUseCase } from './use-cases/email-change-verify.use-case';
+import { EmailChangeConfirmUseCase } from './use-cases/email-change-confirm.use-case';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.
     PasswordResetRequestUseCase,
     PasswordResetVerifyUseCase,
     PasswordResetConfirmUseCase,
+    EmailChangeVerifyUseCase,
+    EmailChangeConfirmUseCase,
     {
       provide: IPasswordHashingService,
       useClass: BcryptPasswordHashingService,

@@ -75,6 +75,8 @@ enum AppointmentStatus {
 enum NotificationKind {
   PHYSICIAN_REVIEW_REQUESTED
   TREATMENT_SUSPENDED
+  EMAIL_CHANGE_REQUEST_PENDING
+  EMAIL_CHANGE_REQUEST_DECIDED
 }
 
 enum ContactRequestStatus {
@@ -262,6 +264,12 @@ model VerificationToken {
   purpose   VerificationPurpose
   tokenHash String?
   newEmail  String?
+
+  requestedById String?
+  approvedAt    DateTime?
+  approvedById  String?
+  rejectedAt    DateTime?
+  rejectedById  String?
 
   expiresAt  DateTime
   consumedAt DateTime?
@@ -748,6 +756,7 @@ enum AuthSessionRevokeReason {
   IDLE_TIMEOUT
   ABSOLUTE_TIMEOUT
   SUPERSEDED
+  EMAIL_CHANGED
 }
 
 model MfaCredential {

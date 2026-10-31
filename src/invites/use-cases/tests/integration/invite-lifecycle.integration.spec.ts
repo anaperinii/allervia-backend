@@ -11,6 +11,7 @@ import {
   IEmailService,
   InviteEmailParams,
 } from 'src/infra/email/email.service';
+import { PASSWORD_MAX_LENGTH } from 'src/security/validation/password.validation';
 import { TestDatabaseManager } from 'test/database/test-database.manager';
 import { TestFactories } from 'test/factories';
 import {
@@ -66,6 +67,9 @@ describe('Ciclo do convite - Integração HTTP', () => {
       sendPasswordChangedNotification: () => Promise.resolve(),
       sendDemoRequest: () => Promise.resolve(),
       sendDemoRequestConfirmation: () => Promise.resolve(),
+      sendEmailChangeLink: () => Promise.resolve(),
+      sendEmailChangeFarewell: () => Promise.resolve(),
+      sendEmailChangeWelcome: () => Promise.resolve(),
       sendInviteLink: (params: InviteEmailParams) => {
         if (failNextInviteEmail) {
           failNextInviteEmail = false;
@@ -378,7 +382,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
     ).toBe(0);
   });
 
-  it('aplica a política de senha no registro público (mínimo 8, máximo 72 bytes)', async () => {
+  it('aplica a política de senha no registro público (8 a 20 caracteres com maiúscula, minúscula, número e símbolo)', async () => {
     const session = await loginAsAdmin();
     await invite(session, 'politica-senha@clinica.com.br');
     const token = delivered[0].token;
@@ -389,24 +393,28 @@ describe('Ciclo do convite - Integração HTTP', () => {
       phoneNumber: '62994315582',
     };
 
-    const tooShort = await server()
-      .post(`/onboarding/registration/${token}`)
-      .set('Origin', ORIGIN)
-      .send({ ...base, password: 'a' })
-      .expect(400);
-    expect(readBody<ErrorBody>(tooShort).code).toBe('VALIDATION_ERROR');
-    expect(readBody<ErrorBody>(tooShort).fieldErrors).toHaveProperty(
-      'password',
-    );
+    const rejected: Record<string, string> = {
+      abaixoDoMinimo: 'Ab1!',
+      acimaDoMaximo: 'Ab1!'.repeat(PASSWORD_MAX_LENGTH),
+      semMaiuscula: 'senha!forte2026',
+      semMinuscula: 'SENHA!FORTE2026',
+      semNumero: 'Senha!Forte',
+      semCaractereEspecial: 'SenhaForte2026',
+    };
 
-    const tooManyBytes = await server()
-      .post(`/onboarding/registration/${token}`)
-      .set('Origin', ORIGIN)
-      .send({ ...base, password: 'á'.repeat(37) })
-      .expect(400);
-    expect(readBody<ErrorBody>(tooManyBytes).fieldErrors).toHaveProperty(
-      'password',
-    );
+    for (const [caso, password] of Object.entries(rejected)) {
+      const response = await server()
+        .post(`/onboarding/registration/${token}`)
+        .set('Origin', ORIGIN)
+        .send({ ...base, password })
+        .expect(400);
+      const body = readBody<ErrorBody>(response);
+      expect([caso, body.code]).toEqual([caso, 'VALIDATION_ERROR']);
+      expect([caso, body.fieldErrors?.password !== undefined]).toEqual([
+        caso,
+        true,
+      ]);
+    }
 
     expect(
       await prisma.user.findFirst({
@@ -417,7 +425,7 @@ describe('Ciclo do convite - Integração HTTP', () => {
     await server()
       .post(`/onboarding/registration/${token}`)
       .set('Origin', ORIGIN)
-      .send({ ...base, password: 'b'.repeat(72) })
+      .send({ ...base, password: 'Senha!Forte2026' })
       .expect(201);
   });
 

@@ -17,6 +17,9 @@ export interface CreateVerificationTokenParams {
   tokenHash: string;
   newEmail?: string | null;
   expiresAt: Date;
+  requestedById?: string | null;
+  approvedAt?: Date | null;
+  approvedById?: string | null;
 }
 
 export interface ActiveVerificationToken {
@@ -24,4 +27,7 @@ export interface ActiveVerificationToken {
   userId: string;
   userEmail: string;
   userPassword: string;
+  newEmail: string | null;
+  approvedAt: Date | null;
+  expiresAt: Date;
 }

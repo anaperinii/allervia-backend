@@ -38,7 +38,6 @@ export class HttpErrorFilter implements ExceptionFilter {
     const envelope = this.toEnvelope(exception, requestId);
 
     if (envelope.statusCode >= (HttpStatus.INTERNAL_SERVER_ERROR as number)) {
-
       this.logger.error(
         `${request.method} request failed (requestId=${requestId ?? 'none'}, status=${envelope.statusCode}, code=${envelope.code})`,
       );

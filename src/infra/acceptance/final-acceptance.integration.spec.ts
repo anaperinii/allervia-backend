@@ -181,7 +181,6 @@ describe('Aceite final independente: invariantes sob falha e mudança concorrent
     jest.spyOn(prisma.mfaCredential, 'deleteMany').mockImplementationOnce(
       (args) =>
         (async () => {
-
           await prisma.mfaCredential.update({
             where: { id: factor.id },
             data: { confirmedAt: new Date() },

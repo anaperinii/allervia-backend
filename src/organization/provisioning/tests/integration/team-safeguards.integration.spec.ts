@@ -60,6 +60,9 @@ describe('Salvaguardas de equipe e convites - Integração HTTP', () => {
       sendPasswordChangedNotification: () => Promise.resolve(),
       sendDemoRequest: () => Promise.resolve(),
       sendDemoRequestConfirmation: () => Promise.resolve(),
+      sendEmailChangeLink: () => Promise.resolve(),
+      sendEmailChangeFarewell: () => Promise.resolve(),
+      sendEmailChangeWelcome: () => Promise.resolve(),
       sendInviteLink: (params: InviteEmailParams) => {
         delivered.push(params);
         return Promise.resolve();

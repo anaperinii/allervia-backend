@@ -256,7 +256,7 @@ export class GoogleCalendarFetchClient extends GoogleCalendarClient {
           ? (JSON.parse(errorText) as typeof errorBody)
           : {};
       } catch {
-
+        errorBody = {};
       }
       throw new GoogleApiError(
         response.status,

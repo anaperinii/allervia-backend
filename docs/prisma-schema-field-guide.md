@@ -207,7 +207,9 @@ Representa autorização temporária para uma operação específica. Não é se
 | `createdAt` | Instante de emissão, também utilizado nas cotas atuais de emissão de reset. |
 | `updatedAt` | Última alteração, por exemplo consumo. |
 
-Índice `(userId, purpose)` ajuda a consultar emissões por conta e finalidade. `tokenHash` não é único nem possui índice próprio neste schema. `EMAIL_CHANGE` e `newEmail` modelam uma possibilidade; sua presença não comprova um fluxo público completo de troca de email. Na leitura feita, o uso confirmado é recuperação de senha.
+Índice `(userId, purpose)` ajuda a consultar emissões por conta e finalidade. `tokenHash` não é único nem possui índice próprio neste schema.
+
+`EMAIL_CHANGE` deixou de ser apenas modelada: a troca do e-mail de acesso usa esta tabela de ponta a ponta. Além de `newEmail`, o pedido carrega `requestedById`, `approvedAt` e `approvedById`, e o estado é derivado dessas colunas — pendente enquanto `approvedAt` e `consumedAt` são nulos, despachado depois de `approvedAt`, recusado quando `consumedAt` é gravado sem aprovação. Um pedido pendente vale 7 dias; ao ser aprovado, o `tokenHash` é reemitido e `expiresAt` encurta para 60 minutos, de modo que aprovar nunca reaproveita o link que ninguém chegou a receber.
 
 Correção do diagnóstico anterior de rate limit: `PasswordResetRequestUseCase` já contém supressão de emissão por conta (1/minuto, 3/15 minutos e 5/hora), mantendo resposta genérica. Isso não equivale à proteção HTTP global e deve entrar no inventário R0 antes de qualquer substituição.
 

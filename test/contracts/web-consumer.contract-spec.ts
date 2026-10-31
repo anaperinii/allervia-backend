@@ -163,7 +163,9 @@ describe('Web consumer against real Nest HTTP and PostgreSQL', () => {
       expect(report.numFailedTests).toBe(0);
       expect(report.numTotalTests).toBeGreaterThan(0);
       expect(report.numPassedTests).toBe(report.numTotalTests);
-      expect((report.numPendingTests ?? 0) + (report.numTodoTests ?? 0)).toBe(0);
+      expect((report.numPendingTests ?? 0) + (report.numTodoTests ?? 0)).toBe(
+        0,
+      );
       expect(
         await prisma.dose.count({
           where: { immunotherapyId: therapy.immunotherapy.id },

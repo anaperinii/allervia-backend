@@ -7,5 +7,4 @@ import { CreatePatientDto } from './create-patient.dto';
  * previously caused this DTO to appear as an empty object in the contract.
  */
 
-
 export class UpdatePatientDto extends PartialType(CreatePatientDto) {}

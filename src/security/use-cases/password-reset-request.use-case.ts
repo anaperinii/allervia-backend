@@ -48,7 +48,6 @@ export class PasswordResetRequestUseCase {
     try {
       await this.emailService.sendPasswordResetLink(user.email, token);
     } catch {
-
       this.logger.error('Falha ao enviar e-mail de redefinição de senha.');
     }
   }
