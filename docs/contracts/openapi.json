@@ -16,8 +16,7 @@
                 "$ref": "#/components/schemas/AccountOrganizationDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "professional": {
             "allOf": [
@@ -25,8 +24,7 @@
                 "$ref": "#/components/schemas/AccountProfessionalDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "roles": {
             "items": {
@@ -248,8 +246,7 @@
               }
             ],
             "description": "Scheduled successor; null at end of sequence",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "therapyRevision": {
             "type": "number"
@@ -441,8 +438,7 @@
                 "$ref": "#/components/schemas/AppointmentDoseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "doseId": {
             "nullable": true,
@@ -474,8 +470,7 @@
                 "$ref": "#/components/schemas/AppointmentProfessionalDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "professionalId": {
             "nullable": true,
@@ -800,8 +795,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "administeredAt": {
             "format": "date-time",
@@ -814,8 +808,7 @@
                 "$ref": "#/components/schemas/ExportAdministeredByDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -843,8 +836,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "prescription": {
             "allOf": [
@@ -852,8 +844,7 @@
                 "$ref": "#/components/schemas/ExportPrescriptionDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "scheduledAt": {
             "format": "date-time",
@@ -1185,8 +1176,7 @@
               }
             ],
             "description": "Responsável legal. Obrigatório para menores de 18 anos e recusado para maiores. Enviar null remove o vínculo.",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "phoneNumber": {
             "description": "Número de Telefone",
@@ -1448,8 +1438,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -1538,8 +1527,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "prescriptionId": {
             "nullable": true,
@@ -2235,8 +2223,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -2301,8 +2288,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "prescriptionId": {
             "nullable": true,
@@ -2604,8 +2590,7 @@
                 "$ref": "#/components/schemas/DosePrescriptionDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "currentPrescriptionId": {
             "nullable": true,
@@ -3243,8 +3228,7 @@
               }
             ],
             "description": "Previsão em aberto mais próxima; ausência não é término",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "patient": {
             "$ref": "#/components/schemas/TherapyPatientRefDto"
@@ -3256,8 +3240,7 @@
               }
             ],
             "description": "Snapshot imutável da prescrição: versão fixada, revisão e seleção resolvida. Histórico é lido daqui, nunca reinterpretado pela versão padrão vigente.",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "responsiblePhysician": {
             "$ref": "#/components/schemas/TherapyPhysicianRefDto"
@@ -3344,8 +3327,7 @@
               }
             ],
             "description": "Previsão em aberto mais próxima; ausência não é término",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "patient": {
             "$ref": "#/components/schemas/TherapyPatientRefDto"
@@ -3356,8 +3338,7 @@
                 "$ref": "#/components/schemas/TherapyPrescriptionRefDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "responsiblePhysician": {
             "$ref": "#/components/schemas/TherapyPhysicianRefDto"
@@ -3482,8 +3463,7 @@
               }
             ],
             "description": "Immutable prescription snapshot: versionId, revision and resolved step selection",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "revision": {
             "description": "Concurrency revision for clinical writes",
@@ -3752,8 +3732,7 @@
                 "$ref": "#/components/schemas/ProfessionalRefDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           }
         },
         "required": [
@@ -4655,8 +4634,7 @@
               }
             ],
             "description": "Responsável legal; null quando o paciente é maior de idade",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "id": {
             "type": "string"
@@ -6081,8 +6059,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -6108,8 +6085,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "revision": {
             "type": "number"
@@ -6822,8 +6798,7 @@
                 "$ref": "#/components/schemas/LifecycleRecommendationsDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "type": {
             "enum": [
@@ -6890,8 +6865,7 @@
                 "$ref": "#/components/schemas/LifecycleRecommendationsDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "type": {
             "enum": [
@@ -7134,8 +7108,7 @@
                 "$ref": "#/components/schemas/TherapySummaryNextDoseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "prescription": {
             "allOf": [
@@ -7144,8 +7117,7 @@
               }
             ],
             "description": "Versão de protocolo fixada na prescrição",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "revision": {
             "description": "Revisão de concorrência do tratamento",
@@ -7423,8 +7395,7 @@
               }
             ],
             "description": "Responsável legal. Obrigatório para menores de 18 anos e recusado para maiores. Enviar null remove o vínculo.",
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "phoneNumber": {
             "description": "Número de Telefone",
@@ -7506,8 +7477,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "administrationEndedAt": {
             "format": "date-time",
@@ -7572,8 +7542,7 @@
                 "$ref": "#/components/schemas/DoseValuesResponseDto"
               }
             ],
-            "nullable": true,
-            "type": "object"
+            "nullable": true
           },
           "prescriptionId": {
             "nullable": true,
