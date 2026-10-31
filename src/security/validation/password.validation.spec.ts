@@ -31,7 +31,9 @@ describe('IsPassword (política única de senha — DEC-05)', () => {
 
   it('rejeita vazio e abaixo do mínimo', () => {
     expect(errorsFor('')).toContain('isNotEmpty');
-    expect(errorsFor('Ab1!'.repeat(1))).toContain('minLength');
+    expect(
+      errorsFor('Ab1!'.repeat(2).slice(0, PASSWORD_MIN_LENGTH - 1)),
+    ).toContain('minLength');
   });
 
   it('rejeita acima do máximo de caracteres', () => {
@@ -42,9 +44,7 @@ describe('IsPassword (política única de senha — DEC-05)', () => {
 
   it('aceita o mínimo e o máximo de caracteres', () => {
     expect(errorsFor('Ab1!'.repeat(2))).toHaveLength(0);
-    expect(
-      errorsFor('Ab1!'.repeat(PASSWORD_MAX_LENGTH / 4)),
-    ).toHaveLength(0);
+    expect(errorsFor('Ab1!'.repeat(PASSWORD_MAX_LENGTH / 4))).toHaveLength(0);
   });
 
   it('rejeita sem letra maiúscula', () => {

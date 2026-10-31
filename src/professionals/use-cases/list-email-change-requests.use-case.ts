@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { VerificationPurpose } from '@prisma/client';
 import { PrismaService } from 'src/infra/database/prisma.service';
-import { buildPage, PageQueryDto, resolvePage } from 'src/infra/http/pagination';
+import {
+  buildPage,
+  PageQueryDto,
+  resolvePage,
+} from 'src/infra/http/pagination';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import {
   EmailChangeRequestDto,

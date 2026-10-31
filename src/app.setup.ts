@@ -71,7 +71,6 @@ export function configureApp(app: NestExpressApplication): void {
 }
 
 export function setupSwagger(app: INestApplication): void {
-
   if (
     process.env.NODE_ENV === 'production' &&
     process.env.SWAGGER_ENABLED !== 'true'

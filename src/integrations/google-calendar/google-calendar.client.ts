@@ -12,7 +12,6 @@ export interface GoogleEventDateTime {
 }
 
 export interface GoogleEventPayload {
-
   id?: string;
   summary?: string;
   description?: string;

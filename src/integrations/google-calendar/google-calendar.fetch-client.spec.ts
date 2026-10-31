@@ -41,9 +41,7 @@ describe('GoogleCalendarFetchClient contra servidor HTTP controlado', () => {
   });
 
   it('aborta conexão que nunca responde dentro do deadline', async () => {
-    handler = () => {
-
-    };
+    handler = () => {};
     const client = buildClient(1_000);
     const started = Date.now();
     await expect(client.listEvents('tok', 'primary', {})).rejects.toMatchObject(
@@ -146,9 +144,7 @@ describe('GoogleCalendarFetchClient contra servidor HTTP controlado', () => {
   });
 
   it('token endpoint também respeita o deadline', async () => {
-    handler = () => {
-
-    };
+    handler = () => {};
     const client = buildClient(1_000);
     await expect(client.refreshAccessToken('rt')).rejects.toMatchObject({
       errorCode: 'network',

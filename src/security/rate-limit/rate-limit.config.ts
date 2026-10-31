@@ -32,7 +32,6 @@ export class RateLimitConfig {
           failOpen: false,
         };
       case RATE_LIMIT_CLASSES.webhook:
-
         return {
           limit: this.positiveNumber('RATE_LIMIT_WEBHOOK_MAX', 120),
           windowSeconds: this.positiveNumber(

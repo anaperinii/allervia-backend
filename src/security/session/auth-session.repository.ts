@@ -11,7 +11,6 @@ import {
 } from './session.types';
 
 export abstract class IAuthSessionRepository {
-
   abstract withTransaction<T>(work: () => Promise<T>): Promise<T>;
   abstract loadContextByUserId(userId: string): Promise<AuthContext | null>;
 

@@ -251,7 +251,6 @@ export class CalendarSyncService {
       );
     } catch (error) {
       if (error instanceof GoogleApiError && error.status === 409) {
-
         const patched = await this.client.patchEvent(
           accessToken,
           connection.calendarId,
@@ -309,7 +308,6 @@ export class CalendarSyncService {
     etag: string | undefined,
     hash: string | null,
   ): Promise<void> {
-
     await this.prisma.googleCalendarEventLink.updateMany({
       where: {
         appointmentId: appointment.id,
@@ -356,7 +354,6 @@ export class CalendarSyncService {
         },
       });
     } else if (hash !== this.mapper.contentHash(this.toMappable(current))) {
-
       await this.prisma.calendarSyncJob.create({
         data: {
           organizationId: current.organizationId,

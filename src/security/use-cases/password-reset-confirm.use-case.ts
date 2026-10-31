@@ -93,7 +93,6 @@ export class PasswordResetConfirmUseCase {
     try {
       await this.emailService.sendPasswordChangedNotification(token.userEmail);
     } catch {
-
       this.logger.error('Falha ao notificar redefinição de senha por e-mail.');
     }
   }

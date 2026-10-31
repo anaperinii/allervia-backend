@@ -8,7 +8,6 @@ export class BcryptPasswordHashingService extends IPasswordHashingService {
   private readonly SALT_ROUNDS = 10;
 
   async hash(password: string): Promise<string> {
-
     if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_BYTES) {
       throw new Error(
         `Senha excede ${PASSWORD_MAX_BYTES} bytes; rejeitada antes do bcrypt`,

@@ -30,7 +30,6 @@ export class UpdateOrganizationUseCase {
     }
 
     return this.prisma.$transaction(async (tx) => {
-
       await tx.$queryRaw`SELECT id FROM "Organization" WHERE id = ${currentUser.organizationId} FOR NO KEY UPDATE`;
       const current = await tx.organization.findUnique({
         where: { id: currentUser.organizationId },

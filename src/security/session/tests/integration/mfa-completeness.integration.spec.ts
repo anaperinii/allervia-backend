@@ -158,7 +158,6 @@ describe('Cobertura completa de MFA e reautenticação - Integração HTTP', () 
     csrfToken: string;
     sessionId: string;
   }): Promise<EnrollmentBody> {
-
     await reauthenticate(session);
     const enrollment = await server()
       .post('/auth/mfa/enroll')

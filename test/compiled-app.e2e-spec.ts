@@ -98,7 +98,7 @@ describe('Compiled entrypoint serves the same HTTP pipeline (e2e)', () => {
         try {
           process.kill(child.pid, 'SIGKILL');
         } catch {
-
+          return;
         }
       }
     }

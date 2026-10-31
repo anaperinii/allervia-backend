@@ -39,7 +39,6 @@ export class CancelInviteUseCase {
     invite.deactive();
 
     return this.prisma.$transaction(async (tx) => {
-
       const changed = await tx.internalUserInvite.updateMany({
         where: {
           id: invite.id,
