@@ -65,16 +65,6 @@ export const CAPABILITY_MATRIX: ReadonlyArray<{
     action: 'manage',
     subject: 'Appointment',
   },
-  {
-    capability: 'calendarConnections:read',
-    action: 'read',
-    subject: 'GoogleCalendarConnection',
-  },
-  {
-    capability: 'calendarConnections:manage',
-    action: 'manage',
-    subject: 'GoogleCalendarConnection',
-  },
   { capability: 'organization:read', action: 'read', subject: 'Organization' },
   { capability: 'auditLogs:read', action: 'read', subject: 'AuditLog' },
 ];

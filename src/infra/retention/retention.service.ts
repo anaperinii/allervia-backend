@@ -86,11 +86,6 @@ export class RetentionService {
           attempts: { lt: 5 },
         },
       },
-      {
-        name: 'jobs de calendário processados',
-        model: 'calendarSyncJob',
-        where: { processedAt: { lt: new Date(now - 30 * DAY_MS) } },
-      },
     ];
   }
 

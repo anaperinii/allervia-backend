@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { AppointmentFactory } from './appointment.factory';
 import { DoseFactory } from './dose.factory';
-import { GoogleCalendarConnectionFactory } from './google-calendar-connection.factory';
 import { ImmunotherapyFactory } from './immunotherapy.factory';
 import { InternalUserInviteFactory } from './internal-user-invite.factory';
 import { OrganizationFactory } from './organization.factory';
@@ -16,7 +15,6 @@ export class TestFactories {
   public readonly immunotherapies: ImmunotherapyFactory;
   public readonly doses: DoseFactory;
   public readonly appointments: AppointmentFactory;
-  public readonly googleCalendarConnections: GoogleCalendarConnectionFactory;
 
   constructor(prisma: PrismaClient) {
     this.users = new UserFactory(prisma);
@@ -26,8 +24,5 @@ export class TestFactories {
     this.immunotherapies = new ImmunotherapyFactory(prisma);
     this.doses = new DoseFactory(prisma);
     this.appointments = new AppointmentFactory(prisma);
-    this.googleCalendarConnections = new GoogleCalendarConnectionFactory(
-      prisma,
-    );
   }
 }

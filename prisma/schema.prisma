@@ -150,7 +150,6 @@ model Professional {
   patientsResponsible      Patient[]            @relation("ResponsiblePhysician")
   internalUserInvites      InternalUserInvite[]
   appointments             Appointment[]        @relation("AppointmentProfessional")
-  googleCalendarConnection GoogleCalendarConnection?
 
   @@index([organizationId, profession])
 }
@@ -395,9 +394,6 @@ model Appointment {
   updatedAt   DateTime @default(now()) @updatedAt
   updatedById String
   updatedBy   User     @relation("AppointmentUpdatedBy", fields: [updatedById], references: [id])
-
-  calendarEventLink GoogleCalendarEventLink?
-  calendarSyncJobs  CalendarSyncJob[]
 
   @@index([organizationId, startsAt])
   @@index([patientId, startsAt])
@@ -851,109 +847,6 @@ model AuthSession {
   userAgent String?
   ipAddressHash String?
   @@index([userId, revokedAt])
-  @@index([expiresAt])
-}
-
-enum GoogleCalendarConnectionStatus {
-  ACTIVE
-  BROKEN
-}
-
-enum CalendarSyncJobKind {
-  PUSH_SYNC
-  PULL_INCREMENTAL
-  PULL_FULL_RESYNC
-  CHANNEL_RENEW
-  CHANNEL_STOP
-}
-
-model GoogleCalendarConnection {
-  id             String @id @default(ulid())
-  organizationId String
-
-  professionalId String       @unique
-  professional   Professional @relation(fields: [professionalId], references: [id])
-
-  googleAccountEmail String
-  calendarId         String @default("primary")
-  grantedScopes      String
-
-  refreshTokenCiphertext String
-  refreshTokenIv         String
-  refreshTokenAuthTag    String
-  keyVersion             Int    @default(1)
-
-  status       GoogleCalendarConnectionStatus @default(ACTIVE)
-  brokenReason String?
-
-  teardownRequestedAt DateTime?
-
-  syncToken             String?
-  lastIncrementalSyncAt DateTime?
-  lastFullSyncAt        DateTime?
-
-  channelId         String?   @unique
-  channelResourceId String?
-  channelExpiresAt  DateTime?
-  channelTokenHash  String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  eventLinks GoogleCalendarEventLink[]
-
-  @@index([organizationId, status])
-  @@index([channelExpiresAt])
-}
-
-model GoogleCalendarEventLink {
-  id             String @id @default(ulid())
-  organizationId String
-
-  appointmentId String      @unique
-  appointment   Appointment @relation(fields: [appointmentId], references: [id])
-
-  connectionId String
-  connection   GoogleCalendarConnection @relation(fields: [connectionId], references: [id])
-
-  googleEventId String
-  etag          String?
-  lastSyncedHash String?
-  deletedAt      DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  @@unique([connectionId, googleEventId])
-}
-
-model CalendarSyncJob {
-  id             String  @id @default(ulid())
-  organizationId String
-  kind           CalendarSyncJobKind
-  connectionId   String?
-  appointmentId  String?
-  appointment    Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  payload        Json?
-
-  pendingKey String? @unique
-
-  attempts      Int       @default(0)
-  nextAttemptAt DateTime  @default(now())
-  leaseUntil    DateTime?
-  attemptId     String?
-  processedAt   DateTime?
-  lastError     String?
-  createdAt     DateTime  @default(now())
-
-  @@index([processedAt, nextAttemptAt, createdAt])
-  @@index([organizationId, createdAt])
-}
-
-model OAuthStateNonce {
-  nonce     String   @id
-  expiresAt DateTime
-
   @@index([expiresAt])
 }
 

@@ -17,13 +17,6 @@ import { UpdateOrganizationUseCase } from 'src/organization/use-cases/update-org
 import { TestDatabaseManager } from 'test/database/test-database.manager';
 import { TestFactories } from 'test/factories';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
-import { CalendarSyncService } from 'src/integrations/google-calendar/calendar-sync.service';
-import { GoogleAuthService } from 'src/integrations/google-calendar/google-auth.service';
-import {
-  GoogleCalendarClient,
-  GoogleEvent,
-} from 'src/integrations/google-calendar/google-calendar.client';
-import { FakeGoogleCalendarClient } from 'src/integrations/google-calendar/tests/integration/fake-google-calendar.client';
 
 describe('Aceite final independente: invariantes sob falha e mudança concorrente', () => {
   let module: TestingModule;
@@ -32,7 +25,6 @@ describe('Aceite final independente: invariantes sob falha e mudança concorrent
   let user: AuthenticatedUserPayload;
   let repository: IAuthSessionRepository;
   let mfa: MfaService;
-  const google = new FakeGoogleCalendarClient();
 
   beforeAll(async () => {
     process.env.MFA_ENCRYPTION_KEY = Buffer.alloc(32, 9).toString('base64');
@@ -41,8 +33,6 @@ describe('Aceite final independente: invariantes sob falha e mudança concorrent
     module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
       .useValue(TestDatabaseManager.getInstance())
-      .overrideProvider(GoogleCalendarClient)
-      .useValue(google)
       .compile();
     prisma = module.get(PrismaService);
     factories = new TestFactories(prisma);
@@ -53,7 +43,6 @@ describe('Aceite final independente: invariantes sob falha e mudança concorrent
   beforeEach(async () => {
     await TestDatabaseManager.cleanAll();
     user = await factories.users.createAuthenticatedAdmin();
-    google.reset();
   });
 
   afterEach(() => jest.restoreAllMocks());
@@ -311,119 +300,5 @@ describe('Aceite final independente: invariantes sob falha e mudança concorrent
       spies.forEach((spy) => spy.mockRestore());
     }
     expect(captured.join('\n')).not.toContain(marker);
-  });
-
-  async function calendarFixture() {
-    const patient = await factories.patients.create({
-      organizationId: user.organizationId,
-      responsiblePhysicianId: user.professionalId!,
-      createdById: user.id,
-      updatedById: user.id,
-    });
-    const appointment = await factories.appointments.create({
-      organizationId: user.organizationId,
-      professionalId: user.professionalId!,
-      patientId: patient.id,
-      createdById: user.id,
-      updatedById: user.id,
-    });
-    await factories.googleCalendarConnections.create({
-      organizationId: user.organizationId,
-      professionalId: user.professionalId!,
-    });
-    const enqueue = () =>
-      prisma.calendarSyncJob.create({
-        data: {
-          organizationId: user.organizationId,
-          appointmentId: appointment.id,
-          kind: 'PUSH_SYNC',
-          nextAttemptAt: new Date(0),
-        },
-      });
-    return { appointment, enqueue };
-  }
-
-  it('AC-57/59: dois jobs concorrentes do mesmo appointment criam um evento remoto', async () => {
-    const { enqueue } = await calendarFixture();
-    let release!: () => void;
-    let firstRead!: () => void;
-    const bothReaders = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    const read = new Promise<void>((resolve) => {
-      firstRead = resolve;
-    });
-    let readers = 0;
-    jest
-      .spyOn(module.get(GoogleAuthService), 'getAccessToken')
-      .mockImplementation(async () => {
-        readers += 1;
-        if (readers === 1) firstRead();
-        if (readers === 2) release();
-        await bothReaders;
-        return 'synthetic';
-      });
-    const sync = module.get(CalendarSyncService);
-    await enqueue();
-    const first = sync.processPending(1);
-    await read;
-    await enqueue();
-    const second = sync.processPending(1);
-    try {
-      const results = await Promise.all([first, second]);
-      expect(results.every((result) => result.failed === 0)).toBe(true);
-      expect(google.events.size).toBe(1);
-      expect(await prisma.googleCalendarEventLink.count()).toBe(1);
-    } finally {
-      release();
-    }
-  });
-
-  it('AC-59: resposta de push antigo não ressuscita evento após cancelamento', async () => {
-    const { appointment, enqueue } = await calendarFixture();
-    jest
-      .spyOn(module.get(GoogleAuthService), 'getAccessToken')
-      .mockResolvedValue('synthetic');
-    let release!: () => void;
-    let entered!: () => void;
-    const pending = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    const started = new Promise<void>((resolve) => {
-      entered = resolve;
-    });
-    jest
-      .spyOn(google, 'insertEvent')
-      .mockImplementationOnce(async (_token, _calendar, event) => {
-        entered();
-        await pending;
-        const created: GoogleEvent = {
-          ...event,
-          id: event.id!,
-          etag: 'synthetic',
-        };
-        google.events.set(created.id, created);
-        return created;
-      });
-    const sync = module.get(CalendarSyncService);
-    await enqueue();
-    const first = sync.processPending(1);
-    await started;
-    try {
-      await prisma.appointment.update({
-        where: { id: appointment.id },
-        data: { status: 'CANCELLED' },
-      });
-      await enqueue();
-      await sync.processPending(1);
-    } finally {
-      release();
-    }
-    await first;
-    expect(google.events.size).toBe(0);
-    const link = await prisma.googleCalendarEventLink.findUniqueOrThrow({
-      where: { appointmentId: appointment.id },
-    });
-    expect(link.deletedAt).not.toBeNull();
   });
 });

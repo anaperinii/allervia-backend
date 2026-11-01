@@ -13,7 +13,6 @@ import { AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { buildPage, resolvePage } from 'src/infra/http/pagination';
-import { enqueueCalendarSync } from 'src/integrations/google-calendar/calendar-sync.enqueue';
 import {
   CreateAppointmentDto,
   ListAppointmentsQueryDto,
@@ -165,11 +164,6 @@ export class AppointmentsService {
         },
         tx,
       );
-      await enqueueCalendarSync(tx, {
-        organizationId: user.organizationId,
-        kind: 'PUSH_SYNC',
-        appointmentId: appointment.id,
-      });
       return appointment;
     });
   }
@@ -273,77 +267,8 @@ export class AppointmentsService {
         },
         tx,
       );
-      if (updated.professionalId || appointment.professionalId) {
-        await enqueueCalendarSync(tx, {
-          organizationId: user.organizationId,
-          kind: 'PUSH_SYNC',
-          appointmentId: id,
-        });
-      }
       return updated;
     });
-  }
-
-  async applyExternalReschedule(
-    tx: Prisma.TransactionClient,
-    appointmentId: string,
-    window: { startsAt: Date; endsAt: Date },
-    actorUserId: string,
-    source: { googleEventId: string },
-  ) {
-    if (
-      !Number.isFinite(window.startsAt.getTime()) ||
-      !Number.isFinite(window.endsAt.getTime()) ||
-      window.startsAt >= window.endsAt
-    ) {
-      throw new BadRequestException('INVALID_PERIOD');
-    }
-    if (!actorUserId) {
-      throw new Error(
-        'SYSTEM_USER_ID ausente: reagendamento externo exige ator na trilha',
-      );
-    }
-
-    const appointment = await tx.appointment.findUnique({
-      where: { id: appointmentId },
-    });
-    if (!appointment) return null;
-    if (appointment.status !== 'SCHEDULED') {
-      throw new ConflictException('APPOINTMENT_ALREADY_CLOSED');
-    }
-
-    const updated = await tx.appointment.update({
-      where: { id: appointment.id },
-      data: {
-        startsAt: window.startsAt,
-        endsAt: window.endsAt,
-        revision: { increment: 1 },
-        updatedById: actorUserId,
-      },
-    });
-
-    await this.audit.record(
-      {
-        userId: actorUserId,
-        organizationId: appointment.organizationId,
-        entityType: AUDIT_ENTITY_TYPES.APPOINTMENT,
-        entityId: appointment.id,
-        action: 'APPOINTMENT_UPDATED_FROM_GOOGLE',
-        oldValues: {
-          startsAt: appointment.startsAt.toISOString(),
-          endsAt: appointment.endsAt.toISOString(),
-        },
-        newValues: {
-          patientId: appointment.patientId,
-          startsAt: updated.startsAt.toISOString(),
-          endsAt: updated.endsAt.toISOString(),
-          googleEventId: source.googleEventId,
-        },
-      },
-      tx,
-    );
-
-    return updated;
   }
 
   async list(query: ListAppointmentsQueryDto, user: AuthenticatedUserPayload) {

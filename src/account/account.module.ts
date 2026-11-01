@@ -5,7 +5,6 @@ import { EmailModule } from 'src/infra/email/email.module';
 import { AuthModule } from 'src/security/auth.module';
 import { SessionModule } from 'src/security/session/session.module';
 import { PermissionsModule } from 'src/security/permissions/permissions.module';
-import { GoogleCalendarModule } from 'src/integrations/google-calendar/google-calendar.module';
 import { ProfessionalsModule } from 'src/professionals/professionals.module';
 import { AccountController } from './account.controller';
 import { GetAccountContextUseCase } from './use-cases/get-account-context.use-case';
@@ -25,7 +24,6 @@ import { IUserRepository } from './user.repository';
     AuthModule,
     SessionModule,
     PermissionsModule,
-    GoogleCalendarModule,
     UserAccessModule,
     ProfessionalsModule,
   ],

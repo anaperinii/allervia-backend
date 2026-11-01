@@ -61,11 +61,10 @@ O back-end é um **monolito modular** organizado por **domínio de negócio**, n
 | `patients` | Pacientes da organização |
 | `invites` | Convites de usuários internos e registro a partir do convite |
 | `treatment-protocols` | Núcleo clínico: terapias, doses e regras de protocolo |
-| `scheduling` | Agendamentos (`Appointment`) ligados às doses e ao calendário externo |
+| `scheduling` | Agendamentos (`Appointment`) ligados às doses |
 | `audit` | Consulta ao log de auditoria (`AuditLog`), por entidade ou por autor |
 | `notifications` | Notificações internas, preferências e outbox transacional |
 | `public-requests` | Rotas públicas de contato/demo e solicitações de suporte autenticadas |
-| `integrations/google-calendar` | OAuth por profissional, sincronização bidirecional de agenda e webhook de push |
 | `infra` | Recursos compartilhados: Prisma, e-mail, exceções, filtros, health check, paginação HTTP, retenção/expurgo |
 
 ### Critério de modelagem
@@ -93,8 +92,8 @@ O grafo de dependências entre módulos é unidirecional e sem ciclos, verificá
 ### Padrões aplicados
 
 - **Strategy + Factory** no fluxo de convite e registro (`invite-strategy.factory.ts`, `register-strategy.context.ts`). Hoje existe uma única estratégia concreta de cada lado — a estrutura foi mantida deliberadamente (decisão registrada em `docs/review/execucao/decisoes.md`), mas não adicione novas indireções sem uma segunda estratégia real.
-- **Service com interface abstrata** para dependências substituíveis: `IEmailService`, `IPasswordHashingService`, `GoogleCalendarClient` (fake nos testes).
-- **Outbox transacional + lease/fencing** nas três filas persistidas (notificações, Google Calendar, e-mail de demo) — contrato em `docs/review/execucao/filas.md`.
+- **Service com interface abstrata** para dependências substituíveis: `IEmailService`, `IPasswordHashingService` (fakes nos testes).
+- **Outbox transacional + lease/fencing** nas filas persistidas (notificações, e-mail de demo) — contrato em `docs/review/execucao/filas.md`.
 - **Exception filter global único** (`HttpErrorFilter`) traduzindo qualquer exceção para o envelope com `code` do catálogo.
 
 ---
@@ -141,8 +140,6 @@ src/
 ├── audit/                         # consulta ao AuditLog (geral, por entidade, por autor)
 ├── notifications/                 # notificações internas + preferências + outbox (retry, status)
 ├── public-requests/                # demo/contact (público) + support (autenticado)
-├── integrations/
-│   └── google-calendar/            # OAuth, conexão por profissional, sync bidirecional, webhook de push
 │
 ├── infra/
 │   ├── acceptance/                  # critérios/guardas de aceitação de ambiente
@@ -282,22 +279,20 @@ A API sobe em `http://localhost:3000` (ou na porta de `PORT`). O Swagger fica em
 | `DATABASE_URL` | sim | String de conexão PostgreSQL. Lida pelo `PrismaService` e pelo `prisma.config.ts` |
 | `AUTH_SESSION_CSRF_SECRET` | sim | Chave HMAC do CSRF por sessão (mínimo 32 bytes; o boot falha sem ela) |
 | `SUPER_ADMIN_REGISTRATION_KEY` | sim | Chave de provisionamento (`x-provisioning-key`) que autoriza criar organizações pela rota administrativa |
-| `SYSTEM_USER_ID` | com Google habilitado | Usuário de sistema que assina mutações vindas de integrações (inbound/teardown do Google falham sem ator) |
+| `SYSTEM_USER_ID` | para provisionamento | Usuário de sistema que assina mutações sem ator humano (`organization/provisioning/system-actor.ts`) |
 | `MFA_ENCRYPTION_KEY` | para MFA | Chave AES-256 (base64, 32 bytes) que cifra segredos TOTP em repouso |
 | `AUTH_ALLOWED_ORIGINS` | em produção | Origens permitidas (CORS + política de Origin do CSRF), separadas por vírgula |
-| `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_OAUTH_REDIRECT_URL`/`GOOGLE_WEBHOOK_URL`/`GOOGLE_TOKEN_ENCRYPTION_KEY` | p/ Google Calendar | Integração fica desabilitada se ausentes/inválidas (fail-closed) |
-| `GOOGLE_HTTP_TIMEOUT_MS` | não | Deadline por chamada ao Google (default 15000, clamp 1000–60000) |
 | `SMTP_HOST`/`SMTP_PORT`/... | p/ e-mail | Transporte SMTP (STARTTLS fora da porta 465) |
 | `CSP_MODE` | não | `enforce` \| `report-only` \| `off`. Default: `enforce` em produção, `report-only` fora |
 | `SWAGGER_ENABLED` | não | Em produção o Swagger fica desligado por default; `true` reabilita |
 | `HTTP_METRICS_LOG` | não | Log JSON por request (só template de rota). Default: ligado em produção |
-| `ALLERVIA_DISPATCHERS_DISABLED` | não | Desliga os 3 dispatchers de fila no processo |
+| `ALLERVIA_DISPATCHERS_DISABLED` | não | Desliga os dispatchers de fila no processo |
 | `ALLERVIA_RETENTION_ENABLED` | não | Ativa o expurgo de retenção (sem ela roda em dry-run, só contagens) |
 | `PORT` | não | Porta HTTP. Padrão: `3000` |
 
 Para testes de integração, as variáveis vão em `.env.test.local`, apontando para um **banco separado**, com `NODE_ENV=test` (há guardas que recusam bancos de desenvolvimento).
 
-> `.env` e `.env.test.local` não devem ser versionados com valores reais. Trate `AUTH_SESSION_CSRF_SECRET`, `MFA_ENCRYPTION_KEY`, `GOOGLE_*` e `SUPER_ADMIN_REGISTRATION_KEY` como segredos: quem tem a chave de provisionamento consegue criar organizações e administradores.
+> `.env` e `.env.test.local` não devem ser versionados com valores reais. Trate `AUTH_SESSION_CSRF_SECRET`, `MFA_ENCRYPTION_KEY` e `SUPER_ADMIN_REGISTRATION_KEY` como segredos: quem tem a chave de provisionamento consegue criar organizações e administradores.
 
 ---
 
@@ -532,18 +527,6 @@ Configuração disponível tanto no onboarding quanto no uso diário: listar/cri
 | POST | `/contact-requests` | público, rate limit `public-submit` |
 | POST | `/support-requests` | autenticado |
 | GET | `/support-requests` | autenticado |
-
-### `integrations/google-calendar`
-
-| Método | Rota | Acesso |
-| --- | --- | --- |
-| POST | `/integrations/google-calendar/connect` | `manage GoogleCalendarConnection` |
-| GET | `/integrations/google-calendar/callback` | público (retorno do OAuth) |
-| GET | `/integrations/google-calendar/connection` | `read GoogleCalendarConnection` |
-| DELETE | `/integrations/google-calendar/connection` | `manage GoogleCalendarConnection` |
-| GET | `/integrations/google-calendar/connections` | `read GoogleCalendarConnection` |
-| DELETE | `/integrations/google-calendar/connections/:professionalId` | `manage GoogleCalendarConnection` |
-| POST | `/integrations/google-calendar/webhook` | público, rate limit `webhook` (push notification do Google) |
 
 ### `health`
 

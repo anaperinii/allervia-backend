@@ -9,7 +9,6 @@ import { PrismaAuditLogService } from 'src/infra/audit/prisma-audit-log.service'
 import { ulid } from 'ulid';
 import { IUserRepository } from 'src/account/user.repository';
 import { NotFoundException } from '@nestjs/common';
-import { GoogleCalendarConnectionService } from 'src/integrations/google-calendar/google-calendar-connection.service';
 
 describe('ArchiveUserUseCase - Integration', () => {
   let module: TestingModule;
@@ -34,10 +33,6 @@ describe('ArchiveUserUseCase - Integration', () => {
         {
           provide: IAuditLogService,
           useClass: PrismaAuditLogService,
-        },
-        {
-          provide: GoogleCalendarConnectionService,
-          useValue: { disconnectByUserId: jest.fn() },
         },
       ],
     }).compile();

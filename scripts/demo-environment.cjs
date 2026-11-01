@@ -5,10 +5,6 @@ const dotenv = require('dotenv');
 const LOCAL_HOSTS = ['localhost', '127.0.0.1', '[::1]'];
 const DEMO_DATABASE_NAME_PATTERN = /(?:^|[_-])demo$/i;
 const EXTERNAL_INTEGRATION_KEYS = [
-  'GOOGLE_CLIENT_ID',
-  'GOOGLE_CLIENT_SECRET',
-  'GOOGLE_OAUTH_REDIRECT_URL',
-  'GOOGLE_WEBHOOK_URL',
   'SMTP_HOST',
   'SMTP_PORT',
   'SMTP_USER',

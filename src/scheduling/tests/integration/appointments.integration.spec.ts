@@ -158,12 +158,6 @@ describe('Agenda (appointments) - Integração HTTP', () => {
     const appointment = readBody<AppointmentBody>(created);
     expect(appointment.status).toBe('SCHEDULED');
 
-    expect(
-      await prisma.calendarSyncJob.count({
-        where: { appointmentId: appointment.id, kind: 'PUSH_SYNC' },
-      }),
-    ).toBe(1);
-
     const admin = await factories.users.createColleagueWithRoles(
       physician.organizationId,
       ['ADMINISTRATOR'],
@@ -204,7 +198,6 @@ describe('Agenda (appointments) - Integração HTTP', () => {
       });
     expectErrorEnvelope(response, { status: 400, code: 'INVALID_PERIOD' });
     expect(await prisma.appointment.count()).toBe(0);
-    expect(await prisma.calendarSyncJob.count()).toBe(0);
   });
 
   it('DEC-01: paciente inativo não recebe novo agendamento', async () => {
@@ -275,7 +268,6 @@ describe('Agenda (appointments) - Integração HTTP', () => {
     });
 
     expect(await prisma.appointment.count()).toBe(0);
-    expect(await prisma.calendarSyncJob.count()).toBe(0);
   });
 
   it('AC-43: revisão obsoleta, falta antes do início e motivo obrigatório', async () => {
