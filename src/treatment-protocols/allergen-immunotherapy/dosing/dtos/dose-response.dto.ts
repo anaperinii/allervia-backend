@@ -13,6 +13,23 @@ import {
   TherapyStatus,
 } from '@prisma/client';
 
+export class StepIntervalToleranceDto {
+  @ApiProperty({
+    description: 'Intervals below this many days are TOO_SHORT',
+  })
+  shortBelowDays: number;
+
+  @ApiProperty({
+    description: 'Intervals from this many days on are LONG',
+  })
+  longFromDays: number;
+
+  @ApiProperty({
+    description: 'Intervals above this many days are REQUIRES_STEP_REVIEW',
+  })
+  stepReviewAboveDays: number;
+}
+
 export class DoseValuesResponseDto {
   @ApiProperty({
     example: '1000',
@@ -63,6 +80,13 @@ export class ProtocolStepResponseDto {
 
   @ApiProperty()
   intervalDays: number;
+
+  @ApiPropertyOptional({
+    type: () => StepIntervalToleranceDto,
+    description:
+      'Day thresholds authored for this step. Absent means they are derived from this step and its successor.',
+  })
+  intervalTolerance?: StepIntervalToleranceDto;
 }
 
 export class DoseRecommendationRecommendedDto {
@@ -458,6 +482,7 @@ export class UpdateScheduledDoseResponseDto extends DoseRecordDto {
   therapyRevision: number;
 }
 
+
 @ApiExtraModels(
   DoseRecommendationRecommendedDto,
   DoseRecommendationEndOfSequenceDto,
@@ -477,6 +502,14 @@ export class DosePreviewResponseDto {
     description: 'Null when the recommendation ends the sequence',
   })
   nextScheduledAt: Date | null;
+
+  @ApiProperty({
+    type: StepIntervalToleranceDto,
+    nullable: true,
+    description:
+      'Day thresholds that classify the interval until the successor. Authored in the protocol step when present, derived from the step graph otherwise. Null when the recommendation ends the sequence.',
+  })
+  nextIntervalTolerance: StepIntervalToleranceDto | null;
 
   @ApiProperty()
   expectedRevision: number;

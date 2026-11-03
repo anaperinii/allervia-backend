@@ -95,6 +95,14 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
     'Categoria só pode ser informada ao suspender o tratamento.',
   REVISION_TARGETS_SAME_VERSION:
     'A versão escolhida já é a que está em uso. Selecione outra.',
+  NEXT_SCHEDULE_BEFORE_ADMINISTRATION:
+    'A próxima aplicação precisa ser depois desta aplicação.',
+  NEXT_SCHEDULE_NOT_APPLICABLE:
+    'Este é o último passo do protocolo: não há próxima aplicação a agendar.',
+  NEXT_SCHEDULE_REASON_REQUIRED:
+    'Informe o motivo do intervalo escolhido até a próxima aplicação.',
+  NEXT_SCHEDULE_REVIEW_REQUIRED:
+    'Intervalo muito longo: avalie explicitamente se é preciso retroceder doses antes de prosseguir.',
   SCHEDULE_REQUIRES_CALENDAR_REVIEW:
     'Não foi possível calcular a próxima data. Revise o calendário do protocolo.',
   STALE_APPOINTMENT_REVISION:

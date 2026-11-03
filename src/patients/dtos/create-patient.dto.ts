@@ -27,6 +27,28 @@ export class CpfConstraint implements ValidatorConstraintInterface {
   }
 }
 
+export const MAX_PATIENT_AGE_YEARS = 130;
+
+@ValidatorConstraint({ name: 'birthDate', async: false })
+export class BirthDateConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    const birth = new Date(value);
+    if (!Number.isFinite(birth.getTime())) return false;
+
+    const now = new Date();
+    if (birth.getTime() > now.getTime()) return false;
+
+    const oldest = new Date(now);
+    oldest.setFullYear(oldest.getFullYear() - MAX_PATIENT_AGE_YEARS);
+    return birth.getTime() >= oldest.getTime();
+  }
+
+  defaultMessage(): string {
+    return `Data de nascimento inválida: não pode ser futura nem anterior a ${MAX_PATIENT_AGE_YEARS} anos atrás.`;
+  }
+}
+
 export class GuardianDto {
   @ApiProperty({ description: 'Nome completo do responsável legal' })
   @IsString()
@@ -57,9 +79,13 @@ export class CreatePatientDto {
   @IsNotEmpty()
   fullName: string;
 
-  @ApiProperty({ description: 'Data de Nascimento' })
+  @ApiProperty({
+    description:
+      'Data de nascimento. Não pode ser futura nem anterior a 130 anos.',
+  })
   @IsDateString({ strict: true })
   @IsNotEmpty()
+  @Validate(BirthDateConstraint)
   birthDate: string;
 
   @ApiProperty({ description: 'Peso em kg' })

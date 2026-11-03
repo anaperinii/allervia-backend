@@ -201,6 +201,22 @@
           "immediateConduct": {
             "$ref": "#/components/schemas/DoseImmediateConductDto"
           },
+          "nextScheduledAt": {
+            "description": "When the successor should be scheduled, as an ISO timestamp with explicit offset. Omit to use the date the protocol recommends (administeredAt plus the step interval, in the prescription time zone). Only accepted when the engine recommends a successor.",
+            "type": "string"
+          },
+          "nextScheduleReason": {
+            "description": "Clinical reason for the resulting interval. Required when the interval falls below the step tolerance (TOO_SHORT) or beyond it (REQUIRES_STEP_REVIEW).",
+            "type": "string"
+          },
+          "nextScheduleReview": {
+            "description": "Explicit decision about stepping back, required when the interval exceeds the step tolerance (REQUIRES_STEP_REVIEW).",
+            "enum": [
+              "KEEP_STEP",
+              "STEP_BACK_REQUESTED"
+            ],
+            "type": "string"
+          },
           "observations": {
             "items": {
               "$ref": "#/components/schemas/DoseObservationDto"
@@ -1158,7 +1174,7 @@
       "CreatePatientDto": {
         "properties": {
           "birthDate": {
-            "description": "Data de Nascimento",
+            "description": "Data de nascimento. Não pode ser futura nem anterior a 130 anos.",
             "type": "string"
           },
           "cpf": {
@@ -2034,6 +2050,15 @@
           "expectedTherapyRevision": {
             "type": "number"
           },
+          "nextIntervalTolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StepIntervalToleranceDto"
+              }
+            ],
+            "description": "Day thresholds that classify the interval until the successor. Authored in the protocol step when present, derived from the step graph otherwise. Null when the recommendation ends the sequence.",
+            "nullable": true
+          },
           "nextScheduledAt": {
             "description": "Null when the recommendation ends the sequence",
             "format": "date-time",
@@ -2061,6 +2086,7 @@
           "recommendation",
           "allowedValues",
           "nextScheduledAt",
+          "nextIntervalTolerance",
           "expectedRevision",
           "expectedTherapyRevision",
           "prescriptionRevision",
@@ -5105,6 +5131,14 @@
           "intervalDays": {
             "type": "number"
           },
+          "intervalTolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StepIntervalToleranceInputDto"
+              }
+            ],
+            "description": "Limites de tolerância deste passo. Ausente, o sistema deriva do intervalo deste passo e do seguinte."
+          },
           "label": {
             "type": "string"
           },
@@ -5147,6 +5181,14 @@
           },
           "intervalDays": {
             "type": "number"
+          },
+          "intervalTolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StepIntervalToleranceDto"
+              }
+            ],
+            "description": "Day thresholds authored for this step. Absent means they are derived from this step and its successor."
           },
           "label": {
             "type": "string"
@@ -6372,6 +6414,50 @@
         ],
         "type": "object"
       },
+      "StepIntervalToleranceDto": {
+        "properties": {
+          "longFromDays": {
+            "description": "Intervals from this many days on are LONG",
+            "type": "number"
+          },
+          "shortBelowDays": {
+            "description": "Intervals below this many days are TOO_SHORT",
+            "type": "number"
+          },
+          "stepReviewAboveDays": {
+            "description": "Intervals above this many days are REQUIRES_STEP_REVIEW",
+            "type": "number"
+          }
+        },
+        "required": [
+          "shortBelowDays",
+          "longFromDays",
+          "stepReviewAboveDays"
+        ],
+        "type": "object"
+      },
+      "StepIntervalToleranceInputDto": {
+        "properties": {
+          "longFromDays": {
+            "description": "Intervalos a partir deste valor são LONG",
+            "type": "number"
+          },
+          "shortBelowDays": {
+            "description": "Intervalos abaixo deste valor são TOO_SHORT",
+            "type": "number"
+          },
+          "stepReviewAboveDays": {
+            "description": "Intervalos acima deste valor exigem revisão de passo",
+            "type": "number"
+          }
+        },
+        "required": [
+          "shortBelowDays",
+          "longFromDays",
+          "stepReviewAboveDays"
+        ],
+        "type": "object"
+      },
       "SupportRequestDto": {
         "properties": {
           "message": {
@@ -7206,7 +7292,7 @@
       "UpdatePatientDto": {
         "properties": {
           "birthDate": {
-            "description": "Data de Nascimento",
+            "description": "Data de nascimento. Não pode ser futura nem anterior a 130 anos.",
             "type": "string"
           },
           "cpf": {
@@ -7266,10 +7352,18 @@
             "type": "string"
           },
           "reason": {
-            "description": "Clinical reason for adjusting the planned session",
+            "description": "Clinical reason for adjusting the planned session. Required when the resulting interval falls outside the step tolerance, or when there is no preceding administration to measure it against.",
             "type": "string"
           },
           "scheduledAt": {
+            "type": "string"
+          },
+          "scheduleReview": {
+            "description": "Explicit decision about stepping back, required when the resulting interval exceeds the step tolerance.",
+            "enum": [
+              "KEEP_STEP",
+              "STEP_BACK_REQUESTED"
+            ],
             "type": "string"
           },
           "values": {
@@ -7280,8 +7374,7 @@
           "expectedRevision",
           "expectedTherapyRevision",
           "values",
-          "scheduledAt",
-          "reason"
+          "scheduledAt"
         ],
         "type": "object"
       },
