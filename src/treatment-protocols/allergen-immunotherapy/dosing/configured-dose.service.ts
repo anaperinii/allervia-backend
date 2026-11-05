@@ -15,6 +15,7 @@ import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-
 import {
   addProtocolCalendarDays,
   localCalendarDay,
+  localCalendarDaysBetween,
 } from 'src/utils/protocol-calendar';
 import {
   persistenceDefinition,
@@ -33,15 +34,23 @@ import {
 } from '../clinical-rules/protocol-definition.validator';
 import { resolveProtocolStep } from '../clinical-rules/resolve-protocol-step';
 import { recommendNextDose } from '../clinical-rules/recommend-next-dose';
+import {
+  classifyDoseInterval,
+  resolveStepIntervalTolerance,
+  stepIntervalContext,
+  type DoseIntervalAssessment,
+} from '../clinical-rules/classify-dose-interval';
 import type {
   AdministeredDoseValues,
   ProtocolStep,
   PublishedProtocolDefinition,
+  RecommendationResult,
   ResolvedPrescription,
 } from '../clinical-rules/protocol-definition';
 import {
   AdministerDoseDto,
   ConfiguredDoseValuesDto,
+  type NextScheduleReview,
   DosePreviewDto,
   DoseRevisionDto,
   UpdateScheduledDoseDto,
@@ -332,6 +341,102 @@ export class ConfiguredDoseService {
       throw new BadRequestException('SCHEDULE_REQUIRES_CALENDAR_REVIEW');
     }
   }
+  private resolveNextSchedule(
+    dto: AdministerDoseDto,
+    recommendation: RecommendationResult,
+    protocol: PublishedProtocolDefinition,
+    administeredAt: Date,
+    zone: string,
+  ): {
+    scheduledAt: Date | null;
+    recommendedAt: Date | null;
+    rescheduled: boolean;
+    reason: string | null;
+    assessment: DoseIntervalAssessment | null;
+    review: NextScheduleReview | null;
+  } {
+    const empty = {
+      scheduledAt: null,
+      recommendedAt: null,
+      rescheduled: false,
+      reason: null,
+      assessment: null,
+      review: null,
+    };
+    if (recommendation.kind !== 'RECOMMENDED') {
+      if (dto.nextScheduledAt)
+        throw new BadRequestException('NEXT_SCHEDULE_NOT_APPLICABLE');
+      return empty;
+    }
+
+    const step = protocol.steps.find(
+      (candidate) => candidate.id === recommendation.stepId,
+    )!;
+    const context = stepIntervalContext(protocol, step);
+    const recommendedAt = this.nextDate(
+      administeredAt,
+      step.intervalDays,
+      zone,
+    );
+
+    const chosen = dto.nextScheduledAt
+      ? this.date(dto.nextScheduledAt)
+      : recommendedAt;
+    if (chosen <= administeredAt)
+      throw new BadRequestException('NEXT_SCHEDULE_BEFORE_ADMINISTRATION');
+
+    const assessment = classifyDoseInterval(
+      context,
+      localCalendarDaysBetween(administeredAt, chosen, zone),
+    );
+    const reason = dto.nextScheduleReason?.trim() || null;
+    const review = dto.nextScheduleReview ?? null;
+
+    if (assessment.justificationRequired && !reason)
+      throw new BadRequestException('NEXT_SCHEDULE_REASON_REQUIRED');
+    if (assessment.band === 'REQUIRES_STEP_REVIEW' && !review)
+      throw new BadRequestException('NEXT_SCHEDULE_REVIEW_REQUIRED');
+
+    return {
+      scheduledAt: chosen,
+      recommendedAt,
+      rescheduled:
+        localCalendarDay(chosen, zone) !==
+        localCalendarDay(recommendedAt, zone),
+      reason: assessment.band === 'ON_PLAN' ? null : reason,
+      assessment,
+      review: assessment.band === 'REQUIRES_STEP_REVIEW' ? review : null,
+    };
+  }
+  private async assessEditedSchedule(
+    tx: Prisma.TransactionClient,
+    context: { protocol: PublishedProtocolDefinition; timeZone: string },
+    step: ProtocolStep,
+    scheduledAt: Date,
+    therapyId?: string,
+  ): Promise<DoseIntervalAssessment | null> {
+    const preceding = await tx.dose.findFirst({
+      where: {
+        immunotherapyId: therapyId,
+        administeredAt: { not: null },
+        status: {
+          in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'],
+        },
+      },
+      orderBy: { administeredAt: 'desc' },
+      select: { administeredAt: true },
+    });
+    if (!preceding?.administeredAt) return null;
+
+    return classifyDoseInterval(
+      stepIntervalContext(context.protocol, step),
+      localCalendarDaysBetween(
+        preceding.administeredAt,
+        scheduledAt,
+        context.timeZone,
+      ),
+    );
+  }
   private async resolvePerformer(
     tx: Prisma.TransactionClient,
     requested: string | undefined,
@@ -417,6 +522,17 @@ export class ConfiguredDoseService {
                 context.timeZone,
               )
             : null,
+        nextIntervalTolerance:
+          recommendation.kind === 'RECOMMENDED'
+            ? resolveStepIntervalTolerance(
+                stepIntervalContext(
+                  context.protocol,
+                  context.protocol.steps.find(
+                    (step) => step.id === recommendation.stepId,
+                  )!,
+                ),
+              ).tolerance
+            : null,
         expectedRevision: context.dose.revision,
         expectedTherapyRevision: context.therapy.revision,
         prescriptionRevision: context.therapy.currentPrescription!.revision,
@@ -439,8 +555,19 @@ export class ConfiguredDoseService {
       if (previous) return previous.result as never;
       this.active(context, dto);
       const { step } = this.resolve(context, dto.values);
-      if (!dto.reason?.trim())
+      const scheduledAt = this.date(dto.scheduledAt);
+      const assessment = await this.assessEditedSchedule(
+        tx,
+        context,
+        step,
+        scheduledAt,
+        context.therapy.id,
+      );
+      const reason = dto.reason?.trim() || null;
+      if ((assessment?.justificationRequired ?? true) && !reason)
         throw new BadRequestException('ADJUSTMENT_REASON_REQUIRED');
+      if (assessment?.band === 'REQUIRES_STEP_REVIEW' && !dto.scheduleReview)
+        throw new BadRequestException('NEXT_SCHEDULE_REVIEW_REQUIRED');
       const updated = await tx.dose.update({
         where: { id },
         data: {
@@ -449,7 +576,7 @@ export class ConfiguredDoseService {
           concentration: Number(step.concentration),
           volume: new Prisma.Decimal(step.volume),
           nextIntervalInDays: step.intervalDays,
-          scheduledAt: this.date(dto.scheduledAt),
+          scheduledAt,
           revision: { increment: 1 },
           updatedById: user.id,
         },
@@ -495,7 +622,14 @@ export class ConfiguredDoseService {
           newValues: {
             values: updated.plannedValues,
             scheduledAt: updated.scheduledAt.toISOString(),
-            reason: dto.reason,
+            reason: reason,
+            intervalDays: assessment?.actualIntervalDays ?? null,
+            intervalBand: assessment?.band ?? null,
+            intervalToleranceSource: assessment?.toleranceSource ?? null,
+            stepReview:
+              assessment?.band === 'REQUIRES_STEP_REVIEW'
+                ? (dto.scheduleReview ?? null)
+                : null,
           },
           changedFields: ['plannedValues', 'scheduledAt'],
         },
@@ -584,6 +718,13 @@ export class ConfiguredDoseService {
         const recommendation = recommendNextDose(input);
         if (recommendation.kind === 'UNRESOLVED')
           throw new BadRequestException(recommendation);
+        const nextSchedule = this.resolveNextSchedule(
+          dto,
+          recommendation,
+          context.protocol,
+          administeredAt,
+          context.timeZone,
+        );
         const updated = await tx.dose.update({
           where: { id },
           data: {
@@ -625,11 +766,7 @@ export class ConfiguredDoseService {
                     context.protocol,
                     context.dose.prescriptionId!,
                     context.therapy.id,
-                    this.nextDate(
-                      administeredAt,
-                      recommendation.values.intervalDays,
-                      context.timeZone,
-                    ),
+                    nextSchedule.scheduledAt!,
                     user.id,
                   ),
                   sourceDoseId: id,
@@ -699,6 +836,18 @@ export class ConfiguredDoseService {
               reason: dto.reason ?? null,
               recommendation,
               successorId: successor?.id ?? null,
+              successorScheduledAt:
+                nextSchedule.scheduledAt?.toISOString() ?? null,
+              successorRecommendedAt:
+                nextSchedule.recommendedAt?.toISOString() ?? null,
+              successorScheduleRescheduled: nextSchedule.rescheduled,
+              successorScheduleReason: nextSchedule.reason,
+              successorIntervalDays:
+                nextSchedule.assessment?.actualIntervalDays ?? null,
+              successorIntervalBand: nextSchedule.assessment?.band ?? null,
+              successorIntervalToleranceSource:
+                nextSchedule.assessment?.toleranceSource ?? null,
+              successorStepReview: nextSchedule.review,
             },
             changedFields: ['administeredValues', 'status', 'recommendation'],
           },

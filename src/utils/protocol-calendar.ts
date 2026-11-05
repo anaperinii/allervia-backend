@@ -28,6 +28,21 @@ function wallTimestamp(date: Date, zone: string) {
 export function localCalendarDay(date: Date, zone: string): string {
   return parts(date, zone).slice(0, 3).join('-');
 }
+function calendarDayTimestamp(date: Date, zone: string): number {
+  const [year, month, day] = parts(date, zone);
+  return Date.UTC(year, month - 1, day);
+}
+export function localCalendarDaysBetween(
+  from: Date,
+  to: Date,
+  zone: string,
+): number {
+  const start = calendarDayTimestamp(from, zone);
+  const end = calendarDayTimestamp(to, zone);
+  if (!Number.isFinite(start) || !Number.isFinite(end))
+    throw new RangeError('Invalid calendar input');
+  return Math.round((end - start) / 86400000);
+}
 export function addProtocolCalendarDays(
   date: Date,
   days: number,

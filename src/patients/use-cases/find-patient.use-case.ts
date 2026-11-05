@@ -4,6 +4,8 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { PATIENT_MESSAGES } from 'src/patients/patient.messages';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
 import { maskCpf } from '../cpf';
 import { guardianFromColumns } from '../guardian';
 import { PatientDetailDto, TherapySummaryDto } from '../dtos/patient-read.dto';
@@ -13,6 +15,7 @@ export class FindPatientUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly abilityFactory: AbilityFactory,
+    private readonly auditLog: IAuditLogService,
   ) {}
 
   async execute(
@@ -77,6 +80,14 @@ export class FindPatientUseCase {
     if (!patient) {
       throw new NotFoundException(PATIENT_MESSAGES.notFound(id));
     }
+
+    await this.auditLog.record({
+      userId: currentUser.id,
+      organizationId: currentUser.organizationId,
+      entityType: AUDIT_ENTITY_TYPES.PATIENT,
+      entityId: patient.id,
+      action: AUDIT_ACTIONS.PATIENT_VIEWED,
+    });
 
     const canUpdate =
       ability.can('update', 'Patient') &&

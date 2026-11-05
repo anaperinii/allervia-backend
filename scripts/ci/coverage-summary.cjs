@@ -1,8 +1,16 @@
-const { readFileSync, appendFileSync } = require('node:fs');
+const { readFileSync, appendFileSync, existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 
 const root = resolve(__dirname, '../..');
 const summaryPath = resolve(root, 'coverage/coverage-summary.json');
+
+if (!existsSync(summaryPath)) {
+  console.log(
+    'coverage-summary.cjs: coverage/coverage-summary.json não encontrado (npm run test:cov não concluiu); pulando resumo.',
+  );
+  process.exit(0);
+}
+
 const summary = JSON.parse(readFileSync(summaryPath, 'utf8'));
 const total = summary.total;
 

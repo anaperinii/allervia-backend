@@ -195,7 +195,7 @@ docs/                           # documentação do projeto + ADRs
 | `ADMINISTRATOR` | Lê `Patient`, `Immunotherapy` e `Dose` da organização; gerencia `Professional`, `User`, `InternalUserInvite` e `ProfessionalRole`; lê a própria `Organization` |
 | `PHYSICIAN` | Cria `Patient` na organização; lê, atualiza e arquiva **seus** pacientes (`responsiblePhysicianId`); gerencia `Immunotherapy` desses pacientes; lê, cria e atualiza as `Dose` correspondentes |
 | `NURSE` | Lê `Patient` e `Immunotherapy` da organização; lê, cria, atualiza e arquiva `Dose` da organização |
-| `RECEPTIONIST` | Lê, cria e atualiza `Patient` da organização |
+| `RECEPTIONIST` | Lê e atualiza `Patient` da organização. Não cria `Patient`: a única criação é via `POST /immunotherapies/register`, que exige `create Immunotherapy` |
 
 A verificação no guard é sobre **ação mais tipo de recurso**. O escopo por registro individual (o `where` da consulta) é responsabilidade do caso de uso, que incorpora as condições da *ability* antes de ler ou gravar. É por isso que existe `@casl/prisma`, que converte as condições CASL em filtro Prisma.
 

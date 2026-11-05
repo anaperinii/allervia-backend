@@ -81,7 +81,7 @@ export class AbilityFactory {
         break;
 
       case Role.RECEPTIONIST:
-        can(['read', 'create', 'update'], 'Patient', inOrg);
+        can(['read', 'update'], 'Patient', inOrg);
         can('manage', 'Appointment', inOrg);
         can('read', 'Professional', inOrg);
         break;
