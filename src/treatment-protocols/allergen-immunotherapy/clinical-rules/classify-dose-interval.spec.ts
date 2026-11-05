@@ -36,9 +36,13 @@ function step(overrides: Partial<ProtocolStep> = {}): ProtocolStep {
   };
 }
 
-function bands(context: Parameters<typeof classifyDoseInterval>[0], upTo: number) {
-  return Array.from({ length: upTo }, (_, index) =>
-    classifyDoseInterval(context, index + 1).band,
+function bands(
+  context: Parameters<typeof classifyDoseInterval>[0],
+  upTo: number,
+) {
+  return Array.from(
+    { length: upTo },
+    (_, index) => classifyDoseInterval(context, index + 1).band,
   );
 }
 
@@ -78,7 +82,9 @@ describe('Classificação do intervalo entre doses (RNE-010)', () => {
     });
 
     it('exige justificativa só nas pontas', () => {
-      expect(classifyDoseInterval(authored, 4).justificationRequired).toBe(true);
+      expect(classifyDoseInterval(authored, 4).justificationRequired).toBe(
+        true,
+      );
       expect(classifyDoseInterval(authored, 7).justificationRequired).toBe(
         false,
       );
@@ -157,7 +163,10 @@ describe('Classificação do intervalo entre doses (RNE-010)', () => {
       expect(tolerance.stepReviewAboveDays).toBeGreaterThanOrEqual(
         tolerance.longFromDays,
       );
-      expect(classifyDoseInterval({ intervalDays: 1, followingIntervalDays: 1 }, 1).band).toBe('ON_PLAN');
+      expect(
+        classifyDoseInterval({ intervalDays: 1, followingIntervalDays: 1 }, 1)
+          .band,
+      ).toBe('ON_PLAN');
     });
   });
 

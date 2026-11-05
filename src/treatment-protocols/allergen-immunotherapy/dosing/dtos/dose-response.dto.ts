@@ -482,7 +482,6 @@ export class UpdateScheduledDoseResponseDto extends DoseRecordDto {
   therapyRevision: number;
 }
 
-
 @ApiExtraModels(
   DoseRecommendationRecommendedDto,
   DoseRecommendationEndOfSequenceDto,

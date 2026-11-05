@@ -1,8 +1,5 @@
 import { validateSync } from 'class-validator';
-import {
-  CreatePatientDto,
-  MAX_PATIENT_AGE_YEARS,
-} from './create-patient.dto';
+import { CreatePatientDto, MAX_PATIENT_AGE_YEARS } from './create-patient.dto';
 
 function dayOffsetFromToday(days: number): string {
   const date = new Date();
