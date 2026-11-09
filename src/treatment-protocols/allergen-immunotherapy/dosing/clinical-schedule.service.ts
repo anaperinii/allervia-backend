@@ -7,6 +7,8 @@ import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-
 import { buildPage, resolvePage } from 'src/infra/http/pagination';
 import { localCalendarDay } from 'src/utils/protocol-calendar';
 import { resolvePhase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PdfAuditDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/pdf-audit.dto';
 import {
   ScheduleQueryDto,
   SchedulePeriodDto,
@@ -67,12 +69,30 @@ export class ClinicalScheduleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly abilities: AbilityFactory,
+    private readonly audit: IAuditLogService,
   ) {}
 
   private doseScope(user: AuthenticatedUserPayload) {
     const ability = this.abilities.createForUser(user);
     if (!ability.can('read', 'Dose')) return null;
     return accessibleBy(ability, 'read').ofType('Dose');
+  }
+
+  async auditPdfExport(
+    dto: PdfAuditDto,
+    user: AuthenticatedUserPayload,
+  ): Promise<{ recorded: true }> {
+    const ability = this.abilities.createForUser(user);
+    if (!ability.can('read', 'Dose')) throw new BadRequestException();
+    await this.audit.record({
+      userId: user.id,
+      organizationId: user.organizationId,
+      entityType: 'Organization',
+      entityId: user.organizationId,
+      action: 'PDF_EXPORT_GENERATED',
+      newValues: { kind: 'DASHBOARD_REPORT', sections: dto.sections },
+    });
+    return { recorded: true };
   }
 
   async list(query: ScheduleQueryDto, user: AuthenticatedUserPayload) {

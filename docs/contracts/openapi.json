@@ -4919,6 +4919,36 @@
         ],
         "type": "object"
       },
+      "PdfAuditDto": {
+        "properties": {
+          "anonymized": {
+            "description": "Se os identificadores do paciente foram mascarados no PDF",
+            "type": "boolean"
+          },
+          "sections": {
+            "description": "Seções incluídas no PDF gerado no navegador",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "sections"
+        ],
+        "type": "object"
+      },
+      "PdfAuditResponseDto": {
+        "properties": {
+          "recorded": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "recorded"
+        ],
+        "type": "object"
+      },
       "PhaseTimelineDayDto": {
         "properties": {
           "buildUp": {
@@ -9649,6 +9679,48 @@
         ]
       }
     },
+    "/doses/pdf-audit": {
+      "post": {
+        "description": "O PDF é montado no navegador; este endpoint só grava o registro de auditoria da emissão (quem, quando, seções).",
+        "operationId": "DosesController_auditDashboardReportPdf",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfAuditDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdfAuditResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid configured value, conflicting step ID, ambiguous value or invalid calendar input"
+          },
+          "409": {
+            "description": "Stale dose/therapy revision, inactive treatment, disabled automation, pending migration or conflicting idempotency key"
+          },
+          "410": {
+            "description": "Legacy write route retired; use scheduled, preview or administer"
+          }
+        },
+        "summary": "Registra a emissão de um PDF de relatório do painel",
+        "tags": [
+          "doses"
+        ]
+      }
+    },
     "/doses/update/status/{id}": {
       "patch": {
         "deprecated": true,
@@ -10256,6 +10328,48 @@
             "description": ""
           }
         },
+        "tags": [
+          "immunotherapies"
+        ]
+      }
+    },
+    "/immunotherapies/record/{patientId}/pdf-audit": {
+      "post": {
+        "description": "O PDF é montado no navegador; este endpoint só grava o registro de auditoria da emissão (quem, quando, seções, se anonimizado).",
+        "operationId": "ImmunotherapiesController_auditPatientReportPdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfAuditDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdfAuditResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Registra a emissão de um PDF de relatório clínico do paciente",
         "tags": [
           "immunotherapies"
         ]

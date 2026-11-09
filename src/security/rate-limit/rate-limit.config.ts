@@ -5,6 +5,7 @@ export const RATE_LIMIT_CLASSES = {
   publicSubmit: 'public-submit',
   export: 'export',
   webhook: 'webhook',
+  auditLog: 'audit-log',
 } as const;
 
 export type RateLimitClass =
@@ -45,6 +46,15 @@ export class RateLimitConfig {
           limit: this.positiveNumber('RATE_LIMIT_EXPORT_MAX', 10),
           windowSeconds: this.positiveNumber(
             'RATE_LIMIT_EXPORT_WINDOW_SECONDS',
+            3600,
+          ),
+          failOpen: true,
+        };
+      case RATE_LIMIT_CLASSES.auditLog:
+        return {
+          limit: this.positiveNumber('RATE_LIMIT_AUDIT_LOG_MAX', 30),
+          windowSeconds: this.positiveNumber(
+            'RATE_LIMIT_AUDIT_LOG_WINDOW_SECONDS',
             3600,
           ),
           failOpen: true,
