@@ -41,7 +41,10 @@ import { RATE_LIMIT_CLASSES } from 'src/security/rate-limit/rate-limit.config';
 
 class ContactRequestDto {
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(200) name: string;
-  @ApiProperty() @IsEmail() @MaxLength(320) email: string;
+  @ApiProperty({ format: 'email', maxLength: 320 })
+  @IsEmail()
+  @MaxLength(320)
+  email: string;
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

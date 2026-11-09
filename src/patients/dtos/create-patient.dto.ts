@@ -64,11 +64,17 @@ export class GuardianDto {
   @Validate(CpfConstraint)
   cpf?: string;
 
-  @ApiProperty({ description: 'Telefone do responsável' })
+  @ApiProperty({
+    description: 'Telefone do responsável (DDD + número, somente dígitos)',
+    pattern: '^\\d{11}$',
+    minLength: 11,
+    maxLength: 11,
+  })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{10,11}$/, {
-    message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.',
+  @Matches(/^\d{11}$/, {
+    message:
+      'Número de telefone inválido. Deve conter 11 dígitos (DDD + número).',
   })
   phoneNumber: string;
 }
@@ -94,11 +100,17 @@ export class CreatePatientDto {
   @Max(500, { message: 'Peso inválido. Valor muito alto.' })
   weightInKg: number;
 
-  @ApiProperty({ description: 'Número de Telefone' })
+  @ApiProperty({
+    description: 'Número de telefone (DDD + número, somente dígitos)',
+    pattern: '^\\d{11}$',
+    minLength: 11,
+    maxLength: 11,
+  })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{10,11}$/, {
-    message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.',
+  @Matches(/^\d{11}$/, {
+    message:
+      'Número de telefone inválido. Deve conter 11 dígitos (DDD + número).',
   })
   phoneNumber: string;
 

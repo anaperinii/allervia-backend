@@ -336,6 +336,7 @@
           },
           "newEmail": {
             "example": "novo.endereco@clinica.com.br",
+            "format": "email",
             "type": "string"
           }
         },
@@ -756,7 +757,23 @@
         "type": "object"
       },
       "ChangePasswordDto": {
-        "properties": {},
+        "properties": {
+          "currentPassword": {
+            "description": "Senha atual",
+            "type": "string"
+          },
+          "newPassword": {
+            "description": "Senha: 8-20 caracteres, com ao menos uma maiúscula, uma minúscula, um número e um caractere especial",
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
         "type": "object"
       },
       "ChangePasswordResponseDto": {
@@ -1008,6 +1025,8 @@
       "ContactRequestDto": {
         "properties": {
           "email": {
+            "format": "email",
+            "maxLength": 320,
             "type": "string"
           },
           "message": {
@@ -1158,6 +1177,7 @@
         "properties": {
           "email": {
             "description": "E-mail do Profissional",
+            "format": "email",
             "type": "string"
           },
           "fullName": {
@@ -1195,7 +1215,10 @@
             "nullable": true
           },
           "phoneNumber": {
-            "description": "Número de Telefone",
+            "description": "Número de telefone (DDD + número, somente dígitos)",
+            "maxLength": 11,
+            "minLength": 11,
+            "pattern": "^\\d{11}$",
             "type": "string"
           },
           "responsiblePhysicianId": {
@@ -1304,6 +1327,8 @@
       "DemoRequestDto": {
         "properties": {
           "email": {
+            "format": "email",
+            "maxLength": 320,
             "type": "string"
           },
           "lastName": {
@@ -1313,7 +1338,11 @@
             "type": "string"
           },
           "phone": {
+            "description": "Telefone (DDD + número, somente dígitos)",
             "example": "11999999999",
+            "maxLength": 11,
+            "minLength": 11,
+            "pattern": "^\\d{11}$",
             "type": "string"
           },
           "professionals": {
@@ -3122,7 +3151,10 @@
             "type": "string"
           },
           "phoneNumber": {
-            "description": "Telefone do responsável",
+            "description": "Telefone do responsável (DDD + número, somente dígitos)",
+            "maxLength": 11,
+            "minLength": 11,
+            "pattern": "^\\d{11}$",
             "type": "string"
           }
         },
@@ -4475,7 +4507,23 @@
         "type": "object"
       },
       "PasswordResetConfirmDTO": {
-        "properties": {},
+        "properties": {
+          "newPassword": {
+            "description": "Senha: 8-20 caracteres, com ao menos uma maiúscula, uma minúscula, um número e um caractere especial",
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
+            "type": "string"
+          },
+          "token": {
+            "description": "Token de redefinição de senha",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ],
         "type": "object"
       },
       "PasswordResetMessageResponseDto": {
@@ -4491,7 +4539,16 @@
         "type": "object"
       },
       "PasswordResetRequestDTO": {
-        "properties": {},
+        "properties": {
+          "email": {
+            "description": "E-mail da conta",
+            "format": "email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
         "type": "object"
       },
       "PasswordResetVerifyDTO": {
@@ -5158,7 +5215,10 @@
             "type": "string"
           },
           "password": {
-            "description": "Senha",
+            "description": "Senha: 8-20 caracteres, com ao menos uma maiúscula, uma minúscula, um número e um caractere especial",
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
             "type": "string"
           },
           "phoneNumber": {
@@ -5520,6 +5580,8 @@
       "ProvisionOrganizationAdministratorDto": {
         "properties": {
           "email": {
+            "format": "email",
+            "maxLength": 254,
             "type": "string"
           },
           "fullName": {
@@ -6225,6 +6287,7 @@
         "properties": {
           "newEmail": {
             "example": "novo.endereco@clinica.com.br",
+            "format": "email",
             "type": "string"
           }
         },
@@ -6489,6 +6552,8 @@
         "properties": {
           "email": {
             "example": "profissional@clinica.com.br",
+            "format": "email",
+            "maxLength": 254,
             "type": "string"
           },
           "password": {
@@ -7461,7 +7526,10 @@
             "nullable": true
           },
           "phoneNumber": {
-            "description": "Número de Telefone",
+            "description": "Número de telefone (DDD + número, somente dígitos)",
+            "maxLength": 11,
+            "minLength": 11,
+            "pattern": "^\\d{11}$",
             "type": "string"
           },
           "responsiblePhysicianId": {
