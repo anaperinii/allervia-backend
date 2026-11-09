@@ -50,6 +50,7 @@ import {
   PhaseTimelineQueryDto,
   PhaseTimelineResponseDto,
 } from './dtos/phase-timeline.dto';
+import { PdfAuditDto, PdfAuditResponseDto } from './dtos/pdf-audit.dto';
 import {
   ClinicalExportPageDto,
   ClinicalExportQueryDto,
@@ -198,6 +199,26 @@ export class ImmunotherapiesController {
   ) {
     response.setHeader('Cache-Control', 'no-store');
     return this.history.record(patientId, user);
+  }
+
+  @Post('record/:patientId/pdf-audit')
+  @CheckPolicies({ action: 'read', subject: 'Patient' })
+  @RateLimit({
+    class: RATE_LIMIT_CLASSES.auditLog,
+    keyBy: ['user', 'organization'],
+  })
+  @ApiOperation({
+    summary: 'Registra a emissão de um PDF de relatório clínico do paciente',
+    description:
+      'O PDF é montado no navegador; este endpoint só grava o registro de auditoria da emissão (quem, quando, seções, se anonimizado).',
+  })
+  @ApiOkResponse({ type: PdfAuditResponseDto })
+  async auditPatientReportPdf(
+    @Param('patientId') patientId: string,
+    @Body() dto: PdfAuditDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.history.auditPdfExport(patientId, dto, user);
   }
 
   @Get('patients/:patientId')

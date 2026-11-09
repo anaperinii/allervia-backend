@@ -6,7 +6,10 @@ export const EMAIL_CHANGE_CHANNELS = ['email', 'whatsapp'] as const;
 export type EmailChangeChannel = (typeof EMAIL_CHANGE_CHANNELS)[number];
 
 export class AdminRequestEmailChangeDto {
-  @ApiProperty({ example: 'novo.endereco@clinica.com.br' })
+  @ApiProperty({
+    example: 'novo.endereco@clinica.com.br',
+    format: 'email',
+  })
   @IsNotEmpty({ message: 'O email não pode estar vazio' })
   @IsEmail()
   newEmail: string;
@@ -17,7 +20,10 @@ export class AdminRequestEmailChangeDto {
 }
 
 export class SelfRequestEmailChangeDto {
-  @ApiProperty({ example: 'novo.endereco@clinica.com.br' })
+  @ApiProperty({
+    example: 'novo.endereco@clinica.com.br',
+    format: 'email',
+  })
   @IsNotEmpty({ message: 'O email não pode estar vazio' })
   @IsEmail()
   newEmail: string;
