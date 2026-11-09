@@ -721,6 +721,46 @@ export class DoseMetricsTherapiesDto {
   maintenance: number;
 }
 
+export class DoseMetricsConcentrationDto {
+  @ApiProperty()
+  concentration: number;
+
+  @ApiProperty()
+  count: number;
+
+  @ApiProperty({
+    description: 'Soma do volume (mL) aplicado nessa concentração',
+  })
+  totalVolume: number;
+}
+
+export class DoseMetricsVolumeMatrixDto {
+  @ApiProperty()
+  concentration: number;
+
+  @ApiProperty()
+  volume: number;
+
+  @ApiProperty()
+  count: number;
+}
+
+export class DoseMetricsPhasesDto {
+  @ApiProperty()
+  buildUp: number;
+
+  @ApiProperty()
+  maintenance: number;
+}
+
+export class DoseMetricsTypeDto {
+  @ApiProperty()
+  immunoType: string;
+
+  @ApiProperty()
+  count: number;
+}
+
 export class DoseMetricsResponseDto {
   @ApiProperty({ format: 'date-time' })
   from: string;
@@ -742,4 +782,31 @@ export class DoseMetricsResponseDto {
 
   @ApiProperty({ type: DoseMetricsTherapiesDto })
   therapies: DoseMetricsTherapiesDto;
+
+  @ApiProperty({
+    type: DoseMetricsConcentrationDto,
+    isArray: true,
+    description: 'Distribuição de doses do período por concentração',
+  })
+  concentration: DoseMetricsConcentrationDto[];
+
+  @ApiProperty({
+    type: DoseMetricsVolumeMatrixDto,
+    isArray: true,
+    description: 'Contagem de doses administradas por par concentração/volume',
+  })
+  volumeMatrix: DoseMetricsVolumeMatrixDto[];
+
+  @ApiProperty({
+    type: DoseMetricsPhasesDto,
+    description: 'Doses do período por fase do protocolo (build-up/manutenção)',
+  })
+  phases: DoseMetricsPhasesDto;
+
+  @ApiProperty({
+    type: DoseMetricsTypeDto,
+    isArray: true,
+    description: 'Imunoterapias ativas (em andamento, não arquivadas) por tipo',
+  })
+  typesActive: DoseMetricsTypeDto[];
 }

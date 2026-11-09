@@ -1,7 +1,7 @@
 {
-  "backendSha": "31091de7a9e4605f17048021cfe93af691202bb1",
-  "contractHash": "a3df4b3e59af7622919b77a4d09e2148c8de894c791fe1d01234e2750c7f42a9",
-  "generatedAt": "2026-11-03T23:56:23.337Z",
-  "paths": 95,
-  "schemas": 210
+  "backendSha": "c35317a6d23b8755770b6ee60f8ed6ae03a4add7",
+  "contractHash": "7e4ae979fe2856f3265726224d3087731626c9fdbae8e5df59b41b212138607d",
+  "generatedAt": "2026-11-09T13:50:12.329Z",
+  "paths": 96,
+  "schemas": 216
 }

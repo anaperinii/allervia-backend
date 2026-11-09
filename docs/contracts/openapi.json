@@ -1736,6 +1736,41 @@
         ],
         "type": "object"
       },
+      "DoseMetricsConcentrationDto": {
+        "properties": {
+          "concentration": {
+            "type": "number"
+          },
+          "count": {
+            "type": "number"
+          },
+          "totalVolume": {
+            "description": "Soma do volume (mL) aplicado nessa concentração",
+            "type": "number"
+          }
+        },
+        "required": [
+          "concentration",
+          "count",
+          "totalVolume"
+        ],
+        "type": "object"
+      },
+      "DoseMetricsPhasesDto": {
+        "properties": {
+          "buildUp": {
+            "type": "number"
+          },
+          "maintenance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "buildUp",
+          "maintenance"
+        ],
+        "type": "object"
+      },
       "DoseMetricsResponseDto": {
         "properties": {
           "adherence": {
@@ -1744,9 +1779,24 @@
           "applications": {
             "$ref": "#/components/schemas/DoseMetricsApplicationsDto"
           },
+          "concentration": {
+            "description": "Distribuição de doses do período por concentração",
+            "items": {
+              "$ref": "#/components/schemas/DoseMetricsConcentrationDto"
+            },
+            "type": "array"
+          },
           "from": {
             "format": "date-time",
             "type": "string"
+          },
+          "phases": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DoseMetricsPhasesDto"
+              }
+            ],
+            "description": "Doses do período por fase do protocolo (build-up/manutenção)"
           },
           "scheduled": {
             "$ref": "#/components/schemas/DoseMetricsScheduledDto"
@@ -1761,6 +1811,20 @@
           "to": {
             "format": "date-time",
             "type": "string"
+          },
+          "typesActive": {
+            "description": "Imunoterapias ativas (em andamento, não arquivadas) por tipo",
+            "items": {
+              "$ref": "#/components/schemas/DoseMetricsTypeDto"
+            },
+            "type": "array"
+          },
+          "volumeMatrix": {
+            "description": "Contagem de doses administradas por par concentração/volume",
+            "items": {
+              "$ref": "#/components/schemas/DoseMetricsVolumeMatrixDto"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -1770,7 +1834,11 @@
           "applications",
           "scheduled",
           "adherence",
-          "therapies"
+          "therapies",
+          "concentration",
+          "volumeMatrix",
+          "phases",
+          "typesActive"
         ],
         "type": "object"
       },
@@ -1813,6 +1881,40 @@
           "completed",
           "buildUp",
           "maintenance"
+        ],
+        "type": "object"
+      },
+      "DoseMetricsTypeDto": {
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "immunoType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "immunoType",
+          "count"
+        ],
+        "type": "object"
+      },
+      "DoseMetricsVolumeMatrixDto": {
+        "properties": {
+          "concentration": {
+            "type": "number"
+          },
+          "count": {
+            "type": "number"
+          },
+          "volume": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "concentration",
+          "volume",
+          "count"
         ],
         "type": "object"
       },
@@ -4757,6 +4859,52 @@
           "updatedById",
           "archivedAt",
           "archivedById"
+        ],
+        "type": "object"
+      },
+      "PhaseTimelineDayDto": {
+        "properties": {
+          "buildUp": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string"
+          },
+          "maintenance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "buildUp",
+          "maintenance"
+        ],
+        "type": "object"
+      },
+      "PhaseTimelineResponseDto": {
+        "properties": {
+          "asOf": {
+            "type": "string"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseTimelineDayDto"
+            },
+            "type": "array"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "totalTherapies": {
+            "description": "Imunoterapias em andamento consideradas no cálculo",
+            "type": "number"
+          }
+        },
+        "required": [
+          "asOf",
+          "timeZone",
+          "totalTherapies",
+          "days"
         ],
         "type": "object"
       },
@@ -9955,6 +10103,55 @@
                     "$ref": "#/components/schemas/ImmunotherapyListItemDto"
                   },
                   "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "immunotherapies"
+        ]
+      }
+    },
+    "/immunotherapies/phase-timeline": {
+      "get": {
+        "operationId": "ImmunotherapiesController_readPhaseTimeline",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "example": "2026-01-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "example": "2026-01-31",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "timeZone",
+            "required": true,
+            "schema": {
+              "example": "America/Sao_Paulo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhaseTimelineResponseDto"
                 }
               }
             },

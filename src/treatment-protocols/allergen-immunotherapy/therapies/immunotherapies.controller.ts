@@ -40,11 +40,16 @@ import { PrescriptionRevisionService } from 'src/treatment-protocols/allergen-im
 import { ClinicalExportService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/clinical-export.service';
 import { ClinicalHistoryService } from 'src/treatment-protocols/allergen-immunotherapy/therapies/clinical-history.service';
 import { StatusHistoryService } from './status-history.service';
+import { PhaseTimelineService } from './phase-timeline.service';
 import {
   PatientClinicalRecordDto,
   StatusHistoryQueryDto,
   StatusHistoryResponseDto,
 } from './dtos/status-history.dto';
+import {
+  PhaseTimelineQueryDto,
+  PhaseTimelineResponseDto,
+} from './dtos/phase-timeline.dto';
 import {
   ClinicalExportPageDto,
   ClinicalExportQueryDto,
@@ -87,6 +92,7 @@ export class ImmunotherapiesController {
     private exporter: ClinicalExportService,
     private history: ClinicalHistoryService,
     private statusHistory: StatusHistoryService,
+    private phaseTimeline: PhaseTimelineService,
     private listDosesByTherapyUseCase: ListDosesByTherapyUseCase,
     private listAllImmunotherapies: ListAllImmunotherapiesUseCase,
     private listImmunotherapyTypesUseCase: ListImmunotherapyTypesUseCase,
@@ -164,6 +170,18 @@ export class ImmunotherapiesController {
   ) {
     response.setHeader('Cache-Control', 'no-store');
     return this.statusHistory.read(query, user);
+  }
+
+  @Get('phase-timeline')
+  @CheckPolicies({ action: 'read', subject: 'Immunotherapy' })
+  @ApiOkResponse({ type: PhaseTimelineResponseDto })
+  async readPhaseTimeline(
+    @Query() query: PhaseTimelineQueryDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    response.setHeader('Cache-Control', 'no-store');
+    return this.phaseTimeline.read(query, user);
   }
 
   @Get('record/:patientId')
