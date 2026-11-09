@@ -209,7 +209,14 @@ export class ClinicalScheduleService {
     };
 
     const administeredWhere: Prisma.DoseWhereInput = {
-      AND: [doseWhere, { status: { in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'] } }],
+      AND: [
+        doseWhere,
+        {
+          status: {
+            in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'],
+          },
+        },
+      ],
     };
 
     const [doses, concentrationGroups, volumeMatrixGroups] = await Promise.all([

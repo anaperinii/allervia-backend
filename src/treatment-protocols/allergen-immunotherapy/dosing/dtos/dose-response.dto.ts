@@ -728,7 +728,9 @@ export class DoseMetricsConcentrationDto {
   @ApiProperty()
   count: number;
 
-  @ApiProperty({ description: 'Soma do volume (mL) aplicado nessa concentração' })
+  @ApiProperty({
+    description: 'Soma do volume (mL) aplicado nessa concentração',
+  })
   totalVolume: number;
 }
 

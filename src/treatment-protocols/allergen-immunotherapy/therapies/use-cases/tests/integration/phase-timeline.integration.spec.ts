@@ -89,22 +89,17 @@ describe('Phase timeline - Integration', () => {
     const result = await service.read(query, physician);
 
     expect(result.totalTherapies).toBe(0);
-    expect(result.days.every((day) => day.buildUp + day.maintenance === 0)).toBe(
-      true,
-    );
+    expect(
+      result.days.every((day) => day.buildUp + day.maintenance === 0),
+    ).toBe(true);
   });
 
   it('caps the window at 366 days', async () => {
-    await expect(
-      service.read(
-        { from: '2020-01-01', to: '2026-01-01', timeZone: 'UTC' },
-        physician,
-      ),
-    ).resolves.toMatchObject({ days: expect.any(Array) });
     const result = await service.read(
       { from: '2020-01-01', to: '2026-01-01', timeZone: 'UTC' },
       physician,
     );
+    expect(Array.isArray(result.days)).toBe(true);
     expect(result.days.length).toBeLessThanOrEqual(366);
   });
 });
