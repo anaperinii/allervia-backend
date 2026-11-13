@@ -281,6 +281,7 @@ export class AppointmentsService {
         { organizationId: user.organizationId },
         accessibleBy(ability, 'read').ofType('Appointment'),
         { startsAt: { gte: window.from, lte: window.to } },
+        { patient: { isArchived: false } },
         ...(query.status ? [{ status: query.status }] : []),
         ...(query.patientId ? [{ patientId: query.patientId }] : []),
         ...(query.professionalId

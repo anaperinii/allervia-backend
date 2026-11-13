@@ -14,6 +14,7 @@ export interface DoseProps {
   volume: Prisma.Decimal | string;
   scheduledAt: Date;
   administeredAt: Date | null;
+  administrationEndedAt?: Date | null;
   nextIntervalInDays: number;
   betweenDosesReport: string;
   status: DoseStatus;
@@ -55,6 +56,7 @@ export class Dose {
   volume: string;
   scheduledAt: Date;
   administeredAt: Date | null;
+  administrationEndedAt: Date | null;
   nextIntervalInDays: number;
   betweenDosesReport: string;
   status: DoseStatus;
@@ -82,6 +84,7 @@ export class Dose {
     this.volume = props.volume.toString();
     this.scheduledAt = props.scheduledAt;
     this.administeredAt = props.administeredAt;
+    this.administrationEndedAt = props.administrationEndedAt ?? null;
     this.nextIntervalInDays = props.nextIntervalInDays;
     this.betweenDosesReport = props.betweenDosesReport;
     this.status = props.status;
