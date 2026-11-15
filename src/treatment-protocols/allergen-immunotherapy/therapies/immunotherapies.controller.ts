@@ -187,10 +187,6 @@ export class ImmunotherapiesController {
 
   @Get('record/:patientId')
   @CheckPolicies({ action: 'read', subject: 'Dose' })
-  @RateLimit({
-    class: RATE_LIMIT_CLASSES.export,
-    keyBy: ['user', 'organization'],
-  })
   @ApiOkResponse({ type: PatientClinicalRecordDto })
   async readPatientRecord(
     @Param('patientId') patientId: string,

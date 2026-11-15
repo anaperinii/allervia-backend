@@ -787,7 +787,17 @@ export class ConfiguredDoseService {
               : {}),
           },
         });
-        if (conduct?.type === 'SUSPEND_TREATMENT')
+        if (conduct?.type === 'SUSPEND_TREATMENT') {
+          await tx.therapyLifecycleEvent.create({
+            data: {
+              immunotherapyId: context.therapy.id,
+              type: 'SUSPENSION',
+              reason:
+                conduct.justification ??
+                'Suspensão automática por conduta clínica pós-aplicação',
+              createdById: user.id,
+            },
+          });
           await this.audit.record(
             {
               userId: user.id,
@@ -804,6 +814,7 @@ export class ConfiguredDoseService {
             },
             tx,
           );
+        }
         if (conduct?.type === 'REQUEST_PHYSICIAN_REVIEW')
           await enqueueOutbox(
             tx,
