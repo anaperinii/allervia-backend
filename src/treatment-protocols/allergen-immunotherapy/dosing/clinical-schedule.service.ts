@@ -105,7 +105,12 @@ export class ClinicalScheduleService {
         { immunotherapy: { patient: { organizationId: user.organizationId } } },
         scope,
         { isArchived: false },
-        { immunotherapy: { isArchived: false, patient: { isArchived: false } } },
+        {
+          immunotherapy: {
+            isArchived: false,
+            patient: { isArchived: false },
+          },
+        },
         {
           OR: [
             { administeredAt: { gte: from, lte: to } },
