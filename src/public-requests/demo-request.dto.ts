@@ -30,10 +30,20 @@ export class DemoRequestDto {
   @MinLength(1)
   @MaxLength(100)
   lastName: string;
-  @ApiProperty() @Transform(trim) @IsEmail() @MaxLength(320) email: string;
-  @ApiProperty({ example: '11999999999' })
+  @ApiProperty({ format: 'email', maxLength: 320 })
+  @Transform(trim)
+  @IsEmail()
+  @MaxLength(320)
+  email: string;
+  @ApiProperty({
+    example: '11999999999',
+    description: 'Telefone (DDD + número, somente dígitos)',
+    pattern: '^\\d{11}$',
+    minLength: 11,
+    maxLength: 11,
+  })
   @IsString()
-  @Matches(/^\d{10,11}$/)
+  @Matches(/^\d{11}$/)
   phone: string;
   @ApiProperty({
     enum: ['doctor', 'clinic_manager', 'pharmacist', 'nurse', 'other'],

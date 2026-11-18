@@ -36,7 +36,6 @@ import { NotificationsService } from './notifications.service';
 class ListNotificationsDto extends PageQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
-
   @Transform(({ value }: { value: unknown }) =>
     value === 'true' || value === true
       ? true

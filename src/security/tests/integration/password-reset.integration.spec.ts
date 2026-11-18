@@ -60,6 +60,9 @@ describe('Recuperação de senha - Integração HTTP', () => {
       },
       sendDemoRequest: () => Promise.resolve(),
       sendDemoRequestConfirmation: () => Promise.resolve(),
+      sendEmailChangeLink: () => Promise.resolve(),
+      sendEmailChangeFarewell: () => Promise.resolve(),
+      sendEmailChangeWelcome: () => Promise.resolve(),
       sendInviteLink: () => Promise.resolve(),
     };
 

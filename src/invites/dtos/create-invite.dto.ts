@@ -3,7 +3,7 @@ import { Role } from '@prisma/client';
 import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateInviteDto {
-  @ApiProperty({ description: 'E-mail do Profissional' })
+  @ApiProperty({ description: 'E-mail do Profissional', format: 'email' })
   @IsEmail()
   @IsNotEmpty()
   email: string;

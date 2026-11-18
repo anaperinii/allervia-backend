@@ -68,7 +68,10 @@ describe('SMTP demo notification', () => {
   });
 
   it('sends the visitor a confirmation without any protocol number', async () => {
-    sendMail.mockResolvedValue({ accepted: ['visitor@example.com'], rejected: [] });
+    sendMail.mockResolvedValue({
+      accepted: ['visitor@example.com'],
+      rejected: [],
+    });
     await service.sendDemoRequestConfirmation(input);
     const sent = sendMail.mock.calls[0][0] as { to: string; text: string };
     expect(sent.to).toBe('visitor@example.com');

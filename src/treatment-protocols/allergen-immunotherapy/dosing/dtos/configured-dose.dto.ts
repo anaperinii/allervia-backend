@@ -4,6 +4,7 @@ import {
   IsArray,
   IsDateString,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -15,6 +16,13 @@ import {
   ArrayMaxSize,
 } from 'class-validator';
 import { DoseImmediateConduct, DoseObservationPhase } from '@prisma/client';
+
+export const NEXT_SCHEDULE_REVIEWS = [
+  'KEEP_STEP',
+  'STEP_BACK_REQUESTED',
+] as const;
+
+export type NextScheduleReview = (typeof NEXT_SCHEDULE_REVIEWS)[number];
 
 export class ConfiguredDoseValuesDto {
   @ApiProperty({
@@ -62,13 +70,23 @@ export class UpdateScheduledDoseDto extends DoseRevisionDto {
   @IsDateString()
   @Matches(/T.*(?:Z|[+-]\d{2}:\d{2})$/)
   scheduledAt: string;
-  @ApiProperty({
-    description: 'Clinical reason for adjusting the planned session',
+  @ApiPropertyOptional({
+    description:
+      'Clinical reason for adjusting the planned session. Required when the resulting interval falls outside the step tolerance, or when there is no preceding administration to measure it against.',
   })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(2000)
-  reason: string;
+  reason?: string;
+  @ApiPropertyOptional({
+    enum: NEXT_SCHEDULE_REVIEWS,
+    description:
+      'Explicit decision about stepping back, required when the resulting interval exceeds the step tolerance.',
+  })
+  @IsOptional()
+  @IsIn(NEXT_SCHEDULE_REVIEWS)
+  scheduleReview?: NextScheduleReview;
   @ApiPropertyOptional({
     description:
       'Stable key reused for retries of this exact command. When present, repeating the same key and body returns the original result without editing again; the same key with a different body is rejected with 409 IDEMPOTENCY_KEY_REUSED.',
@@ -147,4 +165,28 @@ export class AdministerDoseDto extends DosePreviewDto {
   @ValidateNested()
   @Type(() => DoseImmediateConductDto)
   immediateConduct?: DoseImmediateConductDto;
+  @ApiPropertyOptional({
+    description:
+      'When the successor should be scheduled, as an ISO timestamp with explicit offset. Omit to use the date the protocol recommends (administeredAt plus the step interval, in the prescription time zone). Only accepted when the engine recommends a successor.',
+  })
+  @IsOptional()
+  @IsDateString()
+  @Matches(/T.*(?:Z|[+-]\d{2}:\d{2})$/)
+  nextScheduledAt?: string;
+  @ApiPropertyOptional({
+    description:
+      'Clinical reason for the resulting interval. Required when the interval falls below the step tolerance (TOO_SHORT) or beyond it (REQUIRES_STEP_REVIEW).',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  nextScheduleReason?: string;
+  @ApiPropertyOptional({
+    enum: NEXT_SCHEDULE_REVIEWS,
+    description:
+      'Explicit decision about stepping back, required when the interval exceeds the step tolerance (REQUIRES_STEP_REVIEW).',
+  })
+  @IsOptional()
+  @IsIn(NEXT_SCHEDULE_REVIEWS)
+  nextScheduleReview?: NextScheduleReview;
 }

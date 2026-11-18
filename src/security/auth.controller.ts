@@ -12,6 +12,14 @@ import { PasswordResetVerifyDTO } from './dtos/password-reset-verify.dto';
 import { PasswordResetVerifyUseCase } from './use-cases/password-reset-verify.use-case';
 import { PasswordResetConfirmDTO } from './dtos/password-reset-confirm.dto';
 import { PasswordResetConfirmUseCase } from './use-cases/password-reset-confirm.use-case';
+import {
+  EmailChangeMessageResponseDto,
+  EmailChangeVerifyResponseDto,
+} from './dtos/email-change-responses.dto';
+import { EmailChangeVerifyDTO } from './dtos/email-change-verify.dto';
+import { EmailChangeVerifyUseCase } from './use-cases/email-change-verify.use-case';
+import { EmailChangeConfirmDTO } from './dtos/email-change-confirm.dto';
+import { EmailChangeConfirmUseCase } from './use-cases/email-change-confirm.use-case';
 
 @PreAuthCsrf()
 @Controller('auth')
@@ -20,6 +28,8 @@ export class AuthController {
     private readonly passwordResetRequestUseCase: PasswordResetRequestUseCase,
     private readonly passwordResetVerifyUseCase: PasswordResetVerifyUseCase,
     private readonly passwordResetConfirmUseCase: PasswordResetConfirmUseCase,
+    private readonly emailChangeVerifyUseCase: EmailChangeVerifyUseCase,
+    private readonly emailChangeConfirmUseCase: EmailChangeConfirmUseCase,
   ) {}
 
   @Post('password-reset/request')
@@ -55,5 +65,28 @@ export class AuthController {
   ): Promise<PasswordResetMessageResponseDto> {
     await this.passwordResetConfirmUseCase.execute(confirmDto);
     return { message: 'Senha redefinida com sucesso.' };
+  }
+
+  @Post('email-change/verify')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOkResponse({ type: EmailChangeVerifyResponseDto })
+  async emailChangeVerify(
+    @Body() verifyDto: EmailChangeVerifyDTO,
+  ): Promise<EmailChangeVerifyResponseDto> {
+    return this.emailChangeVerifyUseCase.execute(verifyDto);
+  }
+
+  @Post('email-change/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOkResponse({ type: EmailChangeMessageResponseDto })
+  async emailChangeConfirm(
+    @Body() confirmDto: EmailChangeConfirmDTO,
+  ): Promise<EmailChangeMessageResponseDto> {
+    const result = await this.emailChangeConfirmUseCase.execute(confirmDto);
+    return {
+      message: `E-mail de acesso alterado para ${result.newEmail}. Entre novamente com o novo endereço.`,
+    };
   }
 }

@@ -45,6 +45,12 @@ import {
   ScheduleDoseItemDto,
   UpdateScheduledDoseResponseDto,
 } from './dtos/dose-response.dto';
+import { RateLimit } from 'src/security/rate-limit/rate-limit.decorator';
+import { RATE_LIMIT_CLASSES } from 'src/security/rate-limit/rate-limit.config';
+import {
+  PdfAuditDto,
+  PdfAuditResponseDto,
+} from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/pdf-audit.dto';
 @ApiTags('doses')
 @ApiExtraModels(PageDto, ScheduleDoseItemDto)
 @ApiResponse({
@@ -101,6 +107,24 @@ export class DosesController {
     @CurrentUser() user: AuthenticatedUserPayload,
   ) {
     return this.schedule.metrics(query, user);
+  }
+  @Post('pdf-audit')
+  @CheckPolicies({ action: 'read', subject: 'Dose' })
+  @RateLimit({
+    class: RATE_LIMIT_CLASSES.auditLog,
+    keyBy: ['user', 'organization'],
+  })
+  @ApiOperation({
+    summary: 'Registra a emissão de um PDF de relatório do painel',
+    description:
+      'O PDF é montado no navegador; este endpoint só grava o registro de auditoria da emissão (quem, quando, seções).',
+  })
+  @ApiOkResponse({ type: PdfAuditResponseDto })
+  auditDashboardReportPdf(
+    @Body() dto: PdfAuditDto,
+    @CurrentUser() user: AuthenticatedUserPayload,
+  ) {
+    return this.schedule.auditPdfExport(dto, user);
   }
   @Get(':id')
   @CheckPolicies({ action: 'read', subject: 'Dose' })

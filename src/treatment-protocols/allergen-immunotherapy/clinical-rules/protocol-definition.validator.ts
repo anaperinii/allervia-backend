@@ -2,6 +2,7 @@ import type {
   PublishedProtocolDefinition,
   ProtocolStep,
   ResolvedPrescription,
+  StepIntervalTolerance,
 } from './protocol-definition';
 
 export class ProtocolValidationError extends Error {
@@ -30,6 +31,42 @@ function text(value: unknown, path: string): string {
     return fail(path, 'Expected a nonempty string without outer whitespace');
   }
   return value;
+}
+
+function intervalTolerance(
+  value: unknown,
+  intervalDays: number,
+  path: string,
+): { intervalTolerance?: StepIntervalTolerance } {
+  if (value === undefined || value === null) return {};
+
+  const raw = object(value, path);
+  const tolerance: StepIntervalTolerance = {
+    shortBelowDays: positiveInteger(
+      raw.shortBelowDays,
+      `${path}.shortBelowDays`,
+    ),
+    longFromDays: positiveInteger(raw.longFromDays, `${path}.longFromDays`),
+    stepReviewAboveDays: positiveInteger(
+      raw.stepReviewAboveDays,
+      `${path}.stepReviewAboveDays`,
+    ),
+  };
+
+  if (tolerance.shortBelowDays > intervalDays)
+    return fail(`${path}.shortBelowDays`, 'Must not exceed the step interval');
+  if (tolerance.longFromDays <= intervalDays)
+    return fail(
+      `${path}.longFromDays`,
+      'Must be greater than the step interval',
+    );
+  if (tolerance.stepReviewAboveDays < tolerance.longFromDays)
+    return fail(
+      `${path}.stepReviewAboveDays`,
+      'Must not precede the long interval threshold',
+    );
+
+  return { intervalTolerance: tolerance };
 }
 
 export function positiveInteger(value: unknown, path: string): number {
@@ -95,6 +132,11 @@ export function validateProtocolDefinition(
           step.nextStepId === null
             ? null
             : text(step.nextStepId, `${path}.nextStepId`),
+        ...intervalTolerance(
+          step.intervalTolerance,
+          positiveInteger(step.intervalDays, `${path}.intervalDays`),
+          `${path}.intervalTolerance`,
+        ),
       };
     },
   );

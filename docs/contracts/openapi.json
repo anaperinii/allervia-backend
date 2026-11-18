@@ -201,6 +201,22 @@
           "immediateConduct": {
             "$ref": "#/components/schemas/DoseImmediateConductDto"
           },
+          "nextScheduledAt": {
+            "description": "When the successor should be scheduled, as an ISO timestamp with explicit offset. Omit to use the date the protocol recommends (administeredAt plus the step interval, in the prescription time zone). Only accepted when the engine recommends a successor.",
+            "type": "string"
+          },
+          "nextScheduleReason": {
+            "description": "Clinical reason for the resulting interval. Required when the interval falls below the step tolerance (TOO_SHORT) or beyond it (REQUIRES_STEP_REVIEW).",
+            "type": "string"
+          },
+          "nextScheduleReview": {
+            "description": "Explicit decision about stepping back, required when the interval exceeds the step tolerance (REQUIRES_STEP_REVIEW).",
+            "enum": [
+              "KEEP_STEP",
+              "STEP_BACK_REQUESTED"
+            ],
+            "type": "string"
+          },
           "observations": {
             "items": {
               "$ref": "#/components/schemas/DoseObservationDto"
@@ -306,6 +322,27 @@
           "route",
           "volumeUnit",
           "concentrationUnit"
+        ],
+        "type": "object"
+      },
+      "AdminRequestEmailChangeDto": {
+        "properties": {
+          "channel": {
+            "enum": [
+              "email",
+              "whatsapp"
+            ],
+            "type": "string"
+          },
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "format": "email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newEmail",
+          "channel"
         ],
         "type": "object"
       },
@@ -507,6 +544,21 @@
         ],
         "type": "object"
       },
+      "ApproveEmailChangeDto": {
+        "properties": {
+          "channel": {
+            "enum": [
+              "email",
+              "whatsapp"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel"
+        ],
+        "type": "object"
+      },
       "AuditLogDto": {
         "properties": {
           "action": {
@@ -705,7 +757,23 @@
         "type": "object"
       },
       "ChangePasswordDto": {
-        "properties": {},
+        "properties": {
+          "currentPassword": {
+            "description": "Senha atual",
+            "type": "string"
+          },
+          "newPassword": {
+            "description": "Senha: 8-20 caracteres, com ao menos uma maiúscula, uma minúscula, um número e um caractere especial",
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
         "type": "object"
       },
       "ChangePasswordResponseDto": {
@@ -957,6 +1025,8 @@
       "ContactRequestDto": {
         "properties": {
           "email": {
+            "format": "email",
+            "maxLength": 320,
             "type": "string"
           },
           "message": {
@@ -1107,6 +1177,7 @@
         "properties": {
           "email": {
             "description": "E-mail do Profissional",
+            "format": "email",
             "type": "string"
           },
           "fullName": {
@@ -1123,7 +1194,7 @@
       "CreatePatientDto": {
         "properties": {
           "birthDate": {
-            "description": "Data de Nascimento",
+            "description": "Data de nascimento. Não pode ser futura nem anterior a 130 anos.",
             "type": "string"
           },
           "cpf": {
@@ -1144,7 +1215,10 @@
             "nullable": true
           },
           "phoneNumber": {
-            "description": "Número de Telefone",
+            "description": "Número de telefone (DDD + número, somente dígitos)",
+            "maxLength": 11,
+            "minLength": 11,
+            "pattern": "^\\d{11}$",
             "type": "string"
           },
           "responsiblePhysicianId": {
@@ -1253,6 +1327,8 @@
       "DemoRequestDto": {
         "properties": {
           "email": {
+            "format": "email",
+            "maxLength": 320,
             "type": "string"
           },
           "lastName": {
@@ -1262,7 +1338,11 @@
             "type": "string"
           },
           "phone": {
+            "description": "Telefone (DDD + número, somente dígitos)",
             "example": "11999999999",
+            "maxLength": 11,
+            "minLength": 11,
+            "pattern": "^\\d{11}$",
             "type": "string"
           },
           "professionals": {
@@ -1685,6 +1765,41 @@
         ],
         "type": "object"
       },
+      "DoseMetricsConcentrationDto": {
+        "properties": {
+          "concentration": {
+            "type": "number"
+          },
+          "count": {
+            "type": "number"
+          },
+          "totalVolume": {
+            "description": "Soma do volume (mL) aplicado nessa concentração",
+            "type": "number"
+          }
+        },
+        "required": [
+          "concentration",
+          "count",
+          "totalVolume"
+        ],
+        "type": "object"
+      },
+      "DoseMetricsPhasesDto": {
+        "properties": {
+          "buildUp": {
+            "type": "number"
+          },
+          "maintenance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "buildUp",
+          "maintenance"
+        ],
+        "type": "object"
+      },
       "DoseMetricsResponseDto": {
         "properties": {
           "adherence": {
@@ -1693,9 +1808,24 @@
           "applications": {
             "$ref": "#/components/schemas/DoseMetricsApplicationsDto"
           },
+          "concentration": {
+            "description": "Distribuição de doses do período por concentração",
+            "items": {
+              "$ref": "#/components/schemas/DoseMetricsConcentrationDto"
+            },
+            "type": "array"
+          },
           "from": {
             "format": "date-time",
             "type": "string"
+          },
+          "phases": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DoseMetricsPhasesDto"
+              }
+            ],
+            "description": "Doses do período por fase do protocolo (build-up/manutenção)"
           },
           "scheduled": {
             "$ref": "#/components/schemas/DoseMetricsScheduledDto"
@@ -1710,6 +1840,20 @@
           "to": {
             "format": "date-time",
             "type": "string"
+          },
+          "typesActive": {
+            "description": "Imunoterapias ativas (em andamento, não arquivadas) por tipo",
+            "items": {
+              "$ref": "#/components/schemas/DoseMetricsTypeDto"
+            },
+            "type": "array"
+          },
+          "volumeMatrix": {
+            "description": "Contagem de doses administradas por par concentração/volume",
+            "items": {
+              "$ref": "#/components/schemas/DoseMetricsVolumeMatrixDto"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -1719,7 +1863,11 @@
           "applications",
           "scheduled",
           "adherence",
-          "therapies"
+          "therapies",
+          "concentration",
+          "volumeMatrix",
+          "phases",
+          "typesActive"
         ],
         "type": "object"
       },
@@ -1762,6 +1910,40 @@
           "completed",
           "buildUp",
           "maintenance"
+        ],
+        "type": "object"
+      },
+      "DoseMetricsTypeDto": {
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "immunoType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "immunoType",
+          "count"
+        ],
+        "type": "object"
+      },
+      "DoseMetricsVolumeMatrixDto": {
+        "properties": {
+          "concentration": {
+            "type": "number"
+          },
+          "count": {
+            "type": "number"
+          },
+          "volume": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "concentration",
+          "volume",
+          "count"
         ],
         "type": "object"
       },
@@ -1999,6 +2181,15 @@
           "expectedTherapyRevision": {
             "type": "number"
           },
+          "nextIntervalTolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StepIntervalToleranceDto"
+              }
+            ],
+            "description": "Day thresholds that classify the interval until the successor. Authored in the protocol step when present, derived from the step graph otherwise. Null when the recommendation ends the sequence.",
+            "nullable": true
+          },
           "nextScheduledAt": {
             "description": "Null when the recommendation ends the sequence",
             "format": "date-time",
@@ -2026,6 +2217,7 @@
           "recommendation",
           "allowedValues",
           "nextScheduledAt",
+          "nextIntervalTolerance",
           "expectedRevision",
           "expectedTherapyRevision",
           "prescriptionRevision",
@@ -2708,6 +2900,133 @@
         ],
         "type": "object"
       },
+      "EmailChangeConfirmDTO": {
+        "properties": {},
+        "type": "object"
+      },
+      "EmailChangeMessageResponseDto": {
+        "properties": {
+          "message": {
+            "example": "E-mail de acesso alterado com sucesso.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "EmailChangeRequestDto": {
+        "properties": {
+          "currentEmail": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "description": "Momento em que o pedido foi encerrado: aprovação confirmada, recusa ou substituição.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "newEmail": {
+            "type": "string"
+          },
+          "professionalId": {
+            "type": "string"
+          },
+          "professionalName": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "DISPATCHED",
+              "CONFIRMED",
+              "REJECTED",
+              "SUPERSEDED",
+              "EXPIRED"
+            ],
+            "type": "string"
+          },
+          "whatsappUrl": {
+            "description": "URL wa.me pronta para envio manual quando o canal escolhido é WhatsApp.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "professionalId",
+          "professionalName",
+          "currentEmail",
+          "newEmail",
+          "status",
+          "expiresAt",
+          "requestedAt"
+        ],
+        "type": "object"
+      },
+      "EmailChangeRequestPageDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EmailChangeRequestDto"
+            },
+            "type": "array"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pending": {
+            "description": "Total de pedidos aguardando decisão, independente da página consultada.",
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "pending"
+        ],
+        "type": "object"
+      },
+      "EmailChangeVerifyDTO": {
+        "properties": {},
+        "type": "object"
+      },
+      "EmailChangeVerifyResponseDto": {
+        "properties": {
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "type": "string"
+          },
+          "valid": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "newEmail"
+        ],
+        "type": "object"
+      },
       "EnrollMfaDto": {
         "properties": {
           "label": {
@@ -2821,177 +3140,6 @@
         ],
         "type": "object"
       },
-      "GoogleAuthorizationUrlDto": {
-        "properties": {
-          "authorizationUrl": {
-            "description": "URL de consentimento OAuth do Google para redirecionamento",
-            "type": "string"
-          }
-        },
-        "required": [
-          "authorizationUrl"
-        ],
-        "type": "object"
-      },
-      "GoogleCalendarConnectionListItemDto": {
-        "properties": {
-          "brokenReason": {
-            "nullable": true,
-            "type": "string"
-          },
-          "channelExpiresAt": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "googleAccountEmail": {
-            "type": "string"
-          },
-          "lastIncrementalSyncAt": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "professional": {
-            "$ref": "#/components/schemas/GoogleCalendarConnectionProfessionalDto"
-          },
-          "professionalId": {
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "ACTIVE",
-              "BROKEN"
-            ],
-            "type": "string"
-          }
-        },
-        "required": [
-          "professionalId",
-          "googleAccountEmail",
-          "status",
-          "brokenReason",
-          "channelExpiresAt",
-          "lastIncrementalSyncAt",
-          "createdAt",
-          "professional"
-        ],
-        "type": "object"
-      },
-      "GoogleCalendarConnectionProfessionalDto": {
-        "properties": {
-          "fullName": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "profession": {
-            "enum": [
-              "PHYSICIAN",
-              "NURSE",
-              "NURSING_TECHNICIAN",
-              "RECEPTIONIST"
-            ],
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "fullName",
-          "profession"
-        ],
-        "type": "object"
-      },
-      "GoogleCalendarDisconnectedResultDto": {
-        "properties": {
-          "disconnected": {
-            "example": true,
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "disconnected"
-        ],
-        "type": "object"
-      },
-      "GoogleCalendarStatusConnectedDto": {
-        "properties": {
-          "brokenReason": {
-            "nullable": true,
-            "type": "string"
-          },
-          "channelExpiresAt": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "connected": {
-            "oneOf": [
-              {
-                "enum": [
-                  true
-                ],
-                "type": "boolean"
-              }
-            ]
-          },
-          "deadLetteredJobs": {
-            "type": "number"
-          },
-          "googleAccountEmail": {
-            "type": "string"
-          },
-          "lastIncrementalSyncAt": {
-            "format": "date-time",
-            "nullable": true,
-            "type": "string"
-          },
-          "pendingJobs": {
-            "type": "number"
-          },
-          "status": {
-            "enum": [
-              "ACTIVE",
-              "BROKEN"
-            ],
-            "type": "string"
-          }
-        },
-        "required": [
-          "connected",
-          "googleAccountEmail",
-          "status",
-          "brokenReason",
-          "channelExpiresAt",
-          "lastIncrementalSyncAt",
-          "pendingJobs",
-          "deadLetteredJobs"
-        ],
-        "type": "object"
-      },
-      "GoogleCalendarStatusDisconnectedDto": {
-        "properties": {
-          "connected": {
-            "oneOf": [
-              {
-                "enum": [
-                  false
-                ],
-                "type": "boolean"
-              }
-            ]
-          }
-        },
-        "required": [
-          "connected"
-        ],
-        "type": "object"
-      },
       "GuardianDto": {
         "properties": {
           "cpf": {
@@ -3003,7 +3151,10 @@
             "type": "string"
           },
           "phoneNumber": {
-            "description": "Telefone do responsável",
+            "description": "Telefone do responsável (DDD + número, somente dígitos)",
+            "maxLength": 11,
+            "minLength": 11,
+            "pattern": "^\\d{11}$",
             "type": "string"
           }
         },
@@ -4008,7 +4159,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           },
@@ -4085,7 +4238,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           }
@@ -4261,7 +4416,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           },
@@ -4350,13 +4507,29 @@
         "type": "object"
       },
       "PasswordResetConfirmDTO": {
-        "properties": {},
+        "properties": {
+          "newPassword": {
+            "description": "Senha: 8-20 caracteres, com ao menos uma maiúscula, uma minúscula, um número e um caractere especial",
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
+            "type": "string"
+          },
+          "token": {
+            "description": "Token de redefinição de senha",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ],
         "type": "object"
       },
       "PasswordResetMessageResponseDto": {
         "properties": {
           "message": {
-            "example": "Se o e-mail existir, enviamos as instruções de redefinição.",
+            "example": "Se o e-mail existir, enviamos o link de redefinição para sua caixa de entrada.",
             "type": "string"
           }
         },
@@ -4366,7 +4539,16 @@
         "type": "object"
       },
       "PasswordResetRequestDTO": {
-        "properties": {},
+        "properties": {
+          "email": {
+            "description": "E-mail da conta",
+            "format": "email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
         "type": "object"
       },
       "PasswordResetVerifyDTO": {
@@ -4737,6 +4919,82 @@
         ],
         "type": "object"
       },
+      "PdfAuditDto": {
+        "properties": {
+          "anonymized": {
+            "description": "Se os identificadores do paciente foram mascarados no PDF",
+            "type": "boolean"
+          },
+          "sections": {
+            "description": "Seções incluídas no PDF gerado no navegador",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "sections"
+        ],
+        "type": "object"
+      },
+      "PdfAuditResponseDto": {
+        "properties": {
+          "recorded": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "recorded"
+        ],
+        "type": "object"
+      },
+      "PhaseTimelineDayDto": {
+        "properties": {
+          "buildUp": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string"
+          },
+          "maintenance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "buildUp",
+          "maintenance"
+        ],
+        "type": "object"
+      },
+      "PhaseTimelineResponseDto": {
+        "properties": {
+          "asOf": {
+            "type": "string"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseTimelineDayDto"
+            },
+            "type": "array"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "totalTherapies": {
+            "description": "Imunoterapias em andamento consideradas no cálculo",
+            "type": "number"
+          }
+        },
+        "required": [
+          "asOf",
+          "timeZone",
+          "totalTherapies",
+          "days"
+        ],
+        "type": "object"
+      },
       "PrescriptionRevisionAppliedDto": {
         "properties": {
           "dryRun": {
@@ -4987,7 +5245,10 @@
             "type": "string"
           },
           "password": {
-            "description": "Senha",
+            "description": "Senha: 8-20 caracteres, com ao menos uma maiúscula, uma minúscula, um número e um caractere especial",
+            "maxLength": 20,
+            "minLength": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
             "type": "string"
           },
           "phoneNumber": {
@@ -5108,6 +5369,14 @@
           "intervalDays": {
             "type": "number"
           },
+          "intervalTolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StepIntervalToleranceInputDto"
+              }
+            ],
+            "description": "Limites de tolerância deste passo. Ausente, o sistema deriva do intervalo deste passo e do seguinte."
+          },
           "label": {
             "type": "string"
           },
@@ -5150,6 +5419,14 @@
           },
           "intervalDays": {
             "type": "number"
+          },
+          "intervalTolerance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StepIntervalToleranceDto"
+              }
+            ],
+            "description": "Day thresholds authored for this step. Absent means they are derived from this step and its successor."
           },
           "label": {
             "type": "string"
@@ -5333,6 +5610,8 @@
       "ProvisionOrganizationAdministratorDto": {
         "properties": {
           "email": {
+            "format": "email",
+            "maxLength": 254,
             "type": "string"
           },
           "fullName": {
@@ -6034,6 +6313,19 @@
         ],
         "type": "object"
       },
+      "SelfRequestEmailChangeDto": {
+        "properties": {
+          "newEmail": {
+            "example": "novo.endereco@clinica.com.br",
+            "format": "email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newEmail"
+        ],
+        "type": "object"
+      },
       "SessionEnvelopeDto": {
         "properties": {
           "authenticated": {
@@ -6114,7 +6406,9 @@
           "kind": {
             "enum": [
               "PHYSICIAN_REVIEW_REQUESTED",
-              "TREATMENT_SUSPENDED"
+              "TREATMENT_SUSPENDED",
+              "EMAIL_CHANGE_REQUEST_PENDING",
+              "EMAIL_CHANGE_REQUEST_DECIDED"
             ],
             "type": "string"
           }
@@ -6288,6 +6582,8 @@
         "properties": {
           "email": {
             "example": "profissional@clinica.com.br",
+            "format": "email",
+            "maxLength": 254,
             "type": "string"
           },
           "password": {
@@ -6358,6 +6654,50 @@
           "complete",
           "totalTherapies",
           "buckets"
+        ],
+        "type": "object"
+      },
+      "StepIntervalToleranceDto": {
+        "properties": {
+          "longFromDays": {
+            "description": "Intervals from this many days on are LONG",
+            "type": "number"
+          },
+          "shortBelowDays": {
+            "description": "Intervals below this many days are TOO_SHORT",
+            "type": "number"
+          },
+          "stepReviewAboveDays": {
+            "description": "Intervals above this many days are REQUIRES_STEP_REVIEW",
+            "type": "number"
+          }
+        },
+        "required": [
+          "shortBelowDays",
+          "longFromDays",
+          "stepReviewAboveDays"
+        ],
+        "type": "object"
+      },
+      "StepIntervalToleranceInputDto": {
+        "properties": {
+          "longFromDays": {
+            "description": "Intervalos a partir deste valor são LONG",
+            "type": "number"
+          },
+          "shortBelowDays": {
+            "description": "Intervalos abaixo deste valor são TOO_SHORT",
+            "type": "number"
+          },
+          "stepReviewAboveDays": {
+            "description": "Intervalos acima deste valor exigem revisão de passo",
+            "type": "number"
+          }
+        },
+        "required": [
+          "shortBelowDays",
+          "longFromDays",
+          "stepReviewAboveDays"
         ],
         "type": "object"
       },
@@ -7195,7 +7535,7 @@
       "UpdatePatientDto": {
         "properties": {
           "birthDate": {
-            "description": "Data de Nascimento",
+            "description": "Data de nascimento. Não pode ser futura nem anterior a 130 anos.",
             "type": "string"
           },
           "cpf": {
@@ -7216,7 +7556,10 @@
             "nullable": true
           },
           "phoneNumber": {
-            "description": "Número de Telefone",
+            "description": "Número de telefone (DDD + número, somente dígitos)",
+            "maxLength": 11,
+            "minLength": 11,
+            "pattern": "^\\d{11}$",
             "type": "string"
           },
           "responsiblePhysicianId": {
@@ -7255,10 +7598,18 @@
             "type": "string"
           },
           "reason": {
-            "description": "Clinical reason for adjusting the planned session",
+            "description": "Clinical reason for adjusting the planned session. Required when the resulting interval falls outside the step tolerance, or when there is no preceding administration to measure it against.",
             "type": "string"
           },
           "scheduledAt": {
+            "type": "string"
+          },
+          "scheduleReview": {
+            "description": "Explicit decision about stepping back, required when the resulting interval exceeds the step tolerance.",
+            "enum": [
+              "KEEP_STEP",
+              "STEP_BACK_REQUESTED"
+            ],
             "type": "string"
           },
           "values": {
@@ -7269,8 +7620,7 @@
           "expectedRevision",
           "expectedTherapyRevision",
           "values",
-          "scheduledAt",
-          "reason"
+          "scheduledAt"
         ],
         "type": "object"
       },
@@ -7560,6 +7910,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountContextDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/account/me/email-change": {
+      "post": {
+        "operationId": "AccountController_requestOwnEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelfRequestEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
                 }
               }
             },
@@ -8254,6 +8635,68 @@
         },
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/auth/email-change/confirm": {
+      "post": {
+        "operationId": "AuthController_emailChangeConfirm",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeConfirmDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeMessageResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/email-change/verify": {
+      "post": {
+        "operationId": "AuthController_emailChangeVerify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeVerifyDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeVerifyResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
         ]
       }
     },
@@ -9236,6 +9679,48 @@
         ]
       }
     },
+    "/doses/pdf-audit": {
+      "post": {
+        "description": "O PDF é montado no navegador; este endpoint só grava o registro de auditoria da emissão (quem, quando, seções).",
+        "operationId": "DosesController_auditDashboardReportPdf",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfAuditDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdfAuditResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid configured value, conflicting step ID, ambiguous value or invalid calendar input"
+          },
+          "409": {
+            "description": "Stale dose/therapy revision, inactive treatment, disabled automation, pending migration or conflicting idempotency key"
+          },
+          "410": {
+            "description": "Legacy write route retired; use scheduled, preview or administer"
+          }
+        },
+        "summary": "Registra a emissão de um PDF de relatório do painel",
+        "tags": [
+          "doses"
+        ]
+      }
+    },
     "/doses/update/status/{id}": {
       "patch": {
         "deprecated": true,
@@ -9769,6 +10254,55 @@
         ]
       }
     },
+    "/immunotherapies/phase-timeline": {
+      "get": {
+        "operationId": "ImmunotherapiesController_readPhaseTimeline",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "example": "2026-01-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "example": "2026-01-31",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "timeZone",
+            "required": true,
+            "schema": {
+              "example": "America/Sao_Paulo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhaseTimelineResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "immunotherapies"
+        ]
+      }
+    },
     "/immunotherapies/record/{patientId}": {
       "get": {
         "operationId": "ImmunotherapiesController_readPatientRecord",
@@ -9794,6 +10328,48 @@
             "description": ""
           }
         },
+        "tags": [
+          "immunotherapies"
+        ]
+      }
+    },
+    "/immunotherapies/record/{patientId}/pdf-audit": {
+      "post": {
+        "description": "O PDF é montado no navegador; este endpoint só grava o registro de auditoria da emissão (quem, quando, seções, se anonimizado).",
+        "operationId": "ImmunotherapiesController_auditPatientReportPdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfAuditDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdfAuditResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Registra a emissão de um PDF de relatório clínico do paciente",
         "tags": [
           "immunotherapies"
         ]
@@ -9947,169 +10523,6 @@
         },
         "tags": [
           "immunotherapies"
-        ]
-      }
-    },
-    "/integrations/google-calendar/callback": {
-      "get": {
-        "operationId": "GoogleCalendarController_callback",
-        "parameters": [],
-        "responses": {
-          "302": {
-            "description": "Redireciona para a tela de configurações do frontend com status=connected ou status=error&code=<CODIGO>.",
-            "headers": {
-              "Location": {
-                "description": "URL de configurações do frontend com o resultado",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "google-calendar"
-        ]
-      }
-    },
-    "/integrations/google-calendar/connect": {
-      "post": {
-        "operationId": "GoogleCalendarController_connect",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GoogleAuthorizationUrlDto"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "google-calendar"
-        ]
-      }
-    },
-    "/integrations/google-calendar/connection": {
-      "delete": {
-        "operationId": "GoogleCalendarController_disconnect",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "removeEvents",
-            "required": false,
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GoogleCalendarDisconnectedResultDto"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "google-calendar"
-        ]
-      },
-      "get": {
-        "operationId": "GoogleCalendarController_status",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/GoogleCalendarStatusConnectedDto"
-                    },
-                    {
-                      "$ref": "#/components/schemas/GoogleCalendarStatusDisconnectedDto"
-                    }
-                  ]
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "google-calendar"
-        ]
-      }
-    },
-    "/integrations/google-calendar/connections": {
-      "get": {
-        "operationId": "GoogleCalendarController_list",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/GoogleCalendarConnectionListItemDto"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "google-calendar"
-        ]
-      }
-    },
-    "/integrations/google-calendar/connections/{professionalId}": {
-      "delete": {
-        "operationId": "GoogleCalendarController_disconnectProfessional",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "professionalId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "removeEvents",
-            "required": false,
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GoogleCalendarDisconnectedResultDto"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "google-calendar"
         ]
       }
     },
@@ -10953,6 +11366,159 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MemberAccessStatusDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/{id}/email-change": {
+      "post": {
+        "operationId": "ProfessionalsController_startEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRequestEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests": {
+      "get": {
+        "operationId": "ProfessionalsController_listPendingEmailChanges",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestPageDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests/{id}/approve": {
+      "post": {
+        "operationId": "ProfessionalsController_approvePendingEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveEmailChangeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "professionals"
+        ]
+      }
+    },
+    "/professionals/email-change-requests/{id}/reject": {
+      "post": {
+        "operationId": "ProfessionalsController_rejectPendingEmailChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeRequestDto"
                 }
               }
             },

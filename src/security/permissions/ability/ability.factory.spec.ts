@@ -155,5 +155,9 @@ describe('AbilityFactory', () => {
     it('NÃO pode registrar dose', () => {
       expect(ability.can('create', 'Dose')).toBe(false);
     });
+
+    it('NÃO pode criar paciente: a única criação de paciente é via POST /immunotherapies/register, que exige create Immunotherapy', () => {
+      expect(ability.can('create', 'Patient')).toBe(false);
+    });
   });
 });

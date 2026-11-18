@@ -9,13 +9,48 @@ import { PrismaService } from 'src/infra/database/prisma.service';
 import { AbilityFactory } from 'src/security/permissions/ability/ability.factory';
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { maskCpf } from 'src/patients/cpf';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PdfAuditDto } from './dtos/pdf-audit.dto';
 
 @Injectable()
 export class ClinicalHistoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly abilities: AbilityFactory,
+    private readonly audit: IAuditLogService,
   ) {}
+
+  async auditPdfExport(
+    patientId: string,
+    dto: PdfAuditDto,
+    user: AuthenticatedUserPayload,
+  ): Promise<{ recorded: true }> {
+    const ability = this.abilities.createForUser(user);
+    if (!ability.can('read', 'Patient')) throw new NotFoundException();
+    const patient = await this.prisma.patient.findFirst({
+      where: {
+        AND: [
+          { id: patientId, organizationId: user.organizationId },
+          accessibleBy(ability, 'read').ofType('Patient'),
+        ],
+      },
+      select: { id: true },
+    });
+    if (!patient) throw new NotFoundException();
+    await this.audit.record({
+      userId: user.id,
+      organizationId: user.organizationId,
+      entityType: 'Patient',
+      entityId: patientId,
+      action: 'PDF_EXPORT_GENERATED',
+      newValues: {
+        kind: 'PATIENT_CLINICAL_REPORT',
+        sections: dto.sections,
+        anonymized: dto.anonymized ?? false,
+      },
+    });
+    return { recorded: true };
+  }
 
   async record(patientId: string, user: AuthenticatedUserPayload) {
     const ability = this.abilities.createForUser(user);

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   DemoConfirmationEmailParams,
+  EmailChangeLinkParams,
   IEmailService,
   InviteEmailParams,
 } from './email.service';
@@ -31,6 +32,28 @@ export class LogEmailService extends IEmailService {
 
   sendPasswordChangedNotification(email: string): Promise<void> {
     this.logger.log(`[DEV] Senha alterada — aviso enviado para ${email}`);
+    return Promise.resolve();
+  }
+
+  sendEmailChangeLink(params: EmailChangeLinkParams): Promise<void> {
+    this.logger.log(
+      `[DEV] Troca de e-mail para ${params.email} → ${params.newEmail} — token=${params.token}`,
+    );
+    return Promise.resolve();
+  }
+
+  sendEmailChangeFarewell(
+    previousEmail: string,
+    newEmail: string,
+  ): Promise<void> {
+    this.logger.log(
+      `[DEV] Aviso de troca de e-mail enviado para ${previousEmail} — novo endereço ${newEmail}`,
+    );
+    return Promise.resolve();
+  }
+
+  sendEmailChangeWelcome(newEmail: string): Promise<void> {
+    this.logger.log(`[DEV] Boas-vindas ao novo e-mail ${newEmail}`);
     return Promise.resolve();
   }
 

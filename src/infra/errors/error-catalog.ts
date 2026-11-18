@@ -30,22 +30,6 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   DOSE_NOT_ADMINISTERED: 'Esta dose ainda não foi administrada.',
   DOSE_NOT_SCHEDULED: 'Esta dose não está agendada e não pode ser alterada.',
   DOSE_VALUES_REQUIRED: 'Informe os valores da dose.',
-  GOOGLE_CALENDAR_ALREADY_CONNECTED:
-    'Já existe uma conta Google conectada para este profissional. Desconecte antes de conectar outra.',
-  GOOGLE_CALENDAR_CONNECTION_BROKEN:
-    'A conexão com o Google Calendar foi revogada. Reconecte sua conta para retomar a sincronização.',
-  GOOGLE_CALENDAR_NOT_CONNECTED:
-    'Nenhuma conta Google conectada para este profissional.',
-  GOOGLE_OAUTH_EXCHANGE_FAILED:
-    'Não foi possível concluir a conexão com o Google. Tente novamente.',
-  GOOGLE_OAUTH_STATE_INVALID:
-    'A autorização expirou ou é inválida. Inicie a conexão com o Google novamente.',
-  GOOGLE_SCOPE_NOT_GRANTED:
-    'A permissão de agenda não foi concedida. Conecte novamente e mantenha a permissão do Google Agenda marcada.',
-  GOOGLE_REFRESH_TOKEN_MISSING:
-    'O Google não concedeu acesso contínuo. Remova o Allervia das permissões da sua conta Google e conecte de novo.',
-  GOOGLE_TOKEN_KEY_UNAVAILABLE:
-    'A integração com o Google Calendar está indisponível no momento. Fale com o suporte.',
   GUARDIAN_NOT_ALLOWED_FOR_ADULT:
     'Paciente maior de idade não tem responsável legal. Remova os dados do responsável.',
   GUARDIAN_REQUIRED_FOR_MINOR:
@@ -111,6 +95,14 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
     'Categoria só pode ser informada ao suspender o tratamento.',
   REVISION_TARGETS_SAME_VERSION:
     'A versão escolhida já é a que está em uso. Selecione outra.',
+  NEXT_SCHEDULE_BEFORE_ADMINISTRATION:
+    'A próxima aplicação precisa ser depois desta aplicação.',
+  NEXT_SCHEDULE_NOT_APPLICABLE:
+    'Este é o último passo do protocolo: não há próxima aplicação a agendar.',
+  NEXT_SCHEDULE_REASON_REQUIRED:
+    'Informe o motivo do intervalo escolhido até a próxima aplicação.',
+  NEXT_SCHEDULE_REVIEW_REQUIRED:
+    'Intervalo muito longo: avalie explicitamente se é preciso retroceder doses antes de prosseguir.',
   SCHEDULE_REQUIRES_CALENDAR_REVIEW:
     'Não foi possível calcular a próxima data. Revise o calendário do protocolo.',
   STALE_APPOINTMENT_REVISION:
@@ -155,8 +147,6 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   REAUTHENTICATION_REQUIRED: 'Confirme sua identidade para continuar.',
   PROVISIONING_KEY_INVALID: 'Chave de provisionamento inválida.',
 
-  GOOGLE_OAUTH_SESSION_INVALID:
-    'Sua sessão mudou durante a conexão com o Google. Entre novamente e repita a conexão.',
   DEMO_REQUEST_LIMIT:
     'Limite de solicitações atingido. Tente novamente mais tarde.',
   STALE_ORGANIZATION_REVISION:
@@ -179,6 +169,9 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   NOT_FOUND: 'Registro não encontrado.',
   METHOD_NOT_ALLOWED: 'Operação não permitida neste endereço.',
   CONFLICT: 'A operação conflita com o estado atual do registro.',
+  PASSWORD_SAME_AS_CURRENT: 'A nova senha deve ser diferente da senha atual.',
+  EMAIL_ALREADY_IN_USE: 'Este e-mail já está em uso por outra conta.',
+  EMAIL_SAME_AS_CURRENT: 'O novo e-mail deve ser diferente do e-mail atual.',
   ENDPOINT_RETIRED: 'Este recurso foi descontinuado. Atualize o aplicativo.',
   UNSUPPORTED_CONTENT_TYPE: 'Formato de conteúdo não suportado.',
   UNPROCESSABLE_ENTITY: 'Não foi possível processar os dados enviados.',

@@ -24,7 +24,6 @@ API REST para gestão de tratamentos de imunoterapia com alérgenos. O sistema c
 - [Tratamento de erros](#tratamento-de-erros)
 - [Fluxo de onboarding](#fluxo-de-onboarding)
 - [Convenções de código](#convenções-de-código)
-- [Estado atual e limitações conhecidas](#estado-atual-e-limitações-conhecidas)
 
 ---
 
@@ -62,11 +61,10 @@ O back-end é um **monolito modular** organizado por **domínio de negócio**, n
 | `patients` | Pacientes da organização |
 | `invites` | Convites de usuários internos e registro a partir do convite |
 | `treatment-protocols` | Núcleo clínico: terapias, doses e regras de protocolo |
-| `scheduling` | Agendamentos (`Appointment`) ligados às doses e ao calendário externo |
+| `scheduling` | Agendamentos (`Appointment`) ligados às doses |
 | `audit` | Consulta ao log de auditoria (`AuditLog`), por entidade ou por autor |
 | `notifications` | Notificações internas, preferências e outbox transacional |
 | `public-requests` | Rotas públicas de contato/demo e solicitações de suporte autenticadas |
-| `integrations/google-calendar` | OAuth por profissional, sincronização bidirecional de agenda e webhook de push |
 | `infra` | Recursos compartilhados: Prisma, e-mail, exceções, filtros, health check, paginação HTTP, retenção/expurgo |
 
 ### Critério de modelagem
@@ -94,8 +92,8 @@ O grafo de dependências entre módulos é unidirecional e sem ciclos, verificá
 ### Padrões aplicados
 
 - **Strategy + Factory** no fluxo de convite e registro (`invite-strategy.factory.ts`, `register-strategy.context.ts`). Hoje existe uma única estratégia concreta de cada lado — a estrutura foi mantida deliberadamente (decisão registrada em `docs/review/execucao/decisoes.md`), mas não adicione novas indireções sem uma segunda estratégia real.
-- **Service com interface abstrata** para dependências substituíveis: `IEmailService`, `IPasswordHashingService`, `GoogleCalendarClient` (fake nos testes).
-- **Outbox transacional + lease/fencing** nas três filas persistidas (notificações, Google Calendar, e-mail de demo) — contrato em `docs/review/execucao/filas.md`.
+- **Service com interface abstrata** para dependências substituíveis: `IEmailService`, `IPasswordHashingService` (fakes nos testes).
+- **Outbox transacional + lease/fencing** nas filas persistidas (notificações, e-mail de demo) — contrato em `docs/review/execucao/filas.md`.
 - **Exception filter global único** (`HttpErrorFilter`) traduzindo qualquer exceção para o envelope com `code` do catálogo.
 
 ---
@@ -109,21 +107,21 @@ src/
 ├── app.module.ts               # composição dos módulos + guards globais (SessionAuth, Csrf, Policies, RateLimit) + HttpErrorFilter
 │
 ├── security/                   # autenticação e autorização
-│   ├── auth.controller.ts      # password-reset request/verify/confirm
+│   ├── auth.controller.ts      # password-reset e email-change: request/verify/confirm
 │   ├── decorators/             # @Public, @AuthenticatedOnly, @CurrentUser
 │   ├── guards/                 # PoliciesGuard (deny-by-default)
 │   ├── session/                # sessão opaca, cookies, CSRF, MFA TOTP, rate limit de auth
 │   ├── rate-limit/             # @RateLimit por classe (public-submit, export, webhook)
-│   ├── use-cases/              # password-reset request/verify/confirm
+│   ├── use-cases/              # password-reset request/verify/confirm; email-change verify/confirm
 │   ├── validation/             # política de senha (mín. 8 chars, máx. 72 bytes)
 │   └── permissions/            # CASL
 │       ├── ability/            # AbilityFactory, tipos, @CheckPolicies
 │       ├── roles.controller.ts
 │       └── use-cases/          # grant, revoke, find, list
 │
-├── account/                    # perfil, senha, estatísticas do usuário
+├── account/                    # perfil, senha, pedido próprio de troca de e-mail, estatísticas do usuário
 ├── organization/                # cadastro/consulta da instituição + provisioning/ (criação administrativa)
-├── professionals/                # equipe: dados cadastrais e gestão de acesso
+├── professionals/                # equipe: dados cadastrais, gestão de acesso e fila de troca de e-mail
 ├── patients/                     # listagem, consulta e atualização de pacientes
 ├── invites/                      # convites + registro via convite
 │   ├── domain/                   # entidade, exceções e interfaces de convite
@@ -142,8 +140,6 @@ src/
 ├── audit/                         # consulta ao AuditLog (geral, por entidade, por autor)
 ├── notifications/                 # notificações internas + preferências + outbox (retry, status)
 ├── public-requests/                # demo/contact (público) + support (autenticado)
-├── integrations/
-│   └── google-calendar/            # OAuth, conexão por profissional, sync bidirecional, webhook de push
 │
 ├── infra/
 │   ├── acceptance/                  # critérios/guardas de aceitação de ambiente
@@ -199,7 +195,7 @@ docs/                           # documentação do projeto + ADRs
 | `ADMINISTRATOR` | Lê `Patient`, `Immunotherapy` e `Dose` da organização; gerencia `Professional`, `User`, `InternalUserInvite` e `ProfessionalRole`; lê a própria `Organization` |
 | `PHYSICIAN` | Cria `Patient` na organização; lê, atualiza e arquiva **seus** pacientes (`responsiblePhysicianId`); gerencia `Immunotherapy` desses pacientes; lê, cria e atualiza as `Dose` correspondentes |
 | `NURSE` | Lê `Patient` e `Immunotherapy` da organização; lê, cria, atualiza e arquiva `Dose` da organização |
-| `RECEPTIONIST` | Lê, cria e atualiza `Patient` da organização |
+| `RECEPTIONIST` | Lê e atualiza `Patient` da organização. Não cria `Patient`: a única criação é via `POST /immunotherapies/register`, que exige `create Immunotherapy` |
 
 A verificação no guard é sobre **ação mais tipo de recurso**. O escopo por registro individual (o `where` da consulta) é responsabilidade do caso de uso, que incorpora as condições da *ability* antes de ler ou gravar. É por isso que existe `@casl/prisma`, que converte as condições CASL em filtro Prisma.
 
@@ -217,7 +213,7 @@ Todos os identificadores são ULID. Os agregados relevantes carregam autoria (`c
 - **Immunotherapy**: raiz do agregado clínico. Tipo, via de administração (`SUBCUTANEOUS` ou `SUBLINGUAL`), extrato, concentração e volume alvo, datas de início de indução e manutenção, status (`IN_PROGRESS`, `SUSPENDED`, `COMPLETED`).
 - **Dose**: concentração, volume, data prevista, data efetiva, intervalo até a próxima e status (`SCHEDULED`, `ADMINISTERED_ON_SCHEDULE`, `ADMINISTERED_OFF_SCHEDULE`, `ENTERED_IN_ERROR`).
 - **DoseObservation**: observações pré e pós-administração (efeitos colaterais, medicações), única por `(doseId, phase)`.
-- **VerificationToken**: token de uso único para `PASSWORD_RESET` e `EMAIL_CHANGE`, com `expiresAt` e `consumedAt`.
+- **VerificationToken**: token de uso único para `PASSWORD_RESET` e `EMAIL_CHANGE`, com `expiresAt` e `consumedAt`. Nos pedidos de troca de e-mail, guarda também `newEmail`, `requestedById`, `approvedAt` e `approvedById` — o estado do pedido é derivado desses campos: pendente enquanto `approvedAt` e `consumedAt` são nulos, despachado após `approvedAt`, recusado quando `consumedAt` é preenchido sem aprovação.
 - **InternalUserInvite**: convite com token único, papel pretendido, validade e consumo; único por `(email, organizationId, isActive)`.
 - **AuditLog**: `entityType`, `entityId`, `action`, `oldValues`, `newValues`, `changedFields`, indexado por entidade, usuário, organização e tempo.
 
@@ -283,22 +279,20 @@ A API sobe em `http://localhost:3000` (ou na porta de `PORT`). O Swagger fica em
 | `DATABASE_URL` | sim | String de conexão PostgreSQL. Lida pelo `PrismaService` e pelo `prisma.config.ts` |
 | `AUTH_SESSION_CSRF_SECRET` | sim | Chave HMAC do CSRF por sessão (mínimo 32 bytes; o boot falha sem ela) |
 | `SUPER_ADMIN_REGISTRATION_KEY` | sim | Chave de provisionamento (`x-provisioning-key`) que autoriza criar organizações pela rota administrativa |
-| `SYSTEM_USER_ID` | com Google habilitado | Usuário de sistema que assina mutações vindas de integrações (inbound/teardown do Google falham sem ator) |
+| `SYSTEM_USER_ID` | para provisionamento | Usuário de sistema que assina mutações sem ator humano (`organization/provisioning/system-actor.ts`) |
 | `MFA_ENCRYPTION_KEY` | para MFA | Chave AES-256 (base64, 32 bytes) que cifra segredos TOTP em repouso |
 | `AUTH_ALLOWED_ORIGINS` | em produção | Origens permitidas (CORS + política de Origin do CSRF), separadas por vírgula |
-| `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_OAUTH_REDIRECT_URL`/`GOOGLE_WEBHOOK_URL`/`GOOGLE_TOKEN_ENCRYPTION_KEY` | p/ Google Calendar | Integração fica desabilitada se ausentes/inválidas (fail-closed) |
-| `GOOGLE_HTTP_TIMEOUT_MS` | não | Deadline por chamada ao Google (default 15000, clamp 1000–60000) |
 | `SMTP_HOST`/`SMTP_PORT`/... | p/ e-mail | Transporte SMTP (STARTTLS fora da porta 465) |
 | `CSP_MODE` | não | `enforce` \| `report-only` \| `off`. Default: `enforce` em produção, `report-only` fora |
 | `SWAGGER_ENABLED` | não | Em produção o Swagger fica desligado por default; `true` reabilita |
 | `HTTP_METRICS_LOG` | não | Log JSON por request (só template de rota). Default: ligado em produção |
-| `ALLERVIA_DISPATCHERS_DISABLED` | não | Desliga os 3 dispatchers de fila no processo |
+| `ALLERVIA_DISPATCHERS_DISABLED` | não | Desliga os dispatchers de fila no processo |
 | `ALLERVIA_RETENTION_ENABLED` | não | Ativa o expurgo de retenção (sem ela roda em dry-run, só contagens) |
 | `PORT` | não | Porta HTTP. Padrão: `3000` |
 
 Para testes de integração, as variáveis vão em `.env.test.local`, apontando para um **banco separado**, com `NODE_ENV=test` (há guardas que recusam bancos de desenvolvimento).
 
-> `.env` e `.env.test.local` não devem ser versionados com valores reais. Trate `AUTH_SESSION_CSRF_SECRET`, `MFA_ENCRYPTION_KEY`, `GOOGLE_*` e `SUPER_ADMIN_REGISTRATION_KEY` como segredos: quem tem a chave de provisionamento consegue criar organizações e administradores.
+> `.env` e `.env.test.local` não devem ser versionados com valores reais. Trate `AUTH_SESSION_CSRF_SECRET`, `MFA_ENCRYPTION_KEY` e `SUPER_ADMIN_REGISTRATION_KEY` como segredos: quem tem a chave de provisionamento consegue criar organizações e administradores.
 
 ---
 
@@ -339,11 +333,6 @@ Para testes de integração, as variáveis vão em `.env.test.local`, apontando 
 | `npm run start:demo` | Sobe a aplicação já com o ambiente de demonstração |
 | `npm run logs` | Visualizador de logs local (`scripts/log-viewer.cjs`) |
 | `npm run start:logs` | Sobe a aplicação encanando a saída pelo visualizador de logs |
-| `npm run local:up` / `local:down` | Sobe/derruba os containers locais de validação (`compose.validation.yml`) |
-| `npm run local:init` | Inicializa o ambiente local de validação |
-| `npm run local:seed` | Roda o seed dentro dos containers locais |
-| `npm run local:backup` / `local:restore-check` | Backup e verificação de restauração do banco local (`scripts/operations/recovery.cjs`) |
-| `npm run validation:manifest` | Gera o manifesto do ambiente de validação local |
 
 ---
 
@@ -397,6 +386,8 @@ Prefixo: raiz da aplicação. Todas as rotas exigem sessão autenticada (cookie 
 | POST | `/auth/password-reset/request` | público |
 | POST | `/auth/password-reset/verify` | público |
 | POST | `/auth/password-reset/confirm` | público |
+| POST | `/auth/email-change/verify` | público |
+| POST | `/auth/email-change/confirm` | público |
 
 ### `organization`
 
@@ -433,6 +424,7 @@ Prefixo: raiz da aplicação. Todas as rotas exigem sessão autenticada (cookie 
 | --- | --- | --- |
 | GET | `/account/me` | autenticado |
 | POST | `/account/me/password` | autenticado |
+| POST | `/account/me/email-change` | autenticado, exige reautenticação recente |
 | PATCH | `/account/update/stats/:id` | `update User` |
 
 ### `professionals`
@@ -442,8 +434,12 @@ Prefixo: raiz da aplicação. Todas as rotas exigem sessão autenticada (cookie 
 | GET | `/professionals` | `read Professional` |
 | GET | `/professionals/me` | autenticado |
 | PATCH | `/professionals/me` | autenticado |
+| GET | `/professionals/email-change-requests` | `manage Professional` |
+| POST | `/professionals/email-change-requests/:id/approve` | `manage Professional` |
+| POST | `/professionals/email-change-requests/:id/reject` | `manage Professional` |
 | PATCH | `/professionals/:id` | `manage Professional` |
 | PATCH | `/professionals/:id/access` | `manage Professional` |
+| POST | `/professionals/:id/email-change` | `manage Professional` |
 
 ### `patients`
 
@@ -531,18 +527,6 @@ Configuração disponível tanto no onboarding quanto no uso diário: listar/cri
 | POST | `/contact-requests` | público, rate limit `public-submit` |
 | POST | `/support-requests` | autenticado |
 | GET | `/support-requests` | autenticado |
-
-### `integrations/google-calendar`
-
-| Método | Rota | Acesso |
-| --- | --- | --- |
-| POST | `/integrations/google-calendar/connect` | `manage GoogleCalendarConnection` |
-| GET | `/integrations/google-calendar/callback` | público (retorno do OAuth) |
-| GET | `/integrations/google-calendar/connection` | `read GoogleCalendarConnection` |
-| DELETE | `/integrations/google-calendar/connection` | `manage GoogleCalendarConnection` |
-| GET | `/integrations/google-calendar/connections` | `read GoogleCalendarConnection` |
-| DELETE | `/integrations/google-calendar/connections/:professionalId` | `manage GoogleCalendarConnection` |
-| POST | `/integrations/google-calendar/webhook` | público, rate limit `webhook` (push notification do Google) |
 
 ### `health`
 

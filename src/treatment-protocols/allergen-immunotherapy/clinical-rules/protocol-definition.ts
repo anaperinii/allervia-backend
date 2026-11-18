@@ -4,12 +4,19 @@ export type DoseValues = Readonly<{
   intervalDays: number;
 }>;
 
+export type StepIntervalTolerance = Readonly<{
+  shortBelowDays: number;
+  longFromDays: number;
+  stepReviewAboveDays: number;
+}>;
+
 export type ProtocolStep = DoseValues &
   Readonly<{
     id: string;
     label: string;
     phase: 'BUILD_UP' | 'MAINTENANCE';
     nextStepId: string | null;
+    intervalTolerance?: StepIntervalTolerance;
   }>;
 
 export type PublishedProtocolDefinition = Readonly<{

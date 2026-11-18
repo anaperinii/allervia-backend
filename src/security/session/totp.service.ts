@@ -46,7 +46,6 @@ export class TotpService {
           : { afterTimeStep: Number(lastUsedTimeStep) }),
       });
     } catch (error) {
-
       this.logger.warn(
         `TOTP verification error: ${error instanceof Error ? error.name : 'unknown'}`,
       );

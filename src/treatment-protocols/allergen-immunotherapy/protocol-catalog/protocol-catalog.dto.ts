@@ -15,6 +15,19 @@ import {
   MaxLength,
 } from 'class-validator';
 
+export class StepIntervalToleranceInputDto {
+  @ApiProperty({ description: 'Intervalos abaixo deste valor são TOO_SHORT' })
+  shortBelowDays: number;
+
+  @ApiProperty({ description: 'Intervalos a partir deste valor são LONG' })
+  longFromDays: number;
+
+  @ApiProperty({
+    description: 'Intervalos acima deste valor exigem revisão de passo',
+  })
+  stepReviewAboveDays: number;
+}
+
 export class ProtocolStepDefinitionDto {
   @ApiProperty()
   id: string;
@@ -36,6 +49,13 @@ export class ProtocolStepDefinitionDto {
 
   @ApiProperty({ type: String, nullable: true })
   nextStepId: string | null;
+
+  @ApiPropertyOptional({
+    type: () => StepIntervalToleranceInputDto,
+    description:
+      'Limites de tolerância deste passo. Ausente, o sistema deriva do intervalo deste passo e do seguinte.',
+  })
+  intervalTolerance?: StepIntervalToleranceInputDto;
 }
 
 export class ProtocolDefinitionDto {

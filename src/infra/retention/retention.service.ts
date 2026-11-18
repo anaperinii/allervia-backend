@@ -45,7 +45,6 @@ export class RetentionService {
   }> {
     return [
       {
-
         name: 'tentativas de autenticação',
         model: 'authAttempt',
         where: { occurredAt: { lt: new Date(now - DAY_MS) } },
@@ -61,7 +60,6 @@ export class RetentionService {
         where: { expiresAt: { lt: new Date(now - 7 * DAY_MS) } },
       },
       {
-
         name: 'fatores MFA pendentes',
         model: 'mfaCredential',
         where: {
@@ -81,18 +79,12 @@ export class RetentionService {
         },
       },
       {
-
         name: 'outbox processado',
         model: 'outboxEvent',
         where: {
           processedAt: { lt: new Date(now - 30 * DAY_MS) },
           attempts: { lt: 5 },
         },
-      },
-      {
-        name: 'jobs de calendário processados',
-        model: 'calendarSyncJob',
-        where: { processedAt: { lt: new Date(now - 30 * DAY_MS) } },
       },
     ];
   }
@@ -109,7 +101,6 @@ export class RetentionService {
       const eligible = await delegate.count({ where: spec.where });
       let deleted = 0;
       if (!dryRun && eligible > 0) {
-
         for (;;) {
           const batch = await delegate.findMany({
             where: spec.where,

@@ -5,6 +5,8 @@ import { PATIENT_MESSAGES } from 'src/patients/patient.messages';
 import { PrismaService } from 'src/infra/database/prisma.service';
 import { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { Prisma } from '@prisma/client';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from 'src/infra/audit/audit.types';
 import { normalizeCpf } from '../cpf';
 import { guardianColumns, todayCivilDate } from '../guardian';
 
@@ -13,6 +15,7 @@ export class CreatePatientUseCase {
   constructor(
     private patientRepository: PatientRepository,
     private prisma: PrismaService,
+    private auditLog: IAuditLogService,
   ) {}
 
   async execute(
@@ -58,6 +61,18 @@ export class CreatePatientUseCase {
         updatedById: currentUser.id,
         isActive: true,
         isArchived: false,
+      },
+      tx,
+    );
+
+    await this.auditLog.record(
+      {
+        userId: currentUser.id,
+        organizationId: currentUser.organizationId,
+        entityType: AUDIT_ENTITY_TYPES.PATIENT,
+        entityId: savedPatient.id,
+        action: AUDIT_ACTIONS.PATIENT_CREATED,
+        newValues: { ...savedPatient },
       },
       tx,
     );

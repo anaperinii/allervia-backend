@@ -22,7 +22,13 @@ export class PrismaDoseRepository extends IDoseRepository {
 
     return doses.map((dose) => {
       const resolved = dose.prescription?.resolved;
-      const timeZone = resolved && typeof resolved === 'object' && !Array.isArray(resolved) && typeof resolved.timeZone === 'string' ? resolved.timeZone : null;
+      const timeZone =
+        resolved &&
+        typeof resolved === 'object' &&
+        !Array.isArray(resolved) &&
+        typeof resolved.timeZone === 'string'
+          ? resolved.timeZone
+          : null;
       return new Dose({ ...dose, timeZone });
     });
   }

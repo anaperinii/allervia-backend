@@ -15,6 +15,7 @@ export abstract class IUserAuthRepository {
   abstract findActiveVerificationToken(
     tokenHash: string,
     purpose: VerificationPurpose,
+    requireApproved?: boolean,
   ): Promise<ActiveVerificationToken | null>;
 
   abstract countRecentVerificationTokens(
@@ -32,6 +33,13 @@ export abstract class IUserAuthRepository {
     tokenId: string,
     userId: string,
     passwordHash: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void>;
+
+  abstract finalizeEmailChange(
+    tokenId: string,
+    userId: string,
+    newEmail: string,
     tx?: Prisma.TransactionClient,
   ): Promise<void>;
 }

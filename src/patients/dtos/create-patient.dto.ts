@@ -27,6 +27,28 @@ export class CpfConstraint implements ValidatorConstraintInterface {
   }
 }
 
+export const MAX_PATIENT_AGE_YEARS = 130;
+
+@ValidatorConstraint({ name: 'birthDate', async: false })
+export class BirthDateConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    const birth = new Date(value);
+    if (!Number.isFinite(birth.getTime())) return false;
+
+    const now = new Date();
+    if (birth.getTime() > now.getTime()) return false;
+
+    const oldest = new Date(now);
+    oldest.setFullYear(oldest.getFullYear() - MAX_PATIENT_AGE_YEARS);
+    return birth.getTime() >= oldest.getTime();
+  }
+
+  defaultMessage(): string {
+    return `Data de nascimento inválida: não pode ser futura nem anterior a ${MAX_PATIENT_AGE_YEARS} anos atrás.`;
+  }
+}
+
 export class GuardianDto {
   @ApiProperty({ description: 'Nome completo do responsável legal' })
   @IsString()
@@ -42,11 +64,17 @@ export class GuardianDto {
   @Validate(CpfConstraint)
   cpf?: string;
 
-  @ApiProperty({ description: 'Telefone do responsável' })
+  @ApiProperty({
+    description: 'Telefone do responsável (DDD + número, somente dígitos)',
+    pattern: '^\\d{11}$',
+    minLength: 11,
+    maxLength: 11,
+  })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{10,11}$/, {
-    message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.',
+  @Matches(/^\d{11}$/, {
+    message:
+      'Número de telefone inválido. Deve conter 11 dígitos (DDD + número).',
   })
   phoneNumber: string;
 }
@@ -57,9 +85,13 @@ export class CreatePatientDto {
   @IsNotEmpty()
   fullName: string;
 
-  @ApiProperty({ description: 'Data de Nascimento' })
+  @ApiProperty({
+    description:
+      'Data de nascimento. Não pode ser futura nem anterior a 130 anos.',
+  })
   @IsDateString({ strict: true })
   @IsNotEmpty()
+  @Validate(BirthDateConstraint)
   birthDate: string;
 
   @ApiProperty({ description: 'Peso em kg' })
@@ -68,11 +100,17 @@ export class CreatePatientDto {
   @Max(500, { message: 'Peso inválido. Valor muito alto.' })
   weightInKg: number;
 
-  @ApiProperty({ description: 'Número de Telefone' })
+  @ApiProperty({
+    description: 'Número de telefone (DDD + número, somente dígitos)',
+    pattern: '^\\d{11}$',
+    minLength: 11,
+    maxLength: 11,
+  })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{10,11}$/, {
-    message: 'Número de telefone inválido. Deve conter 10 ou 11 dígitos.',
+  @Matches(/^\d{11}$/, {
+    message:
+      'Número de telefone inválido. Deve conter 11 dígitos (DDD + número).',
   })
   phoneNumber: string;
 

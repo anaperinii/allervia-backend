@@ -337,4 +337,156 @@ describe('Dose administration extensions - Integration', () => {
     expect(await prisma.doseObservation.count()).toBe(0);
     expect(await prisma.clinicalCommand.count()).toBe(0);
   });
+
+  it('schedules the successor on the protocol date when none is chosen', async () => {
+    const doseId = await firstDoseId();
+    const result = await clinical.administer(doseId, command(), physician);
+    expect(new Date(result.successor!.scheduledAt).toISOString()).toBe(
+      '2026-01-08T13:00:00.000Z',
+    );
+  });
+
+  it('alerts on a long interval without demanding a reason', async () => {
+    const doseId = await firstDoseId();
+    const result = await clinical.administer(
+      doseId,
+      command({ nextScheduledAt: '2026-01-16T13:00:00Z' }),
+      physician,
+    );
+    expect(new Date(result.successor!.scheduledAt).toISOString()).toBe(
+      '2026-01-16T13:00:00.000Z',
+    );
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'DOSE_ADMINISTERED', entityId: doseId },
+    });
+    expect(audit?.newValues).toMatchObject({
+      successorScheduleRescheduled: true,
+      successorRecommendedAt: '2026-01-08T13:00:00.000Z',
+      successorIntervalDays: 15,
+      successorIntervalBand: 'LONG',
+      successorIntervalToleranceSource: 'DERIVED',
+    });
+  });
+
+  it('keeps a small shift silent, with no band deviation recorded', async () => {
+    const doseId = await firstDoseId();
+    await clinical.administer(
+      doseId,
+      command({ nextScheduledAt: '2026-01-11T13:00:00Z' }),
+      physician,
+    );
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'DOSE_ADMINISTERED', entityId: doseId },
+    });
+    expect(audit?.newValues).toMatchObject({
+      successorIntervalDays: 10,
+      successorIntervalBand: 'ON_PLAN',
+      successorScheduleReason: null,
+    });
+  });
+
+  it('accepts the recommended date without a reason and records no deviation', async () => {
+    const doseId = await firstDoseId();
+    const result = await clinical.administer(
+      doseId,
+      command({ nextScheduledAt: '2026-01-08T13:00:00Z' }),
+      physician,
+    );
+    expect(new Date(result.successor!.scheduledAt).toISOString()).toBe(
+      '2026-01-08T13:00:00.000Z',
+    );
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'DOSE_ADMINISTERED', entityId: doseId },
+    });
+    expect(audit?.newValues).toMatchObject({
+      successorScheduleRescheduled: false,
+      successorScheduleReason: null,
+    });
+  });
+
+  it('refuses a too short interval with no reason, writing nothing', async () => {
+    const doseId = await firstDoseId();
+    await expect(
+      clinical.administer(
+        doseId,
+        command({ nextScheduledAt: '2026-01-03T13:00:00Z' }),
+        physician,
+      ),
+    ).rejects.toThrow('NEXT_SCHEDULE_REASON_REQUIRED');
+    expect(await prisma.clinicalCommand.count()).toBe(0);
+    expect(
+      await prisma.dose.count({ where: { administeredAt: { not: null } } }),
+    ).toBe(0);
+  });
+
+  it('accepts a too short interval once justified', async () => {
+    const doseId = await firstDoseId();
+    await clinical.administer(
+      doseId,
+      command({
+        nextScheduledAt: '2026-01-03T13:00:00Z',
+        nextScheduleReason: 'Antecipação acordada com o prescritor.',
+      }),
+      physician,
+    );
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'DOSE_ADMINISTERED', entityId: doseId },
+    });
+    expect(audit?.newValues).toMatchObject({
+      successorIntervalDays: 2,
+      successorIntervalBand: 'TOO_SHORT',
+      successorScheduleReason: 'Antecipação acordada com o prescritor.',
+    });
+  });
+
+  it('refuses a very long interval without the explicit step review', async () => {
+    const doseId = await firstDoseId();
+    await expect(
+      clinical.administer(
+        doseId,
+        command({
+          nextScheduledAt: '2026-01-25T13:00:00Z',
+          nextScheduleReason: 'Paciente ficou doente por três semanas.',
+        }),
+        physician,
+      ),
+    ).rejects.toThrow('NEXT_SCHEDULE_REVIEW_REQUIRED');
+    expect(await prisma.clinicalCommand.count()).toBe(0);
+  });
+
+  it('records the step review decision for a very long interval', async () => {
+    const doseId = await firstDoseId();
+    await clinical.administer(
+      doseId,
+      command({
+        nextScheduledAt: '2026-01-25T13:00:00Z',
+        nextScheduleReason: 'Paciente ficou doente por três semanas.',
+        nextScheduleReview: 'STEP_BACK_REQUESTED',
+      }),
+      physician,
+    );
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'DOSE_ADMINISTERED', entityId: doseId },
+    });
+    expect(audit?.newValues).toMatchObject({
+      successorIntervalDays: 24,
+      successorIntervalBand: 'REQUIRES_STEP_REVIEW',
+      successorStepReview: 'STEP_BACK_REQUESTED',
+    });
+  });
+
+  it('refuses a successor date that is not after the administration', async () => {
+    const doseId = await firstDoseId();
+    await expect(
+      clinical.administer(
+        doseId,
+        command({
+          nextScheduledAt: '2026-01-01T12:00:00Z',
+          nextScheduleReason: 'Tentativa inválida.',
+        }),
+        physician,
+      ),
+    ).rejects.toThrow('NEXT_SCHEDULE_BEFORE_ADMINISTRATION');
+    expect(await prisma.clinicalCommand.count()).toBe(0);
+  });
 });

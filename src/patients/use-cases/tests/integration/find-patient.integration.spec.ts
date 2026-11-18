@@ -8,6 +8,7 @@ import { PatientRepository } from 'src/patients/patient.repository';
 import { PrismaPatientRepository } from 'src/patients/prisma-patient.repository';
 import { ulid } from 'ulid';
 import { NotFoundException } from '@nestjs/common';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 
 describe('FindPatientUseCase - Integration', () => {
   let module: TestingModule;
@@ -29,6 +30,10 @@ describe('FindPatientUseCase - Integration', () => {
         {
           provide: PatientRepository,
           useClass: PrismaPatientRepository,
+        },
+        {
+          provide: IAuditLogService,
+          useValue: { record: jest.fn() },
         },
       ],
     }).compile();

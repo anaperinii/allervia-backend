@@ -104,7 +104,6 @@ export class VerifyMfaChallengeUseCase {
               error instanceof CodedHttpException &&
               error.code === AUTH_ERROR_CODES.mfaAlreadyConfirmed
             ) {
-
               await this.repository.consumePreAuthChallenge(challenge.id);
               throw new CodedUnauthorizedException(
                 AUTH_ERROR_CODES.mfaChallengeInvalid,

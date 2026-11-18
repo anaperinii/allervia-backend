@@ -24,7 +24,7 @@ export class ProvisionOrganizationOrganizationDto {
 }
 
 export class ProvisionOrganizationAdministratorDto {
-  @ApiProperty()
+  @ApiProperty({ format: 'email', maxLength: 254 })
   @IsEmail()
   @MaxLength(254)
   email: string;

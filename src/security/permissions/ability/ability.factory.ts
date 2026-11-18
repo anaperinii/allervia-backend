@@ -39,7 +39,6 @@ export class AbilityFactory {
     switch (role) {
       case Role.ADMINISTRATOR:
         can('manage', 'TreatmentProtocol', inOrg);
-        can('manage', 'GoogleCalendarConnection', inOrg);
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can('read', 'Dose', doseInOrg);
@@ -68,20 +67,12 @@ export class AbilityFactory {
               { professionalId: user.professionalId },
             ],
           });
-          can('manage', 'GoogleCalendarConnection', {
-            professionalId: user.professionalId,
-          });
         }
         can('read', 'Professional', inOrg);
         break;
 
       case Role.NURSE:
         can('read', 'TreatmentProtocol', inOrg);
-        if (user.professionalId) {
-          can('manage', 'GoogleCalendarConnection', {
-            professionalId: user.professionalId,
-          });
-        }
         can('read', 'Patient', inOrg);
         can('read', 'Immunotherapy', immunoInOrg);
         can(['read', 'create', 'update', 'archive'], 'Dose', doseInOrg);
@@ -90,7 +81,7 @@ export class AbilityFactory {
         break;
 
       case Role.RECEPTIONIST:
-        can(['read', 'create', 'update'], 'Patient', inOrg);
+        can(['read', 'update'], 'Patient', inOrg);
         can('manage', 'Appointment', inOrg);
         can('read', 'Professional', inOrg);
         break;

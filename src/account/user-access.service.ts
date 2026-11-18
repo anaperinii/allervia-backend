@@ -71,7 +71,6 @@ export class UserAccessService {
       }
 
       if (!isActive && professionalId) {
-
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${actor.organizationId}))`;
         const targetIsAdministrator = await tx.professionalRole.count({
           where: {
@@ -102,17 +101,6 @@ export class UserAccessService {
         data: { isActive, tokenVersion: { increment: 1 } },
       });
 
-      if (!isActive) {
-
-        await tx.googleCalendarConnection.updateMany({
-          where: {
-            professional: { userId: before.id },
-            teardownRequestedAt: null,
-          },
-          data: { teardownRequestedAt: new Date() },
-        });
-      }
-
       await recordAudit(tx, beforeUser as User, after, professionalId);
 
       return {
@@ -124,7 +112,6 @@ export class UserAccessService {
     });
 
     if (!isActive && result.changed) {
-
       await this.sessionService.revokeAllForUser(
         targetUserId,
         AuthSessionRevokeReason.ACCOUNT_DISABLED,

@@ -13,7 +13,6 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap().catch((error: unknown) => {
-
   console.error(
     `[bootstrap] falha ao iniciar: ${error instanceof Error ? error.name + ': ' + error.message : 'erro desconhecido'}`,
   );

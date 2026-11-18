@@ -25,6 +25,20 @@ export interface OutboxPayload {
   recipientProfessionalId: string;
 }
 
+export interface EmailChangeOutboxPayload {
+  verificationTokenId: string;
+  professionalId: string;
+  professionalName: string;
+  newEmail: string;
+  decision?: 'APPROVED' | 'REJECTED';
+  recipientProfessionalIds: string[];
+}
+
+const EMAIL_CHANGE_KINDS: NotificationKind[] = [
+  NotificationKind.EMAIL_CHANGE_REQUEST_PENDING,
+  NotificationKind.EMAIL_CHANGE_REQUEST_DECIDED,
+];
+
 export function enqueueOutbox(
   tx: Prisma.TransactionClient,
   organizationId: string,
@@ -40,9 +54,26 @@ export function enqueueOutbox(
   });
 }
 
+export function enqueueEmailChangeOutbox(
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  kind: NotificationKind,
+  payload: EmailChangeOutboxPayload,
+) {
+  return tx.outboxEvent.create({
+    data: {
+      organizationId,
+      kind,
+      payload: payload as unknown as Prisma.InputJsonValue,
+    },
+  });
+}
+
 const TITLES: Record<NotificationKind, string> = {
   PHYSICIAN_REVIEW_REQUESTED: 'Avaliação médica solicitada',
   TREATMENT_SUSPENDED: 'Tratamento suspenso',
+  EMAIL_CHANGE_REQUEST_PENDING: 'Troca de e-mail aguardando aprovação',
+  EMAIL_CHANGE_REQUEST_DECIDED: 'Pedido de troca de e-mail decidido',
 };
 
 export const MAX_ATTEMPTS = 5;
@@ -100,6 +131,10 @@ export class NotificationsService {
   }
 
   private async materialize(event: OutboxEvent): Promise<void> {
+    if (EMAIL_CHANGE_KINDS.includes(event.kind)) {
+      return this.materializeEmailChange(event);
+    }
+
     const payload = event.payload as unknown as OutboxPayload;
     const recipient = await this.prisma.professional.findFirst({
       where: {
@@ -132,6 +167,53 @@ export class NotificationsService {
         entityId: payload.therapyId,
       },
     });
+  }
+
+  private async materializeEmailChange(event: OutboxEvent): Promise<void> {
+    const payload = event.payload as unknown as EmailChangeOutboxPayload;
+    const recipients = await this.prisma.professional.findMany({
+      where: {
+        id: { in: payload.recipientProfessionalIds },
+        organizationId: event.organizationId,
+      },
+      select: { userId: true, user: { select: { isActive: true } } },
+    });
+
+    const body =
+      event.kind === NotificationKind.EMAIL_CHANGE_REQUEST_PENDING
+        ? `${payload.professionalName} pediu a troca do e-mail de acesso para ${payload.newEmail}. Aprove ou recuse o pedido.`
+        : payload.decision === 'APPROVED'
+          ? `Seu pedido de troca de e-mail para ${payload.newEmail} foi aprovado. Confirme pelo link enviado.`
+          : `Seu pedido de troca de e-mail para ${payload.newEmail} foi recusado pela administração.`;
+
+    for (const recipient of recipients) {
+      if (!recipient.user.isActive) continue;
+
+      const preference = await this.prisma.notificationPreference.findUnique({
+        where: { userId_kind: { userId: recipient.userId, kind: event.kind } },
+      });
+      if (preference?.enabled === false) continue;
+
+      await this.prisma.notification.upsert({
+        where: {
+          outboxEventId_userId: {
+            outboxEventId: event.id,
+            userId: recipient.userId,
+          },
+        },
+        update: {},
+        create: {
+          organizationId: event.organizationId,
+          userId: recipient.userId,
+          outboxEventId: event.id,
+          kind: event.kind,
+          title: TITLES[event.kind],
+          body,
+          entityType: 'VerificationToken',
+          entityId: payload.verificationTokenId,
+        },
+      });
+    }
   }
 
   private async complete(event: OutboxEvent, attemptId: string) {

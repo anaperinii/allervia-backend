@@ -98,7 +98,6 @@ export class ResendInviteUseCase {
         data: { isActive: false },
       });
       if (cancelled.count !== 1) {
-
         throw new ConflictException(INVITE_MESSAGES.resendNotAvailable);
       }
 

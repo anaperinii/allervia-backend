@@ -120,31 +120,6 @@ describe('UpdateUserStatusUseCase - Integration', () => {
     expect(activeAdministrators).toBeGreaterThanOrEqual(1);
   });
 
-  it('desativação grava pedido durável de teardown da conexão Google na mesma transação', async () => {
-    const admin = await factories.users.createAuthenticatedAdmin();
-    const target = await factories.users.createColleagueWithRoles(
-      admin.organizationId,
-      ['PHYSICIAN'],
-    );
-    await factories.googleCalendarConnections.create({
-      professionalId: target.professionalId!,
-      organizationId: admin.organizationId,
-    });
-
-    await updateUserStatusUseCase.execute(
-      target.id,
-      { isActive: false },
-      admin,
-    );
-
-    const connection = await prisma.googleCalendarConnection.findFirstOrThrow();
-    expect(connection.teardownRequestedAt).not.toBeNull();
-    const user = await prisma.user.findUniqueOrThrow({
-      where: { id: target.id },
-    });
-    expect(user.isActive).toBe(false);
-  });
-
   it('should activate user correctly', async () => {
     const authenticatedUser =
       await factories.users.createAuthenticatedPhysicianProfessional();

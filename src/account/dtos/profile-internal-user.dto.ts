@@ -9,7 +9,6 @@ export class ProfileInternalUserDto {
   @IsString()
   fullName: string;
 
-  @ApiProperty({ description: 'Senha' })
   @IsPassword()
   password: string;
 

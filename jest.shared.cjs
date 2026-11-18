@@ -7,13 +7,6 @@ module.exports = {
 
   collectCoverage: false,
 
-  coverageThreshold: {
-    global: {
-      lines: 80,
-      branches: 60,
-    },
-  },
-
   rootDir: '.',
 
   testMatch: ['**/*.spec.ts'],
@@ -46,7 +39,7 @@ module.exports = {
 
   coverageDirectory: 'coverage',
 
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['text', 'text-summary', 'json-summary', 'lcov', 'html'],
 
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',

@@ -6,6 +6,9 @@ import { AbilityFactory } from 'src/security/permissions/ability/ability.factory
 import type { AuthenticatedUserPayload } from 'src/security/types/authenticated-user.types';
 import { buildPage, resolvePage } from 'src/infra/http/pagination';
 import { localCalendarDay } from 'src/utils/protocol-calendar';
+import { resolvePhase } from 'src/treatment-protocols/allergen-immunotherapy/therapies/use-cases/list-all-immunotherapies.use-case';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
+import { PdfAuditDto } from 'src/treatment-protocols/allergen-immunotherapy/therapies/dtos/pdf-audit.dto';
 import {
   ScheduleQueryDto,
   SchedulePeriodDto,
@@ -66,12 +69,30 @@ export class ClinicalScheduleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly abilities: AbilityFactory,
+    private readonly audit: IAuditLogService,
   ) {}
 
   private doseScope(user: AuthenticatedUserPayload) {
     const ability = this.abilities.createForUser(user);
     if (!ability.can('read', 'Dose')) return null;
     return accessibleBy(ability, 'read').ofType('Dose');
+  }
+
+  async auditPdfExport(
+    dto: PdfAuditDto,
+    user: AuthenticatedUserPayload,
+  ): Promise<{ recorded: true }> {
+    const ability = this.abilities.createForUser(user);
+    if (!ability.can('read', 'Dose')) throw new BadRequestException();
+    await this.audit.record({
+      userId: user.id,
+      organizationId: user.organizationId,
+      entityType: 'Organization',
+      entityId: user.organizationId,
+      action: 'PDF_EXPORT_GENERATED',
+      newValues: { kind: 'DASHBOARD_REPORT', sections: dto.sections },
+    });
+    return { recorded: true };
   }
 
   async list(query: ScheduleQueryDto, user: AuthenticatedUserPayload) {
@@ -84,6 +105,12 @@ export class ClinicalScheduleService {
         { immunotherapy: { patient: { organizationId: user.organizationId } } },
         scope,
         { isArchived: false },
+        {
+          immunotherapy: {
+            isArchived: false,
+            patient: { isArchived: false },
+          },
+        },
         {
           OR: [
             { administeredAt: { gte: from, lte: to } },
@@ -131,11 +158,21 @@ export class ClinicalScheduleService {
       }),
       this.prisma.dose.count({ where }),
     ]);
-    return buildPage(items.map(({ prescription, ...item }) => {
-      const resolved = prescription?.resolved;
-      const timeZone = resolved && typeof resolved === 'object' && !Array.isArray(resolved) && typeof resolved.timeZone === 'string' ? resolved.timeZone : null;
-      return { ...item, timeZone };
-    }), total, bounds);
+    return buildPage(
+      items.map(({ prescription, ...item }) => {
+        const resolved = prescription?.resolved;
+        const timeZone =
+          resolved &&
+          typeof resolved === 'object' &&
+          !Array.isArray(resolved) &&
+          typeof resolved.timeZone === 'string'
+            ? resolved.timeZone
+            : null;
+        return { ...item, timeZone };
+      }),
+      total,
+      bounds,
+    );
   }
 
   async metrics(dto: SchedulePeriodDto, user: AuthenticatedUserPayload) {
@@ -165,28 +202,74 @@ export class ClinicalScheduleService {
         buildUp: 0,
         maintenance: 0,
       },
+      concentration: [] as {
+        concentration: number;
+        count: number;
+        totalVolume: number;
+      }[],
+      volumeMatrix: [] as {
+        concentration: number;
+        volume: number;
+        count: number;
+      }[],
+      phases: { buildUp: 0, maintenance: 0 },
+      typesActive: [] as { immunoType: string; count: number }[],
     };
     if (!scope) return empty;
 
-    const doses = await this.prisma.dose.findMany({
-      where: {
-        AND: [
-          {
-            immunotherapy: { patient: { organizationId: user.organizationId } },
+    const doseWhere: Prisma.DoseWhereInput = {
+      AND: [
+        {
+          immunotherapy: { patient: { organizationId: user.organizationId } },
+        },
+        scope,
+        { isArchived: false },
+        { status: { not: 'ENTERED_IN_ERROR' } },
+        {
+          OR: [
+            { administeredAt: { gte: from, lte: to } },
+            { administeredAt: null, scheduledAt: { gte: from, lte: to } },
+          ],
+        },
+      ],
+    };
+
+    const administeredWhere: Prisma.DoseWhereInput = {
+      AND: [
+        doseWhere,
+        {
+          status: {
+            in: ['ADMINISTERED_ON_SCHEDULE', 'ADMINISTERED_OFF_SCHEDULE'],
           },
-          scope,
-          { isArchived: false },
-          { status: { not: 'ENTERED_IN_ERROR' } },
-          {
-            OR: [
-              { administeredAt: { gte: from, lte: to } },
-              { administeredAt: null, scheduledAt: { gte: from, lte: to } },
-            ],
-          },
-        ],
-      },
-      select: { status: true, scheduledAt: true, administeredAt: true },
-    });
+        },
+      ],
+    };
+
+    const [doses, concentrationGroups, volumeMatrixGroups] = await Promise.all([
+      this.prisma.dose.findMany({
+        where: doseWhere,
+        select: {
+          status: true,
+          scheduledAt: true,
+          administeredAt: true,
+          plannedValues: true,
+          immunotherapy: { select: { maintenanceStartDate: true } },
+        },
+      }),
+      this.prisma.dose.groupBy({
+        by: ['concentration'],
+        where: administeredWhere,
+        _count: { _all: true },
+        _sum: { volume: true },
+        orderBy: { concentration: 'asc' },
+      }),
+      this.prisma.dose.groupBy({
+        by: ['concentration', 'volume'],
+        where: administeredWhere,
+        _count: { _all: true },
+        orderBy: [{ concentration: 'asc' }, { volume: 'asc' }],
+      }),
+    ]);
 
     const now = new Date();
     const byDay = new Map<string, number>();
@@ -233,6 +316,33 @@ export class ClinicalScheduleService {
         })
       : 0;
 
+    const typesActiveGroups = therapyAbility.can('read', 'Immunotherapy')
+      ? await this.prisma.immunotherapy.groupBy({
+          by: ['immunoType'],
+          where: {
+            AND: [
+              { patient: { organizationId: user.organizationId } },
+              accessibleBy(therapyAbility, 'read').ofType('Immunotherapy'),
+              { isArchived: false },
+              { status: 'IN_PROGRESS' },
+            ],
+          },
+          _count: { _all: true },
+          orderBy: { immunoType: 'asc' },
+        })
+      : [];
+
+    let phaseBuildUp = 0;
+    let phaseMaintenance = 0;
+    for (const dose of doses) {
+      const phase = resolvePhase(
+        dose.plannedValues,
+        dose.immunotherapy.maintenanceStartDate,
+      );
+      if (phase === 'MAINTENANCE') phaseMaintenance++;
+      else phaseBuildUp++;
+    }
+
     return {
       ...empty,
       applications: {
@@ -257,6 +367,21 @@ export class ClinicalScheduleService {
         buildUp,
         maintenance: therapyCount('IN_PROGRESS') - buildUp,
       },
+      concentration: concentrationGroups.map((row) => ({
+        concentration: row.concentration,
+        count: row._count._all,
+        totalVolume: Number(row._sum.volume ?? 0),
+      })),
+      volumeMatrix: volumeMatrixGroups.map((row) => ({
+        concentration: row.concentration,
+        volume: Number(row.volume),
+        count: row._count._all,
+      })),
+      phases: { buildUp: phaseBuildUp, maintenance: phaseMaintenance },
+      typesActive: typesActiveGroups.map((row) => ({
+        immunoType: row.immunoType,
+        count: row._count._all,
+      })),
     };
   }
 }

@@ -53,13 +53,14 @@ export function statusBuckets(query: StatusHistoryQueryDto, asOf: Date) {
     else
       close.setUTCDate(close.getUTCDate() + 6 - ((close.getUTCDay() + 6) % 7));
     const date = [close.toISOString().slice(0, 10), query.to, today].sort()[0];
+    const monthLabel = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'UTC',
+      month: 'short',
+      year: '2-digit',
+    }).format(new Date(date + 'T12:00:00Z'));
     const label =
       query.granularity === 'month'
-        ? new Intl.DateTimeFormat('pt-BR', {
-            timeZone: 'UTC',
-            month: 'short',
-            year: '2-digit',
-          }).format(new Date(date + 'T12:00:00Z'))
+        ? monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)
         : `${date.slice(8, 10)}/${date.slice(5, 7)}`;
     buckets.push({ date, label });
     cursor.setTime(close.getTime() + 86400000);

@@ -1,4 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsString,
@@ -19,6 +20,10 @@ const UPPERCASE_PATTERN = /[A-Z]/;
 const LOWERCASE_PATTERN = /[a-z]/;
 const DIGIT_PATTERN = /\d/;
 const SPECIAL_CHAR_PATTERN = /[^A-Za-z0-9]/;
+
+export const PASSWORD_PATTERN = new RegExp(
+  `^(?=.*${LOWERCASE_PATTERN.source})(?=.*${UPPERCASE_PATTERN.source})(?=.*${DIGIT_PATTERN.source})(?=.*${SPECIAL_CHAR_PATTERN.source}).+$`,
+).source;
 
 export function isPasswordWithinPolicy(value: string): boolean {
   return (
@@ -51,6 +56,13 @@ function MaxByteLength(maxBytes: number): PropertyDecorator {
 
 export function IsPassword(): PropertyDecorator {
   return applyDecorators(
+    ApiProperty({
+      description:
+        'Senha: 8-20 caracteres, com ao menos uma maiúscula, uma minúscula, um número e um caractere especial',
+      minLength: PASSWORD_MIN_LENGTH,
+      maxLength: PASSWORD_MAX_LENGTH,
+      pattern: PASSWORD_PATTERN,
+    }),
     IsString(),
     IsNotEmpty({ message: 'A senha não pode estar vazia' }),
     MinLength(PASSWORD_MIN_LENGTH, {

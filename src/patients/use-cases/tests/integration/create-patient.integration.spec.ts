@@ -6,6 +6,7 @@ import { TestDatabaseManager } from 'test/database/test-database.manager';
 import { PatientRepository } from 'src/patients/patient.repository';
 import { PrismaPatientRepository } from 'src/patients/prisma-patient.repository';
 import { CreatePatientDto } from 'src/patients/dtos/create-patient.dto';
+import { IAuditLogService } from 'src/infra/audit/audit-log.service';
 
 describe('CreatePatientUseCase - Integration', () => {
   let module: TestingModule;
@@ -26,6 +27,10 @@ describe('CreatePatientUseCase - Integration', () => {
         {
           provide: PatientRepository,
           useClass: PrismaPatientRepository,
+        },
+        {
+          provide: IAuditLogService,
+          useValue: { record: jest.fn() },
         },
       ],
     }).compile();

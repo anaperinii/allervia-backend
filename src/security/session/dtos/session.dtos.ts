@@ -9,7 +9,11 @@ import {
 } from 'class-validator';
 
 export class StartSessionDto {
-  @ApiProperty({ example: 'profissional@clinica.com.br' })
+  @ApiProperty({
+    example: 'profissional@clinica.com.br',
+    format: 'email',
+    maxLength: 254,
+  })
   @IsEmail()
   @MaxLength(254)
   email: string;

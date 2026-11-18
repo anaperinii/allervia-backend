@@ -49,6 +49,7 @@ scripts/.demo-credentials.local.json
 # temp directory
 .temp
 .tmp
+/tmp/
 
 # Runtime data
 pids
@@ -61,3 +62,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /generated/prisma
 tools/
+
+# Documentação apenas informacional (relatórios, planos, auditorias narrativas)
+# não deve ser versionada. Somente o README principal fica visível no
+# repositório; qualquer exceção pontual entra com `git add -f`.
+*.md
+!/README.md

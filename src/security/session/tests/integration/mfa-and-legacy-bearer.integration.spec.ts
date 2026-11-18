@@ -128,7 +128,6 @@ describe('Segundo fator e bearer legado - Integração HTTP', () => {
     csrfToken: string,
     sessionId: string,
   ) {
-
     await server()
       .post('/auth/reauthenticate')
       .set('Origin', ORIGIN)

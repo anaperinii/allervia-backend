@@ -4,6 +4,7 @@ import { createTransport, type Transporter } from 'nodemailer';
 import {
   DemoConfirmationEmailParams,
   DemoEmailParams,
+  EmailChangeLinkParams,
   IEmailService,
   InviteEmailParams,
 } from './email.service';
@@ -151,6 +152,65 @@ export class SmtpEmailService extends IEmailService implements OnModuleDestroy {
     });
 
     this.logger.log('Invite link dispatched.');
+  }
+
+  async sendEmailChangeLink(params: EmailChangeLinkParams): Promise<void> {
+    const link = `${this.appBaseUrl}/confirm-email-change?token=${encodeURIComponent(params.token)}`;
+
+    await this.transporter.sendMail({
+      from: this.sender,
+      to: params.email,
+      subject: 'Confirme o novo e-mail de acesso — Allervia',
+      text: [
+        `Olá, ${params.fullName}.`,
+        '',
+        `Foi solicitada a troca do e-mail de acesso da sua conta Allervia para ${params.newEmail}.`,
+        '',
+        'Abra o endereço abaixo para confirmar a troca:',
+        link,
+        '',
+        'O link expira em 60 minutos e vale uma única vez.',
+        'Se você não reconhece este pedido, procure a administração da sua clínica.',
+      ].join('\n'),
+    });
+
+    this.logger.log('Email change link dispatched.');
+  }
+
+  async sendEmailChangeFarewell(
+    previousEmail: string,
+    newEmail: string,
+  ): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.sender,
+      to: previousEmail,
+      subject: 'Seu e-mail de acesso ao Allervia foi alterado',
+      text: [
+        `O e-mail de acesso da conta Allervia passou a ser ${newEmail}.`,
+        '',
+        'Este contato não faz mais login no Allervia.',
+        'As sessões abertas foram encerradas.',
+        'Se não foi você, procure a administração da sua clínica.',
+      ].join('\n'),
+    });
+
+    this.logger.log('Email change farewell dispatched.');
+  }
+
+  async sendEmailChangeWelcome(newEmail: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.sender,
+      to: newEmail,
+      subject: 'Seu novo e-mail de acesso ao Allervia está ativo',
+      text: [
+        'Este endereço passou a ser o e-mail de acesso da sua conta Allervia.',
+        '',
+        'Use-o a partir de agora para entrar na plataforma.',
+        'Sua senha continua a mesma.',
+      ].join('\n'),
+    });
+
+    this.logger.log('Email change welcome dispatched.');
   }
 
   async sendPasswordChangedNotification(email: string): Promise<void> {

@@ -9,7 +9,6 @@ const { assertTestDatabase } = environment as {
 };
 
 const TABLES = [
-  'OAuthStateNonce',
   'RateLimitCounter',
   'DemoRequest',
   'Notification',
@@ -17,9 +16,6 @@ const TABLES = [
   'OutboxEvent',
   'SupportRequest',
   'ContactRequest',
-  'CalendarSyncJob',
-  'GoogleCalendarEventLink',
-  'GoogleCalendarConnection',
   'Appointment',
   'DoseObservationAddendum',
   'TherapyLifecycleEvent',

@@ -56,7 +56,6 @@ export class NotificationsDispatcher implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(`Outbox: ${result.failed} evento(s) falharam.`);
       this.ticks += 1;
       if (this.ticks % RETENTION_EVERY_TICKS === 0) {
-
         await this.retention.runOnce();
       }
     } catch (error) {
